@@ -21,7 +21,7 @@ A fixture comes from one of two kinds of definition:
 - **Built-in profile** — Glowstone's own simple fixtures: `PAR Can` and the laser engines `Laser — Red`, `Laser — Green`, `Laser — Blue`. The PAR uses a cylinder body with a default beam angle and warm tint; the lasers render as razor-thin, haze-only streaks.
 
 <Callout type="info">
-Glowstone visualises DMX from a lighting console — it is input-only and never transmits DMX. The Inspector values below are the live state being driven by the console (or by your manual edits when no DMX is patched).
+The Inspector values below are the live state being driven by the console (or by your manual edits when no DMX is patched).
 </Callout>
 
 ## The fixture Inspector
@@ -74,7 +74,7 @@ A GDTF fixture's active DMX mode defines how many **emitters** (cells) it has. A
 
 - Each cell has its own colour, white at rest; the Inspector's Color picker tints all of them.
 - Fixtures whose heads tilt or pan independently also carry per-cell pan and tilt (e.g. a wave-effect bar).
-- Switching the DMX mode re-resizes the cell layout — see [DMX Modes & Channels](/docs/library/dmx-modes).
+- Switching the DMX mode re-resizes the cell layout — see [DMX Modes & Channels](/docs/library/profile-editor).
 
 <Callout type="idea">
 To address individual cells from a console, patch the fixture in its multi-emitter mode and drive the per-cell channels. Each cell decodes its own colour from the DMX stream.
@@ -105,7 +105,7 @@ LED screen curvature, render animation, motion blur, caustics, contact shadows a
   <Card icon={<Lightbulb />} title="The Beam Engine" href="/docs/fixtures/beam-engine">
     How beams, pools and volumetrics are rendered.
   </Card>
-  <Card icon={<SlidersHorizontal />} title="Beam Parameter Reference" href="/docs/fixtures/parameters">
+  <Card icon={<SlidersHorizontal />} title="Beam Parameter Reference" href="/docs/fixtures/beam-engine">
     Every beam parameter with type, range and default.
   </Card>
   <Card icon={<Palette />} title="Colour" href="/docs/fixtures/color">

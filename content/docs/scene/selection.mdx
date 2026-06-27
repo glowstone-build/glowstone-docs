@@ -35,9 +35,8 @@ Every click maps to a clear rule. The rules apply whether you click in the 3D Vi
 | `Cmd`/`Ctrl`+`Click` | Toggle — flip membership of the single hit. Clicking an off-kind object switches to that kind. |
 | `Shift`+`Click` (viewport) | Add — union the hit into the current selection (within the active kind). |
 | `Shift`+`Click` (outliner, fixtures) | Extend a range from the anchor to the clicked fixture (see below). |
-| `Click`+`Drag` | Box-select — drag a marquee to select everything inside it (Replace). |
-| `Shift`+`Drag` | Box-select — add the covered objects to the selection (within the active kind). |
-| `Cmd`/`Ctrl`+`Drag` | Subtract — drag a marquee to remove hits from the selection (within the active kind). |
+
+For marquee (box) selection, see [Box-select](#box-select) with `B` below.
 
 <Callout type="info" title="Cmd vs Ctrl">
 On macOS use `Cmd`; on Windows and Linux use `Ctrl`. The two are interchangeable throughout Glowstone.
@@ -54,7 +53,7 @@ A plain `Click` discards the old selection and selects only what you hit. Click 
 
 <Step>
 ### Add to the selection
-In the viewport, hold `Shift` and click to union more objects into the selection (or `Shift`+drag a marquee to add many). Add stays within the active kind — `Shift`+clicking a screen while fixtures are selected has no effect on the fixtures. (In the outliner, `Shift`+click on a fixture extends a range instead — see below.)
+In the viewport, hold `Shift` and click to union more objects into the selection. Add stays within the active kind — `Shift`+clicking a screen while fixtures are selected has no effect on the fixtures. (In the outliner, `Shift`+click on a fixture extends a range instead — see below.)
 </Step>
 
 <Step>
@@ -63,8 +62,8 @@ Hold `Cmd`/`Ctrl` and click to flip one object in or out of the selection. Toggl
 </Step>
 
 <Step>
-### Box-select and subtract
-Drag a marquee to select everything it covers. Hold `Cmd`/`Ctrl` while dragging to remove the covered objects from the current selection instead.
+### Box-select
+Press `B` to arm box-select, then drag a marquee in the viewport. It is **additive** — it adds to the current selection and **auto-exits** after each box, so press `B` again to box more; hold `Cmd`/`Ctrl` on release to subtract instead. While armed, a crosshair tracks the cursor and a cue shows the active filter: press `F` for **fixtures only** or `O` for **objects only** (default is everything except fog volumes). `Esc` or a right-click cancels before you drag.
 </Step>
 
 </Steps>

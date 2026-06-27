@@ -62,7 +62,7 @@ Every row is laid out the same way: indent, disclosure, icon and name on the lef
   }}
 />
 
-Rows are indented `14 px` per level, carry subtle zebra striping, and are joined by hierarchy guide lines. A red patch address is your fastest cue that two fixtures share an address — fix it in [Patching](/docs/dmx/patching). Unpatched fixtures simply show no address; use the **Unpatched** chip or the DMX pane to find them.
+Rows are indented `14 px` per level, carry subtle zebra striping, and are joined by hierarchy guide lines. A red patch address is your fastest cue that two fixtures share an address — fix it in [Patching](/docs/dmx/patching). Unpatched fixtures show no address; use the **Unpatched** chip or the DMX pane to find them.
 
 The leading sequence number is editable and sortable; see [Fixtures](/docs/fixtures/fixtures) for renumber-by-position.
 
@@ -75,6 +75,8 @@ The eye column reflects the combined visibility of a row and, for containers, of
 | Shown | Open eye | The row and all its children are visible. |
 | Hidden | Closed eye | The row, or every child, is hidden. |
 | Mixed | Open eye, muted | Some children are hidden. Clicking hides the remaining visible ones. |
+
+Press `H` to hide the current selection without using the eye column — or reveal it if everything selected is already hidden.
 
 <Callout type="info">Hiding only affects the viewport: a hidden fixture is not drawn and not pickable. Visibility is a session toggle, not a render setting.</Callout>
 

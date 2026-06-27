@@ -67,11 +67,11 @@ A **fixture** is a single controllable light. Beyond its `position`, `pan` and `
 
 > engine → shutter/dimmer → animation wheel → gobo wheels → colour (wheel / CMY / CTO) → prism → frost → focus → zoom lens
 
-Each stage is driven by normalized `0`–`1` controls that resolve through the fixture's real-world ranges into a beam the renderer draws. Fixtures also carry an editable **sequence number** — a console-style id (`0` = unassigned) shown and sortable in the outliner and Fixture Manager. See [The Beam Engine](/docs/fixtures/beam-engine) and the [Beam Parameter Reference](/docs/fixtures/parameters).
+Each stage is driven by normalized `0`–`1` controls that resolve through the fixture's real-world ranges into a beam the renderer draws. Fixtures also carry an editable **sequence number** — a console-style id (`0` = unassigned) shown and sortable in the outliner and Fixture Manager. See [The Beam Engine](/docs/fixtures/beam-engine) and the [Beam Parameter Reference](/docs/fixtures/beam-engine).
 </Accordion>
 
 <Accordion title="GDTF — real fixture profiles">
-A `.gdtf` file bundles the fixture's 3D model, wheel images, and its **DMX modes** (each mode defines the emitters, optical components and channel map). Import one via **File ▸ Import GDTF Fixture…**. See [Importing GDTF Fixtures](/docs/library/import-gdtf) and [DMX Modes & Channels](/docs/library/dmx-modes).
+A `.gdtf` file bundles the fixture's 3D model, wheel images, and its **DMX modes** (each mode defines the emitters, optical components and channel map). Import one via **File ▸ Import GDTF Fixture…**. See [Importing GDTF Fixtures](/docs/library/import-gdtf) and [DMX Modes & Channels](/docs/library/profile-editor).
 </Accordion>
 
 <Accordion title="MVR — scene interchange">
@@ -79,7 +79,7 @@ An `.mvr` archive round-trips a whole scene — fixtures, geometry, LED screens,
 </Accordion>
 
 <Accordion title="DMX — live input from a console">
-Glowstone receives DMX from a console over [Art-Net or sACN](/docs/dmx/connectivity). Once a fixture is patched, its DMX values are decoded every frame to drive pan, tilt, intensity, colour and optics. See the [DMX Overview](/docs/dmx) and [Connecting a Console](/docs/dmx/consoles).
+Glowstone receives DMX from a console over [Art-Net or sACN](/docs/dmx/connectivity). Once a fixture is patched, its DMX values are decoded every frame to drive pan, tilt, intensity, colour and optics. See the [DMX Overview](/docs/dmx) and [Connecting a Console](/docs/dmx/connectivity).
 </Accordion>
 
 <Accordion title="Patch — universe & address">
@@ -99,16 +99,6 @@ The native **`.glow`** file is an atomic snapshot of your entire show: scene, fi
 </Accordion>
 
 </Accordions>
-
-## Two ideas that trip people up
-
-<Callout type="warn" title="Glowstone is input-only for DMX">
-Glowstone **receives and visualizes** DMX from a console — it never outputs or transmits DMX, answers polls, or sends discovery packets. Use it to preview what your console is doing, not to drive real fixtures.
-</Callout>
-
-<Callout type="idea" title="Looks, views and layouts are different things">
-A [**cue**](/docs/cues) saves a fixture *look*. A [**camera bookmark**](/docs/navigation/bookmarks) (9 numbered slots) saves a *view*. A [**workspace**](/docs/interface/workspaces) saves a *panel layout*. They are independent — saving one does not affect the others.
-</Callout>
 
 ## How the pieces fit together
 

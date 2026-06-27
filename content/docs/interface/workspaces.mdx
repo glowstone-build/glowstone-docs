@@ -21,10 +21,6 @@ Each workspace captures three things:
 - **Default tool** — the tool armed on activation (`Select`, `Move`, `Rotate`, `Scale`, `Aim`, `Measure`, or `Add`).
 - **Overlay emphasis** — which of the four overlays start ON: `Labels`, `Stats`, `Grid`, `Gizmos`.
 
-<Callout type="info" title="A starting context, not a lock">
-Activating a workspace applies the layout, sets the tool, and emphasises the saved overlays — but everything stays fully editable afterward. Drag panels, switch tools, and toggle overlays freely without leaving the workspace.
-</Callout>
-
 ## Built-in workspaces
 
 Four presets ship with every install. They are regenerated automatically if `workspaces.json` is missing.
@@ -37,7 +33,7 @@ Four presets ship with every install. They are regenerated automatically if `wor
 | **Visualise** | `Select` | Grid only | Previsualization / render-artist view — minimal chrome and a clean look, with no bottom strip. |
 
 <Callout type="idea">
-Use `Focus` while pointing heads at the cursor, then switch to `Visualise` to judge the render-clean look. Because workspaces are non-destructive, you can flip between them mid-session without losing your panel sizes within each one.
+Use `Focus` while pointing heads at the cursor, then switch to `Visualise` to judge the render-clean look. Flipping between them mid-session preserves each one's panel sizes.
 </Callout>
 
 ## Switching workspaces
@@ -122,7 +118,7 @@ Reset Layout reverts manual splits and resizes back to the saved arrangement. It
   <Card icon={<LayoutDashboard />} title="Workspace & Docking" href="/docs/interface">
     How the dockable panel tree and edge-snapping work.
   </Card>
-  <Card icon={<Plug />} title="Panels" href="/docs/interface/panels">
+  <Card icon={<Plug />} title="Panels" href="/docs/interface#what-each-panel-does">
     Every dockable panel and what it shows.
   </Card>
   <Card icon={<RotateCcw />} title="Menu Bar" href="/docs/interface/menus">

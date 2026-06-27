@@ -7,8 +7,6 @@ import { Network, SlidersHorizontal, Library, FileBox, Cloud } from 'lucide-reac
 
 How Glowstone treats the terms you will meet across the app. Each entry links to the page where the topic is covered in depth.
 
-<Callout type="info">Glowstone is **input-only** for DMX: it visualizes the DMX a console sends, but it never outputs or transmits DMX itself.</Callout>
-
 <ImagePlaceholder
   label="Screenshot"
   ratio="16 / 9"
@@ -17,7 +15,7 @@ How Glowstone treats the terms you will meet across the app. Each entry links to
 
 ## Protocols & patching
 
-**Art-Net** — Glowstone receives Art-Net on UDP port `6454` but never answers `ArtPoll` discovery. See [Connectivity](/docs/dmx/connectivity).
+**Art-Net** — Glowstone receives Art-Net on UDP port `6454`. See [Connectivity](/docs/dmx/connectivity).
 
 **sACN / E1.31** — Received on UDP port `5568`. Each source carries a priority (`0`–`200`) and a stable CID. See [Connectivity](/docs/dmx/connectivity).
 
@@ -27,7 +25,7 @@ How Glowstone treats the terms you will meet across the app. Each entry links to
 
 **Address** — The starting channel (`1`–`512`) a fixture occupies within its universe. See [Patching](/docs/dmx/patching).
 
-**Footprint** — The number of consecutive channels a fixture occupies, set by its GDTF mode (plain fixtures use a fixed 8-channel synthetic map). See [DMX Modes & Channels](/docs/library/dmx-modes).
+**Footprint** — The number of consecutive channels a fixture occupies, set by its GDTF mode (plain fixtures use a fixed 8-channel synthetic map). See [DMX Modes & Channels](/docs/library/profile-editor).
 
 **Patch** — The table that maps each fixture to a universe, address, footprint, and mode. Stored separately from the scene so duplicating a fixture never duplicates its address. See [Patching](/docs/dmx/patching).
 
@@ -63,9 +61,9 @@ How Glowstone treats the terms you will meet across the app. Each entry links to
 
 **Frost** — Softens the beam edge and spreads the cone wider (`tan_half` × `1 + 0.4·frost`). See [Gobos, Animation, Prism & Frost](/docs/fixtures/gobos-prism).
 
-**Iris** — `1` = fully open, `0` = closed to the GDTF minimum. See [Beam Parameter Reference](/docs/fixtures/parameters).
+**Iris** — `1` = fully open, `0` = closed to the GDTF minimum. See [Beam Parameter Reference](/docs/fixtures/beam-engine).
 
-**Zoom** — The beam cone angle, mapped across the fixture's GDTF zoom range. Narrow beams are brighter as luminous flux concentrates. See [Beam Parameter Reference](/docs/fixtures/parameters).
+**Zoom** — The beam cone angle, mapped across the fixture's GDTF zoom range. Narrow beams are brighter as luminous flux concentrates. See [Beam Parameter Reference](/docs/fixtures/beam-engine).
 
 ## Colour
 
@@ -125,7 +123,7 @@ How Glowstone treats the terms you will meet across the app. Each entry links to
   <Card icon={<Network />} title="DMX Overview" href="/docs/dmx">
     Protocols, patching, and the DMX Monitor.
   </Card>
-  <Card icon={<SlidersHorizontal />} title="Beam Parameter Reference" href="/docs/fixtures/parameters">
+  <Card icon={<SlidersHorizontal />} title="Beam Parameter Reference" href="/docs/fixtures/beam-engine">
     Every optical control and its range.
   </Card>
   <Card icon={<Library />} title="The Fixture Library" href="/docs/library">

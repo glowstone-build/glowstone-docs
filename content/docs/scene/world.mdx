@@ -24,7 +24,7 @@ The **World** node holds a single equirectangular HDRI that does two jobs at onc
   </Card>
 </Cards>
 
-The World is the only source of ambient image-based light. It does not output DMX or replace your fixtures — it complements them with a backdrop and soft fill.
+The World is the only source of ambient image-based light. It complements your fixtures with a backdrop and soft fill, rather than replacing them.
 
 ## Selecting the World
 
@@ -121,9 +121,7 @@ There is no benefit to importing maps wider than `1024` px — anything larger i
   <Accordion title="What happens before any HDRI is loaded?">
     With no map loaded, the World uses a flat placeholder and provides no image-based fill. Load a map to get both sky and ambient lighting.
   </Accordion>
-  <Accordion title="Does the World replace my fixtures or the fog volume?">
-    No. The World only adds sky and ambient fill. Fixtures still light the scene, and the haze that makes beams visible comes from an Environment volume — see Environments below.
-  </Accordion>
+
 </Accordions>
 
 ## See also

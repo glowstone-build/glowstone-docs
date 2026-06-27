@@ -5,7 +5,6 @@
     "index",
     "connectivity",
     "patching",
-    "dmx-monitor",
-    "consoles"
+    "dmx-monitor"
   ]
 }

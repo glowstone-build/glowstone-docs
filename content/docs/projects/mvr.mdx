@@ -79,7 +79,7 @@ The camera frames the whole rig. A dropped-in `.mvr` notifies `Imported MVR · N
 </Cards>
 
 <Callout type="warn">
-Imported rigs arrive **blacked out**. Glowstone visualizes incoming DMX from a console — it never outputs DMX — so a fresh import has no light until you connect a console or raise intensity in the Inspector. See [Connecting a Console](/docs/dmx/consoles).
+Imported rigs arrive **blacked out** — a fresh import has no light until you connect a console or raise intensity in the Inspector. See [Connecting a Console](/docs/dmx/connectivity).
 </Callout>
 
 <Callout type="idea">
@@ -150,7 +150,7 @@ MVR and Glowstone use different conventions, so transforms are converted on the 
 | Up axis | `+Z` (right-handed) | `+Y` (right-handed) |
 | Translation units | Millimetres (in `<Matrix>`) | Metres |
 
-On import, the basis change `+Z`-up → `+Y`-up is applied and translations are scaled `mm` → `m`. On export the same change is inverted and translations scale `m` → `mm`, recovering the original matrices. This is handled automatically — you do not configure it.
+On import, the basis change `+Z`-up → `+Y`-up is applied and translations are scaled `mm` → `m`. On export the same change is inverted and translations scale `m` → `mm`, recovering the original matrices.
 
 <Callout type="warn">
 Each `<Geometry3D>` may carry its own unit-conversion matrix (for example `0.0254` for inch-authored models). Glowstone reads and re-emits it. A foreign tool that ignores this can render those models dozens of times oversized.

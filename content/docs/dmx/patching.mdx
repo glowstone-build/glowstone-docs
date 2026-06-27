@@ -5,7 +5,7 @@ description: "Map fixtures to universes and addresses so incoming DMX drives the
 
 import { Network, Wand2, ListChecks, Plug, Activity, BookOpen, Cable, Flame } from 'lucide-react';
 
-The **patch** maps each fixture to a universe, a starting address, a channel footprint and a mode, then decodes incoming console data into beams. Glowstone is **input-only** — it reads DMX and never transmits.
+The **patch** maps each fixture to a universe, a starting address, a channel footprint and a mode, then decodes incoming console data into beams.
 
 <ImagePlaceholder
   label="Screenshot"
@@ -51,7 +51,7 @@ MVR rigs arrive already addressed, so they light up as soon as the matching cons
 
 A footprint is how many consecutive channels a fixture consumes.
 
-**GDTF fixtures** use the channel count of their active mode, resolved per instance. See [DMX Modes & Channels](/docs/library/dmx-modes) for how a mode determines the footprint.
+**GDTF fixtures** use the channel count of their active mode, resolved per instance. See [DMX Modes & Channels](/docs/library/profile-editor) for how a mode determines the footprint.
 
 **Plain fixtures** (no GDTF profile) use a fixed **8-channel synthetic footprint**:
 
@@ -72,7 +72,7 @@ Footprints drive packing. A rig of 65 plain fixtures at 8 channels each needs `6
 
 ## Patching workflows
 
-There are two interactive keyboard operators — **Patch** (`P`) and **Unpatch** (`U`) — plus the full Fixture Manager. Both are undoable. After running the Patch operator you can re-open its dialog with `F9` (Blender-style "adjust last operation") to tweak the universe/address and re-run.
+There are two interactive keyboard operators — **Patch** (`P`) and **Unpatch** (`U`) — plus the full Fixture Manager. Both are undoable. After running the Patch operator you can re-open its dialog with `F9` ("adjust last operation") to tweak the universe/address and re-run.
 
 Both operators act on whichever patchable selection is active: **fixtures** (via the side patch table) or **pyro devices** (via their inline patch — see [Pyro Devices](/docs/fixtures/pyro)).
 
@@ -209,10 +209,10 @@ To find conflicts fast, flip on the **Conflicts** toggle in the Fixture Manager,
   <Card icon={<Activity />} title="The DMX Monitor" href="/docs/dmx/dmx-monitor">
     Watch live channel levels and spot conflicts on the universe grid.
   </Card>
-  <Card icon={<BookOpen />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+  <Card icon={<BookOpen />} title="DMX Modes & Channels" href="/docs/library/profile-editor">
     How a fixture's mode determines its footprint.
   </Card>
-  <Card icon={<Cable />} title="Connecting a Console" href="/docs/dmx/consoles">
+  <Card icon={<Cable />} title="Connecting a Console" href="/docs/dmx/connectivity">
     Match Glowstone universes to your console's output.
   </Card>
   <Card icon={<Flame />} title="Pyro Devices" href="/docs/fixtures/pyro">

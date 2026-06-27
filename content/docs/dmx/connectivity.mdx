@@ -5,7 +5,7 @@ description: "Receive Art-Net and sACN, set the merge policy, and monitor live s
 
 import { Radio, Network, Activity, SlidersHorizontal, Plug, Table2 } from 'lucide-react';
 
-The **Connectivity** panel binds Glowstone to your lighting network to receive live DMX from a console. Glowstone is **input-only**: it listens for Art-Net or sACN and never outputs, transmits, or replies.
+The **Connectivity** panel binds Glowstone to your lighting network to receive live DMX from a console.
 
 <ImagePlaceholder
   label="UI panel"
@@ -30,7 +30,6 @@ Glowstone speaks two industry protocols. Both can run at the same time, and thei
     - **Addressing**: Art-Net Port-Addresses map to **1-based** universe numbers (Art-Net port 0 → universe `1`).
     - **Priority**: the protocol carries no per-source priority, so Glowstone assigns every Art-Net source a fixed [Art-Net priority](#art-net-priority).
     - **Loss detection**: from the packet sequence number (`0`–`255`). A sequence of `0` disables loss counting.
-    - `ArtPoll` packets are recognised but never answered (input-only).
   </Tab>
   <Tab value="sACN / E1.31">
     - **Port**: UDP `5568` (ANSI E1.31-2018)
@@ -144,10 +143,12 @@ The **FPS** column is colour-tiered so you can read network health at a glance:
 
 ## Connect a console
 
+The flow is the same for any console: configure its output, enable the matching protocol in Glowstone, confirm the source appears, then patch to matching addresses.
+
 <Steps>
 <Step>
 ### Output from the console
-On the console, enable Art-Net or sACN output and point it at the universe and network interface you want Glowstone to receive. See [Connecting a Console](/docs/dmx/consoles) for grandMA3 and MagicQ walkthroughs.
+On the console, enable Art-Net or sACN output and point it at the universe and network interface you want Glowstone to receive. See the [console walkthroughs](#console-walkthroughs) below for grandMA3 and MagicQ.
 </Step>
 <Step>
 ### Match the protocol in Glowstone
@@ -168,6 +169,87 @@ Patch fixtures to matching addresses in the [patch table](/docs/dmx/patching) or
 </Steps>
 
 <Callout type="success">Once a green source is listed and fixtures are patched, the [DMX Monitor](/docs/dmx/dmx-monitor) shows live channel levels and the viewport reacts in real time.</Callout>
+
+### Console walkthroughs
+
+<Tabs items={['grandMA3', 'MagicQ']}>
+<Tab value="grandMA3">
+
+<Steps>
+<Step>
+### Configure the console output
+On the grandMA3, open **Setup > DMX > Output**. Add an **Art-Net** node or an **sACN** universe, set the **universe** number (start with `1`), and choose the **network interface / IP**.
+</Step>
+<Step>
+### Enable the protocol in Glowstone
+Open the **Connectivity** tab at the bottom of the window. Tick **Art-Net** or **sACN** to match the console's output.
+</Step>
+<Step>
+### Set the bind interface
+Leave **Bind interface** at `0.0.0.0` to listen on all NICs — the most reliable choice, especially for sACN multicast across multiple interfaces. Then click **Reapply** to re-bind the sockets.
+</Step>
+<Step>
+### Subscribe the universe (sACN only)
+If you chose sACN, add the universe to the **sACN universes** list (e.g. `1`, or a range like `1-4`). Each entry joins one sACN multicast group, so a universe missing from this list is never received. Art-Net ignores this field — it is broadcast and accepts every universe regardless. Universe-list and merge edits apply live; protocol and interface changes need **Reapply**.
+</Step>
+<Step>
+### Confirm Receive DMX is on
+Tick **Receive DMX** to bind the sockets. The status line beside it shows which protocols bound (e.g. `Art-Net + sACN`) and the live source count; when off it reads `stopped`.
+</Step>
+<Step>
+### Verify the source appears
+Check the **Sources** table. You should see a row with **Proto** = Art-Net, the console's `ip:port` under **Source**, the universes it is sending, and a green **FPS** reading.
+</Step>
+<Step>
+### Patch fixtures to matching addresses
+Patch your Glowstone fixtures to the same universes and addresses as the console's rig. Select the fixtures and press `P` to open the Patch dialog (prefilled with the next free universe and address), or use the Fixture Manager's bulk **Patch seq** / **Set U** tools. See [Patching](/docs/dmx/patching).
+</Step>
+<Step>
+### Play
+Fade the rig on the console. The patched fixtures in the 3D Viewport update in real time.
+</Step>
+</Steps>
+
+</Tab>
+<Tab value="MagicQ">
+
+<Steps>
+<Step>
+### Configure the console output
+In MagicQ, open **Cues > Outputs** (the DMX I/O view). Select **Art-Net** or **sACN** — sACN is preferred on modern networks — and set the **universe** and **IP** to suit your network. Start with universe `1`.
+</Step>
+<Step>
+### Enable the protocol in Glowstone
+Open the **Connectivity** tab and tick **sACN** (or **Art-Net**) to match MagicQ's output.
+</Step>
+<Step>
+### Set the bind interface
+Leave **Bind interface** at `0.0.0.0`, then click **Reapply** to re-bind. sACN binds to `0.0.0.0` regardless, for reliable multicast receive.
+</Step>
+<Step>
+### Subscribe the universe (sACN)
+Add the MagicQ universe to the **sACN universes** list (e.g. `1`). For sACN you must list every universe you want — each entry joins its multicast group, and a universe not in the list is never received. (Art-Net is broadcast and ignores this field.)
+</Step>
+<Step>
+### Confirm Receive DMX is on
+Ensure **Receive DMX** is ticked; the status line shows `sACN` (or `Art-Net + sACN`) bound and the source count.
+</Step>
+<Step>
+### Verify the source appears
+In the **Sources** table, look for a row with **Proto** = sACN and MagicQ's **CID** (a hex prefix, plus the source name if MagicQ sends one). A steady green **FPS** confirms a healthy stream.
+</Step>
+<Step>
+### Patch fixtures to matching addresses
+Patch fixtures to the universes and addresses MagicQ is driving. Select fixtures and press `P` to open the Patch dialog, or use the Fixture Manager's bulk patch tools. See [Patching](/docs/dmx/patching).
+</Step>
+<Step>
+### Play
+Run your cues on MagicQ and watch the rig respond in the Viewport.
+</Step>
+</Steps>
+
+</Tab>
+</Tabs>
 
 ## Troubleshooting
 
@@ -194,7 +276,7 @@ Patch fixtures to matching addresses in the [patch table](/docs/dmx/patching) or
 ## See also
 
 <Cards>
-  <Card icon={<Plug />} title="Connecting a Console" href="/docs/dmx/consoles">
+  <Card icon={<Plug />} title="Connect a console" href="#connect-a-console">
     Step-by-step setup for grandMA3 and MagicQ.
   </Card>
   <Card icon={<SlidersHorizontal />} title="Patching Fixtures" href="/docs/dmx/patching">

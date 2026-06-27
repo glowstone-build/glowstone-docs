@@ -41,7 +41,7 @@ Imported fixtures are tagged with a light-blue **Imported** provenance chip so y
 
 ## What's inside a `.gdtf` archive
 
-A `.gdtf` file is a renamed ZIP. Glowstone reads its contents directly — you never unpack it by hand.
+A `.gdtf` file is a renamed ZIP. Glowstone reads its contents directly.
 
 <Files>
   <Folder name="Robe Lighting@Robin Esprite.gdtf (ZIP)" defaultOpen>
@@ -78,7 +78,7 @@ When a GDTF is parsed, Glowstone reads and retains the complete fixture definiti
     Colour, gobo, prism, animation, and frost wheels, with per-slot gobo media or CIE-derived colour swatches.
   </Card>
   <Card icon={<ListTree />} title="DMX modes & channels">
-    Every DMX mode and its channels, attributes, and footprint. See <a href="/docs/library/dmx-modes">DMX Modes &amp; Channels</a>.
+    Every DMX mode and its channels, attributes, and footprint. See <a href="/docs/library/profile-editor">DMX Modes &amp; Channels</a>.
   </Card>
   <Card icon={<SlidersHorizontal />} title="Beam optics">
     Beam and field angle, beam radius, beam type, colour temperature, CRI, and luminous flux per emitter.
@@ -120,7 +120,7 @@ Open the same `.glow` project on another machine and every imported fixture load
     It is added to the project Library and immediately placed in the scene at `(0, 4, 0)`, selected and ready to edit.
   </Accordion>
   <Accordion title="Can I change the DMX mode after import?">
-    Yes. Open the fixture's profile and pick a mode in the DMX Modes tab. Switching modes reconfigures the available channels without removing the fixture. See <a href="/docs/library/dmx-modes">DMX Modes &amp; Channels</a>.
+    Yes. Open the fixture's profile and pick a mode in the DMX Modes tab. Switching modes reconfigures the available channels without removing the fixture. See <a href="/docs/library/profile-editor">DMX Modes &amp; Channels</a>.
   </Accordion>
   <Accordion title="What if a slot has no gobo image?">
     Colour wheel slots without media display a colour swatch derived from the GDTF CIE xyY colour data instead of an image.
@@ -139,7 +139,7 @@ Open the same `.glow` project on another machine and every imported fixture load
   <Card icon={<Cloud />} title="GDTF Share" href="/docs/library/gdtf-share">
     Browse and download thousands of community fixtures straight into your Library.
   </Card>
-  <Card icon={<ListTree />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+  <Card icon={<ListTree />} title="DMX Modes & Channels" href="/docs/library/profile-editor">
     Understand modes, channel footprints, and how attributes map to DMX slots.
   </Card>
   <Card icon={<Boxes />} title="The Fixture Library" href="/docs/library">

@@ -5,7 +5,7 @@ description: "Parametric Duplicate/Array dialog and Shift+D grab-duplicate for f
 
 import { LayoutGrid, MousePointer2, Move3d, RotateCw, Repeat2 } from 'lucide-react';
 
-Glowstone gives you two ways to repeat a selection. The parametric **Duplicate / Array** dialog (`D`) arrays the active fixture by an exact per-copy offset and pan angle, for fast beam fans and rows. The Blender-style `Shift`+`D` grab-duplicate clones the whole selection and lets you drag the copies into place. Both assign fresh stable IDs to every copy.
+Glowstone gives you two ways to repeat a selection. The parametric **Duplicate / Array** dialog (`D`) arrays the active fixture by an exact per-copy offset and pan angle, for fast beam fans and rows. The `Shift`+`D` grab-duplicate clones the whole selection and lets you drag the copies into place. Both assign fresh stable IDs to every copy.
 
 <ImagePlaceholder
   label="Screenshot"
@@ -138,7 +138,7 @@ Press `Enter` to confirm. Press `Esc` to cancel the move; the base copies stay w
 </Steps>
 
 <Callout type="info" title="Esc leaves the base copies">
-  Cancelling a grab with `Esc` does not remove the clones — the base copies are left at the source (the clone is its own undo step) while the live array extras are dropped. This matches Blender's `Shift`+`D` → `Esc`. Press `Cmd`/`Ctrl`+`Z` afterwards if you want to remove the base copies too.
+  Cancelling a grab with `Esc` does not remove the clones — the base copies are left at the source (the clone is its own undo step) while the live array extras are dropped. Press `Cmd`/`Ctrl`+`Z` afterwards if you want to remove the base copies too.
 </Callout>
 
 <Callout type="idea">

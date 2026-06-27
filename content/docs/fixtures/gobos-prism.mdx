@@ -5,7 +5,7 @@ description: "Per-wheel WheelControl for gobos, animation, prism and frost — v
 
 import { Aperture, Disc3, Sparkles, CloudFog, Film, SlidersHorizontal, Library, Lightbulb } from 'lucide-react';
 
-The shaping wheels sit between the source and the lens, after the dimmer and before focus and zoom: animation wheel → gobo wheels → colour → prism → frost. Each wheel is a separate optical component declared by the fixture's [GDTF mode](/docs/library/dmx-modes), and each one runs its own motion independently. This page covers gobos, the animation wheel, prisms, and frost — colour wheels and CMY live on the [Colour](/docs/fixtures/color) page.
+The shaping wheels sit between the source and the lens, after the dimmer and before focus and zoom: animation wheel → gobo wheels → colour → prism → frost. Each wheel is a separate optical component declared by the fixture's [GDTF mode](/docs/library/profile-editor), and each one runs its own motion independently. This page covers gobos, the animation wheel, prisms, and frost — colour wheels and CMY live on the [Colour](/docs/fixtures/color) page.
 
 <ImagePlaceholder
   label="Screenshot"
@@ -78,7 +78,7 @@ Raise `shake` to oscillate the pattern back and forth. Frequency runs `1–9 Hz`
 </Steps>
 
 <Callout type="info">
-Focus controls how crisp the cookie is, and frost softens its edge. See [Beam parameter reference](/docs/fixtures/parameters) for `focus` and how the in-focus point maps to a real-world distance.
+Focus controls how crisp the cookie is, and frost softens its edge. See [Beam parameter reference](/docs/fixtures/beam-engine) for `focus` and how the in-focus point maps to a real-world distance.
 </Callout>
 
 ### Multiple gobo wheels
@@ -185,13 +185,13 @@ Wheel motion is integrated once per frame, so transitions slew rather than snap.
 ## See also
 
 <Cards>
-  <Card icon={<SlidersHorizontal />} title="Beam parameter reference" href="/docs/fixtures/parameters">
+  <Card icon={<SlidersHorizontal />} title="Beam parameter reference" href="/docs/fixtures/beam-engine">
     Every beam control — dimmer, zoom, focus, iris, CTO and more.
   </Card>
   <Card icon={<Aperture />} title="The beam engine" href="/docs/fixtures/beam-engine">
     How the optical chain resolves from source to lens each frame.
   </Card>
-  <Card icon={<Library />} title="DMX modes & channels" href="/docs/library/dmx-modes">
+  <Card icon={<Library />} title="DMX modes & channels" href="/docs/library/profile-editor">
     Which wheels and controls a fixture exposes depends on its mode.
   </Card>
   <Card icon={<Sparkles />} title="Colour" href="/docs/fixtures/color">

@@ -5,7 +5,7 @@ description: "Live per-channel levels for one universe, overlaid with the patche
 
 import { Grid3x3, MousePointerClick, Radio, AlertTriangle, Network, Workflow } from 'lucide-react';
 
-The **DMX Monitor** is a real-time, read-only view of one universe at a time: a grid of all 512 channels showing live levels from your console, overlaid with which fixture owns each address. Glowstone visualises incoming DMX and never transmits it.
+The **DMX Monitor** is a real-time, read-only view of one universe at a time: a grid of all 512 channels showing live levels from your console, overlaid with which fixture owns each address.
 
 <Callout type="info">Open it from the **DMX** tab at the bottom of the workspace. The grid always shows exactly one universe; use the navigation controls to switch between universes referenced by your patch or by live sources.</Callout>
 
@@ -73,7 +73,7 @@ The live indicator tells you whether data is arriving on the currently displayed
   </Tab>
 </Tabs>
 
-<Callout type="warn">If the displayed universe reads `idle` while you expect data, confirm the console is sending and that the universe number matches. See [Connecting a Console](/docs/dmx/consoles) and [Connectivity](/docs/dmx/connectivity) for source diagnostics.</Callout>
+<Callout type="warn">If the displayed universe reads `idle` while you expect data, confirm the console is sending and that the universe number matches. See [Connecting a Console](/docs/dmx/connectivity) and [Connectivity](/docs/dmx/connectivity) for source diagnostics.</Callout>
 
 When the patch contains any overlapping enabled entries, a **conflict warning** appears in the header with a count (for example `2 conflicts`). The count is for the whole patch, not just the displayed universe; the overlapping cells in the displayed universe are also outlined in red in the grid.
 
@@ -116,7 +116,7 @@ A **conflict** is two or more enabled patch entries occupying overlapping channe
   <Card icon={<Network />} title="Connectivity: Art-Net & sACN" href="/docs/dmx/connectivity">
     Configure protocols, bind interface, and inspect live sources.
   </Card>
-  <Card icon={<Radio />} title="Connecting a Console" href="/docs/dmx/consoles">
+  <Card icon={<Radio />} title="Connecting a Console" href="/docs/dmx/connectivity">
     Set up grandMA3, MagicQ, and other consoles to feed Glowstone.
   </Card>
   <Card icon={<AlertTriangle />} title="DMX Overview" href="/docs/dmx">

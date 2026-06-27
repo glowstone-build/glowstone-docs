@@ -92,7 +92,7 @@ When the list is empty the panel reads `none — set a look (Inspector / DMX), t
 <Steps>
 <Step>
 ### Set the look
-Position, colour and control every fixture using the [Inspector](/docs/interface/panels) or [live DMX input](/docs/dmx/consoles) until the rig shows the look you want.
+Position, colour and control every fixture using the [Inspector](/docs/interface#inspector) or [live DMX input](/docs/dmx/connectivity) until the rig shows the look you want.
 </Step>
 <Step>
 ### Name it (optional)
@@ -126,7 +126,7 @@ Set the fade time to `0 s` for an instant snap with no crossfade — useful for 
 ## Cues and a live console
 
 <Callout type="warn" title="Don't run cues and a console at once">
-The cue engine runs after live-DMX decode each frame. While a fade is in progress, **the cue output wins over live DMX**; outside a fade, live DMX drives the rig normally. Running cues and a live console at the same time makes them fight for control. Glowstone is an offline previsualization tool — drive the rig from one source at a time. See [Connecting a Console](/docs/dmx/consoles).
+The cue engine runs after live-DMX decode each frame. While a fade is in progress, **the cue output wins over live DMX**; outside a fade, live DMX drives the rig normally. See [Connecting a Console](/docs/dmx/connectivity).
 </Callout>
 
 ## Persistence and undo
@@ -154,18 +154,16 @@ The cue list does not yet support renaming or reordering. A cue's name is set at
   <Accordion title="Can I change a cue's fade time after recording?">
     Yes. Drag the fade slider in the cue list's third column. The change is per-cue and does not require re-recording.
   </Accordion>
-  <Accordion title="Why did my gobo change instantly while the colour faded?">
-    Discrete optics — gobo, colour, prism, animation and frost wheel slots — snap at the start of the recall because wheel slots can't interpolate. Only continuous fields crossfade.
-  </Accordion>
+
 </Accordions>
 
 ## See also
 
 <Cards>
-  <Card icon={<SlidersHorizontal />} title="The Inspector & panels" href="/docs/interface/panels">
+  <Card icon={<SlidersHorizontal />} title="The Inspector & panels" href="/docs/interface#inspector">
     Set fixture looks before recording a cue.
   </Card>
-  <Card icon={<Disc />} title="Connecting a console" href="/docs/dmx/consoles">
+  <Card icon={<Disc />} title="Connecting a console" href="/docs/dmx/connectivity">
     Drive the rig from live DMX — but not at the same time as cues.
   </Card>
   <Card icon={<Bookmark />} title="Camera bookmarks" href="/docs/navigation/bookmarks">

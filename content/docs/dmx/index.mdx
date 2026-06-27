@@ -7,10 +7,6 @@ import { Network, ListOrdered, Activity, MonitorSpeaker, Cable, Layers } from 'l
 
 Glowstone receives live DMX from a console over the network and decodes it every frame to drive each fixture's optics.
 
-<Callout type="warn" title="Input only by construction">
-Glowstone **never transmits, replies or discovers**. It listens for Art-Net and sACN packets, merges them and visualizes the result. `ArtPoll` packets are recognized but never answered. Set your console as the DMX source; Glowstone is always the receiver.
-</Callout>
-
 <ImagePlaceholder
   label="Diagram"
   ratio="16 / 9"
@@ -80,17 +76,12 @@ Both protocols can run at once. If they overlap, the merge policy decides which 
   <Card icon={<MonitorSpeaker />} title="The DMX Monitor" href="/docs/dmx/dmx-monitor">
     The live 512-channel grid with patch occupancy and conflicts.
   </Card>
-  <Card icon={<Cable />} title="Connecting a Console" href="/docs/dmx/consoles">
-    Step-by-step setup for grandMA3, MagicQ and others.
-  </Card>
 </Cards>
 
 ## Common questions
 
 <Accordions type="single">
-  <Accordion title="Can Glowstone output DMX to a console or node?">
-    No. Glowstone is input-only — it visualizes incoming DMX and never transmits, replies or sends discovery packets.
-  </Accordion>
+
   <Accordion title="My fixtures aren't moving — where do I start?">
     Confirm the source is live in the [Connectivity](/docs/dmx/connectivity) Sources table, then check the fixture is **enabled** and patched to the universe and address your console is driving. The [DMX Monitor](/docs/dmx/dmx-monitor) grid shows which channels are arriving.
   </Accordion>
@@ -102,7 +93,7 @@ Both protocols can run at once. If they overlap, the merge policy decides which 
 ## See also
 
 <Cards>
-  <Card icon={<Activity />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+  <Card icon={<Activity />} title="DMX Modes & Channels" href="/docs/library/profile-editor">
     How a GDTF mode defines a fixture's channel footprint.
   </Card>
   <Card icon={<Layers />} title="MVR Scene Exchange" href="/docs/projects/mvr">

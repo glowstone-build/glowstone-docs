@@ -63,7 +63,7 @@ The body is a single self-describing [MessagePack](https://msgpack.org/) dump of
 </Files>
 
 <Callout type="info" title="Crash-safe saves">
-Saves are atomic: Glowstone writes a temporary sibling file first, then renames it onto the target. A crash mid-save cannot corrupt your project.
+Saves are atomic: Glowstone writes a temporary sibling file first, then renames it onto the target.
 </Callout>
 
 <Callout type="success" title="Opens across versions">
@@ -121,11 +121,7 @@ LED screen image content is bundled inline (its decoded bytes ride along, like t
   </Card>
 </Cards>
 
-When you render a still image, the output format is part of the render settings: `PNG`, `JPEG`, or `OpenEXR`. Note that the EXR readback is the post-tonemap LDR plate written into a float container — convenient for a float-pipeline compositor, but not raw linear HDR for highlight recovery. See [Rendering a Still Image](/docs/rendering/render-image).
-
-<Callout type="idea">
-Working with another tool? Bring its rig in as MVR, do your previsualization in Glowstone, then export MVR back. The native `.glow` format is best for your own iterative work because it bundles every asset for an exact, dependency-free reopen.
-</Callout>
+When you render a still image, the output format is part of the render settings: `PNG`, `JPEG`, or `OpenEXR`. The EXR readback is the post-tonemap LDR plate written into a float container — convenient for a float-pipeline compositor, but not raw linear HDR for highlight recovery. See [Rendering a Still Image](/docs/rendering/render-image).
 
 ## See also
 

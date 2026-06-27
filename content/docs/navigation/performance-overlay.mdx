@@ -5,7 +5,7 @@ description: "FPS, GPU pass timings, draw counts and inline quality levers in on
 
 import { Gauge, SlidersHorizontal, Activity, Cpu } from 'lucide-react';
 
-A flight-sim-style HUD pinned to the top-right of the viewport. It reports how fast Glowstone is rendering, what it is drawing, where the GPU is spending time, and gives you inline levers to trade quality for speed without leaving the view.
+A HUD pinned to the top-right of the viewport. It reports how fast Glowstone is rendering, what it is drawing, where the GPU is spending time, and gives you inline levers to trade quality for speed without leaving the view.
 
 <ImagePlaceholder
   label="Screenshot"
@@ -40,7 +40,7 @@ A lightweight **FPS overlay** can also be shown directly in the viewport (Prefer
 
 The header is the at-a-glance status line.
 
-- **FPS** — a large monospace counter (`26px`), colour-coded so you can read it from across the room.
+- **FPS** — a large monospace counter (`26px`).
 - **frame-ms** — the time the last frame took, in milliseconds.
 - **render resolution** — the internal render size as `WIDTH`x`HEIGHT`px. This is the size Glowstone actually renders before upscaling, so it drops when render scale or dynamic resolution is active.
 
@@ -137,9 +137,7 @@ Drop **render scale** (or enable **auto fps**) for the broadest win, **raymarch 
   <Accordion title="Why does the render resolution look smaller than my window?">
     Because **render scale** (or dynamic resolution via **auto fps**) is rendering below native and upscaling. The header's render resolution shows the actual internal size — at `0.5` scale on a Retina display it will read roughly half your window's pixel dimensions in each axis.
   </Accordion>
-  <Accordion title="The GPU Passes section is empty — is something broken?">
-    No. It means your graphics adapter does not report per-pass timestamps, so Glowstone shows "per-pass GPU timing unavailable on this adapter". FPS, frame-ms and the draw counts are unaffected.
-  </Accordion>
+
 </Accordions>
 
 ## See also

@@ -3,7 +3,7 @@ title: "Installation & Requirements"
 description: "Download Glowstone for your platform, or build it from source."
 ---
 
-import { Apple, MonitorPlay, Rocket, TerminalSquare, Radio, Download } from 'lucide-react';
+import { Apple, MonitorPlay, Rocket, TerminalSquare, Radio, Download, Palette } from 'lucide-react';
 
 Download a prebuilt release for your platform, or build from source with the Rust toolchain.
 
@@ -19,7 +19,14 @@ Grab the latest build for your OS from the releases page:
   <Card icon={<Download />} title="Latest release" href="https://github.com/embedder-dev/glowstone/releases/latest">
     Download the macOS or Windows build from GitHub Releases.
   </Card>
+  <Card icon={<Palette />} title="Demo showfile" href="https://cdn.glowstone.build/arena_glowstone.glow">
+    Premade `.glow` for testing — sourced from an .MVR on GDTF Hub by **<u>Xzidental</u>**.
+  </Card>
 </Cards>
+
+<Callout type="idea" title="Tip">
+Download the full **[.MVR](https://www.gdtf.eu/mvr/examples)** and use **Shift + R** to replace broken/no-mesh fixture imports and quickly build out a rig.
+</Callout>
 
 <Tabs items={['macOS', 'Windows']}>
   <Tab value="macOS">

@@ -116,10 +116,6 @@ Three sources deliver frames over the network or from DMX input. Each has its ow
   </Tab>
 </Tabs>
 
-<Callout type="info" title="DMX is input-only">
-Glowstone visualizes DMX it receives; it never outputs or transmits DMX. Pixel-map DMX reads incoming Art-Net / sACN to colour the grid. See [DMX Overview](/docs/dmx) and [Connectivity](/docs/dmx/connectivity).
-</Callout>
-
 ## How the wall lights the scene
 
 A screen does not light the stage per pixel. Instead, Glowstone computes an average **summary colour** from the content and applies it as a single, cheap area-light contribution, which is what feeds volumetric haze and fog for beams in front of the wall.

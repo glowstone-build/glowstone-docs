@@ -147,7 +147,7 @@ Stack the tools that real fixtures cannot: pull a colour wheel to a saturated sl
 
 <Accordions type="single">
   <Accordion title="Why is my CMY mix a gradient instead of a solid colour?">
-    That is correct behaviour. CMY flags are rendered per-fragment as sliding graduated dichroic flags, so a partially inserted flag is a real gradient across the beam. Push the flag fully to `1.0` for an even, saturated cone.
+    CMY flags are rendered per-fragment as sliding graduated dichroic flags, so a partially inserted flag is a real gradient across the beam. Push the flag fully to `1.0` for an even, saturated cone.
   </Accordion>
   <Accordion title="Why does my colour wheel show two colours at once?">
     The wheel is moving. Travelling colour wheels split the beam spatially and reveal the holder gap between slots. Once the wheel parks on a slot, the colour folds to a uniform tint.
@@ -160,7 +160,7 @@ Stack the tools that real fixtures cannot: pull a colour wheel to a saturated sl
 ## See also
 
 <Cards>
-  <Card icon={<SlidersHorizontal />} title="Beam parameter reference" href="/docs/fixtures/parameters">
+  <Card icon={<SlidersHorizontal />} title="Beam parameter reference" href="/docs/fixtures/beam-engine">
     The full table of beam optics controls, ranges and defaults.
   </Card>
   <Card icon={<Shapes />} title="Gobos, animation, prism & frost" href="/docs/fixtures/gobos-prism">
@@ -169,7 +169,7 @@ Stack the tools that real fixtures cannot: pull a colour wheel to a saturated sl
   <Card icon={<Palette />} title="The Beam Engine" href="/docs/fixtures/beam-engine">
     How controls resolve into the rendered beam each frame.
   </Card>
-  <Card icon={<CircleDot />} title="DMX modes & channels" href="/docs/library/dmx-modes">
+  <Card icon={<CircleDot />} title="DMX modes & channels" href="/docs/library/profile-editor">
     Which colour attributes a fixture's mode exposes.
   </Card>
 </Cards>

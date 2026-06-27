@@ -31,7 +31,7 @@ The beam exits along the head's local `-Y`, from the lens `0.32 m` below the hea
 />
 
 <Callout type="info" title="Setting angles">
-Edit `pan` and `tilt` directly in the Inspector, or let a patched console write them over DMX. Glowstone visualizes incoming DMX — it never transmits DMX. See [Patching Fixtures](/docs/dmx/patching) and [Connecting a Console](/docs/dmx/consoles).
+Edit `pan` and `tilt` directly in the Inspector, or let a patched console write them over DMX. See [Patching Fixtures](/docs/dmx/patching) and [Connecting a Console](/docs/dmx/connectivity).
 </Callout>
 
 <Callout type="info" title="Newly placed fixtures">
@@ -51,10 +51,6 @@ The `move_speed` control scales how aggressively the motors drive:
 - `0` — fastest. The head effectively **tracks** the command with near-zero lag.
 - `1` — slowest. Full travel takes around `25.5 s`.
 
-<Callout type="idea">
-Dial `move_speed` up for slow, cinematic fan-outs and lazy position fades; keep it at `0` when you want hard, snappy position cues that hit on the beat.
-</Callout>
-
 ### Maximum slew rates
 
 At full motor speed (`move_speed = 0`), the top slew rate depends on the fixture class. Lighter heads turn faster.
@@ -65,10 +61,6 @@ At full motor speed (`move_speed = 0`), the top slew rate depends on the fixture
 | Spot (default) | `220°/s` | `180°/s` |
 | Wash | `160°/s` | `130°/s` |
 | Slowest motor (`move_speed = 1`) | `~21°/s` | `~11°/s` |
-
-<Callout type="info">
-At the slowest motor setting a head needs roughly `25.5 s` for full travel, so plan long position moves with that headroom in mind.
-</Callout>
 
 ## The Aim tool
 
@@ -102,7 +94,7 @@ Some GDTF fixtures are **independent-head** designs with more than one articulat
 - `cell_pan` — per-emitter pan, one entry per emitter.
 - `cell_tilt` — per-emitter tilt.
 
-The emitter layout comes from the active GDTF [DMX mode](/docs/library/dmx-modes); switching modes resizes the per-emitter arrays to match.
+The emitter layout comes from the active GDTF [DMX mode](/docs/library/profile-editor); switching modes resizes the per-emitter arrays to match.
 
 <Accordions type="single">
   <Accordion title="Why does my multi-head fixture only have one pan/tilt field?">
@@ -122,10 +114,10 @@ The emitter layout comes from the active GDTF [DMX mode](/docs/library/dmx-modes
   <Card icon={<Plug />} title="Patching Fixtures" href="/docs/dmx/patching">
     Assign universe and address so a console can drive pan and tilt.
   </Card>
-  <Card icon={<SlidersHorizontal />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+  <Card icon={<SlidersHorizontal />} title="DMX Modes & Channels" href="/docs/library/profile-editor">
     How emitter layout and the channel map are chosen per fixture.
   </Card>
-  <Card icon={<Crosshair />} title="Beam Parameter Reference" href="/docs/fixtures/parameters">
+  <Card icon={<Crosshair />} title="Beam Parameter Reference" href="/docs/fixtures/beam-engine">
     Every beam parameter beyond position and aim.
   </Card>
 </Cards>

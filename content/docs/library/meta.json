@@ -5,7 +5,6 @@
     "index",
     "import-gdtf",
     "profile-editor",
-    "gdtf-share",
-    "dmx-modes"
+    "gdtf-share"
   ]
 }

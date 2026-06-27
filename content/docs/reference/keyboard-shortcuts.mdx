@@ -32,7 +32,7 @@ Always active unless a text field is editing. Used when no more specific context
 </Step>
 </Steps>
 
-<Callout type="info" title="A few things to keep in mind">
+<Callout type="info" title="Notes">
 - `Cmd` on macOS = `Ctrl` on Windows/Linux. Shortcuts below are written as `Cmd`/`Ctrl`.
 - Shortcuts do **not** fire while a text field, search box, or numeric input is actively editing.
 - Some keys are context-dependent: `S` = Quick-select (Global) or Scale (Viewport); `Z` = Shading pie (Viewport) or axis lock (Modal).
@@ -64,7 +64,7 @@ Every binding here is rebindable, can be disabled, or extended with your own. Se
 | `Click` | Select — pick the object under the cursor |
 | `Cmd`/`Ctrl`+`Click` | Toggle — add/remove from selection |
 | `Shift`+`Click` | Range select — from the last pick to the current one |
-| `Click`+`Drag` | Range box — drag a box to select multiple |
+| `B`, then drag | Box select — arm a marquee (see [Selecting Objects](/docs/scene/selection)) |
 
 ### Library & outliner
 
@@ -84,11 +84,11 @@ Every binding here is rebindable, can be disabled, or extended with your own. Se
 | `Home` | Frame all (alias) |
 | `L` | Toggle fixture labels |
 
-See [Views, Gizmo & Pie Menus](/docs/navigation/views) for the full navigation model.
+See [Views, Gizmo & Pie Menus](/docs/navigation) for the full navigation model.
 
 ## Numpad views & orbit
 
-Blender-style orthographic snaps and stepped orbit. Hold `Cmd`/`Ctrl` to snap to the opposite view.
+Orthographic snaps and stepped orbit. Hold `Cmd`/`Ctrl` to snap to the opposite view.
 
 ### Camera views (Viewport)
 
@@ -162,6 +162,7 @@ The following live in the Overlays submenu and have no default key, but can be b
 | Shortcut | Action |
 | --- | --- |
 | `A` | Select all |
+| `B` | Box select — arm an additive marquee; `F`/`O` filter fixtures/objects, `Cmd`/`Ctrl` subtracts (auto-exits after each box) |
 | `Alt`+`A` | Deselect all (none) |
 | `Esc` | Deselect all (also cancels the active tool or modal op) |
 | `Cmd`/`Ctrl`+`I` | Invert selection |
@@ -266,6 +267,12 @@ With **Duplicate & grab**, copies follow the mouse, typing a number sets the arr
 | `Cmd`/`Ctrl`+`Shift`+`R` | Renumber sequence by position (rows then columns; all fixtures if none selected) |
 
 Renumber assigns each fixture's [sequence number](/docs/fixtures) by stage position. See [Patching Fixtures](/docs/dmx/patching).
+
+### Visibility
+
+| Shortcut | Action |
+| --- | --- |
+| `H` | Hide / reveal selection — hides the selected items, or reveals them if all are already hidden |
 
 ### Delete
 
@@ -415,7 +422,7 @@ A compact summary of every default key. A dash means the key is unbound in that 
   <Card icon={<SlidersHorizontal />} title="Preferences & Theme" href="/docs/interface/preferences">
     Rebind keys in the Keymap editor; changes persist to keymap.json.
   </Card>
-  <Card icon={<MousePointer2 />} title="Views, Gizmo & Pie Menus" href="/docs/navigation/views">
+  <Card icon={<MousePointer2 />} title="Views, Gizmo & Pie Menus" href="/docs/navigation">
     The full navigation model behind the mouse and numpad shortcuts.
   </Card>
   <Card icon={<BookMarked />} title="Camera Bookmarks" href="/docs/navigation/bookmarks">

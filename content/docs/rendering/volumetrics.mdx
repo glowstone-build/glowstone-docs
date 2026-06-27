@@ -62,7 +62,7 @@ Every other beam is still marched, but shares a single coarse occluder map inste
 </Steps>
 
 <Callout type="idea">
-Want a specific light to read as a sharp hero shaft? Tighten its beam — ranking is by cone narrowness, so a narrower zoom promotes it above the washes. See [Pan, Tilt & Aiming](/docs/fixtures/movement) and the [Beam Parameter Reference](/docs/fixtures/parameters).
+Want a specific light to read as a sharp hero shaft? Tighten its beam — ranking is by cone narrowness, so a narrower zoom promotes it above the washes. See [Pan, Tilt & Aiming](/docs/fixtures/movement) and the [Beam Parameter Reference](/docs/fixtures/beam-engine).
 </Callout>
 
 ## The environment drives the look
@@ -136,7 +136,7 @@ See [Performance & Quality Tuning](/docs/rendering/performance) for dynamic reso
     Lower `render_scale` first, then consider enabling the froxel grid (`froxel_volumetric`) — accepting its coarser look in exchange for cost that decouples from fixture count.
   </Accordion>
   <Accordion title="I see no beams at all.">
-    Check that an environment exists and is unhidden, that its `density` is above zero, and that fixtures have intensity. Beams only scatter where there is haze.
+    Check that an environment exists and is unhidden, that its `density` is above zero, and that fixtures have intensity.
   </Accordion>
 </Accordions>
 

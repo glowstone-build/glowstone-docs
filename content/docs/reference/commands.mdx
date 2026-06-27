@@ -90,7 +90,7 @@ Framing, standard views, orbit, overlays, and bookmarks. These are pure actions 
 </Callout>
 
 <Callout type="info">
-The 9 numbered **camera (view) bookmarks** store viewpoints and are distinct from [Cues](/docs/cues), which store fixture looks. The orbit, view, and bookmark commands are detailed in [Views, Gizmo & Pie Menus](/docs/navigation/views) and [Camera Bookmarks](/docs/navigation/bookmarks).
+The 9 numbered **camera (view) bookmarks** store viewpoints and are distinct from [Cues](/docs/cues), which store fixture looks. The orbit, view, and bookmark commands are detailed in [Views, Gizmo & Pie Menus](/docs/navigation) and [Camera Bookmarks](/docs/navigation/bookmarks).
 </Callout>
 
 ## Selection
@@ -100,6 +100,7 @@ Bulk selection actions. For the radial `S` menu and per-type/per-maker selection
 | Command | Default shortcut | What it does |
 | --- | --- | --- |
 | Select all | `A` | Selects every item of the active kind (fixtures by default) |
+| Box select (marquee) | `B` | Arms an additive marquee; drag to add, `F`/`O` restrict to fixtures/objects, `Cmd`/`Ctrl` subtracts (auto-exits after each box) |
 | Invert selection | `Cmd`/`Ctrl`+`I` | Flips membership within the active kind (selects all from an empty selection) |
 | Quick-select menu | `S` | Opens the Quick-Select palette (global context only) |
 | Replace selected fixtures | `Shift`+`R` | Replaces the selected fixtures |
@@ -159,6 +160,7 @@ Document-mutating operators plus undo/redo and the palette/adjust commands. Oper
 | Patch Fixtures… | `P` | Dialog | Opens the Patch dialog |
 | Unpatch Fixtures | `U` | Direct | Removes the DMX patch from the selection |
 | Delete Selected | `Delete` (also `Backspace`) | Direct | Deletes the selected items (fixtures, objects, screens, pyro) |
+| Hide / reveal selection | `H` | Direct | Hides the selected items (fixtures, objects, screens, pyro, environment); reveals them if all are already hidden |
 | Undo | `Cmd`/`Ctrl`+`Z` | Action | Steps back one undo step |
 | Redo | `Cmd`/`Ctrl`+`Shift`+`Z` (also `Cmd`/`Ctrl`+`Y`) | Action | Steps forward one undo step |
 | Operator search | `F3` (also `Space`) | Action | Opens the operator-search palette |

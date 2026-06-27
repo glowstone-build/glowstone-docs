@@ -3,7 +3,6 @@
   "icon": "Compass",
   "pages": [
     "index",
-    "views",
     "bookmarks",
     "overlays",
     "performance-overlay"

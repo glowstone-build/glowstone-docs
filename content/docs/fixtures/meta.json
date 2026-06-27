@@ -4,7 +4,6 @@
   "pages": [
     "index",
     "beam-engine",
-    "parameters",
     "color",
     "gobos-prism",
     "movement",
