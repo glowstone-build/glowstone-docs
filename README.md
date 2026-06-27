@@ -1,7 +1,7 @@
-# archie-docs
+# glowstone-docs
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+This is the source code for documentation of the glowstone software.
+[glowstone.build](https://glowstone.build).
 
 Run development server:
 
