@@ -22,7 +22,13 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const markdownUrl = getPageMarkdownUrl(page).url;
 
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
+    <DocsPage
+      toc={page.data.toc}
+      full={page.data.full}
+      // The landing page guides via its own cards; the auto prev/next footer
+      // (a lone "next" card) only looks orphaned there. Keep it on real pages.
+      footer={page.slugs.length === 0 ? { enabled: false } : undefined}
+    >
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b pb-6">
