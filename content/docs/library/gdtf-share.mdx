@@ -136,18 +136,20 @@ If a fixture is already cached from a previous session or another project, its b
 
 ### Where files live
 
-Downloaded profiles and the cached list are stored outside any single project, so they are available to every show you open.
+Downloaded profiles and the cached list are stored outside any single project, so they are available to every show you open. These live in Glowstone's per-user [data, cache and config directories](/docs/projects#where-glowstone-stores-files) (which resolve per OS).
 
 <Files>
-  <Folder name="<data>/gdtf" defaultOpen>
-    <File name="{rid}.gdtf" />
-    <File name=".{rid}.part (in-progress download)" />
+  <Folder name="data directory" defaultOpen>
+    <Folder name="gdtf" defaultOpen>
+      <File name="<rid>.gdtf (downloaded fixture)" />
+      <File name=".<rid>.part (in-progress download)" />
+    </Folder>
   </Folder>
-  <Folder name="<cache>">
+  <Folder name="cache directory">
     <File name="share-list.json (cached catalogue)" />
   </Folder>
-  <Folder name="<config>">
-    <File name="share-credentials.json (if Remember me)" />
+  <Folder name="config directory">
+    <File name="share-credentials.json (only with Remember me)" />
   </Folder>
 </Files>
 

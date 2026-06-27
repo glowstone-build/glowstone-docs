@@ -89,10 +89,10 @@ Deleting a workspace is immediate and removes it from `workspaces.json`. Built-i
 
 ## Storage and reset
 
-All workspaces — built-in and user — are stored in `<config>/workspaces.json`. The file is loaded once at startup and rewritten on each save or delete.
+All workspaces — built-in and user — are stored in `workspaces.json` in Glowstone's per-user [config directory](/docs/projects#where-glowstone-stores-files) (on macOS, `~/Library/Application Support/build.glowstone.glowstone`). The file is loaded once at startup and rewritten on each save or delete.
 
 <Files>
-  <Folder name="<config>" defaultOpen>
+  <Folder name="config directory" defaultOpen>
     <File name="workspaces.json" />
     <File name="keymap.json" />
     <File name="bookmarks.json" />

@@ -133,7 +133,7 @@ A project from a format version newer than your build, or older than the build's
 
 Glowstone writes a periodic background autosave (roughly every 20 s, when the scene has content) so you can recover after an unexpected quit.
 
-- On macOS, the autosave lives at `~/Library/Caches/dev.Embedder.glowstone/last-session.glow`. Other platforms use the equivalent cache location.
+- The autosave is `last-session.glow` in Glowstone's [cache directory](#where-glowstone-stores-files) — on macOS, `~/Library/Caches/build.glowstone.glowstone/`.
 - After a crash, if a valid autosave exists, the welcome screen shows a **Recover Last Session** button. A recovered session opens as untitled, so the next Save prompts for a destination instead of overwriting the autosave.
 
 <Callout type="warn">
@@ -146,6 +146,44 @@ The Recent Files list (in the **File ▸ Open Recent** submenu and on the welcom
 
 - The stored list holds up to 12 entries, deduplicated by path; the welcome screen shows up to 8.
 - Projects that no longer exist on disk are pruned automatically, so the list only shows files you can actually open.
+
+## Where Glowstone stores files
+
+Apart from your `.glow` projects, Glowstone keeps a few per-user files — your keymap, workspaces, camera bookmarks, Library favourites, recent-files list, and the GDTF Share cache — in the standard OS locations (derived from the `build.glowstone.glowstone` app identifier).
+
+<Tabs items={['macOS', 'Linux', 'Windows']}>
+  <Tab value="macOS">
+    - **Config / Data**: `~/Library/Application Support/build.glowstone.glowstone`
+    - **Cache**: `~/Library/Caches/build.glowstone.glowstone`
+  </Tab>
+  <Tab value="Linux">
+    - **Config**: `~/.config/glowstone`
+    - **Cache**: `~/.cache/glowstone`
+    - **Data**: `~/.local/share/glowstone`
+  </Tab>
+  <Tab value="Windows">
+    - **Config**: `%APPDATA%\glowstone\glowstone\config`
+    - **Cache**: `%LOCALAPPDATA%\glowstone\glowstone\cache`
+    - **Data**: `%APPDATA%\glowstone\glowstone\data`
+  </Tab>
+</Tabs>
+
+| File / folder | Directory | Holds |
+| --- | --- | --- |
+| `keymap.json` | Config | Keyboard rebinds |
+| `workspaces.json` | Config | Saved panel layouts |
+| `bookmarks.json` | Config | Camera bookmarks |
+| `library.json` | Config | Library Recents & Favourites |
+| `inspector.json` | Config | Inspector category open/closed state |
+| `recent.json` | Config | Recent-projects list |
+| `share-credentials.json` | Config | GDTF Share login (only with **Remember me**) |
+| `share-list.json` | Cache | Cached GDTF Share catalogue |
+| `last-session.glow` | Cache | Autosave / crash recovery |
+| `gdtf/` | Data | Downloaded GDTF Share fixtures |
+
+<Callout type="info">
+On macOS, Config and Data resolve to the same Application Support folder. If the OS directories can't be resolved, downloaded GDTFs fall back to a temporary `glowstone-gdtf` folder.
+</Callout>
 
 ## Frequently asked
 
