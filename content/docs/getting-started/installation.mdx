@@ -95,16 +95,16 @@ RUST_LOG=glowstone=debug,wgpu=warn cargo run --release
 
 ## NDI video (optional)
 
-NDI receive is an **optional compile-time feature**, off by default. A default build ships a no-op stub; to actually receive NDI you must build with the `ndi` feature and have the NDI runtime installed.
+You don't need to build from source to use NDI — the prebuilt releases already ship with NDI compiled in, so all you need is the **NDI runtime** installed. Building from source is the exception: there NDI is an opt-in compile-time feature (off by default, shipping a no-op stub), so a source build must enable the `ndi` feature.
 
 <Steps>
 <Step>
-### Install the NDI SDK
-Download and install the **NDI 6 SDK** from the [official NDI SDK page](https://ndi.video/for-developers/ndi-sdk/) (you must accept the licence/EULA). It includes the runtime needed at run time.
+### Install the NDI runtime
+Download the **NDI 6 SDK** from the [official NDI SDK page](https://ndi.video/for-developers/ndi-sdk/) (you must accept the licence/EULA); it includes the runtime, which is all a prebuilt release needs to receive NDI.
 </Step>
 <Step>
-### Build with the NDI feature
-Building the feature also needs Clang available on `PATH`:
+### Optional: build from source with the NDI feature
+Only needed if you build Glowstone yourself, not for the prebuilt releases. The feature also needs Clang available on `PATH`:
 
 ```bash
 cargo run --release --features ndi
