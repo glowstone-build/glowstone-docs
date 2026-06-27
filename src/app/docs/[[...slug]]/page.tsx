@@ -12,6 +12,7 @@ import { getMDXComponents } from '@/components/mdx';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { gitConfig } from '@/lib/shared';
+import { Logo } from '@/components/logo';
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params;
@@ -29,7 +30,16 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
       // (a lone "next" card) only looks orphaned there. Keep it on real pages.
       footer={page.slugs.length === 0 ? { enabled: false } : undefined}
     >
-      <DocsTitle>{page.data.title}</DocsTitle>
+      <DocsTitle>
+        {page.slugs.length === 0 ? (
+          <span className="inline-flex items-center gap-2.5">
+            <Logo className="size-8" res={64} />
+            {page.data.title}
+          </span>
+        ) : (
+          page.data.title
+        )}
+      </DocsTitle>
       <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b pb-6">
         <MarkdownCopyButton markdownUrl={markdownUrl} />
