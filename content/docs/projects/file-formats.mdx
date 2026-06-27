@@ -17,7 +17,7 @@ Glowstone reads and writes one native project format, one scene-interchange form
 
 | Format | Type | Read | Write | Notes |
 | --- | --- | --- | --- | --- |
-| `.glow` | Project | Yes | Yes | Native binary project. Bundles everything inline; exact round-trip. Legacy `.archie` files still open. |
+| `.glow` | Project | Yes | Yes | Native project (self-describing MessagePack). Bundles everything inline; exact round-trip; opens across app versions. |
 | `.mvr` | Scene | Yes | Yes | ZIP scene-interchange archive. Round-trips with grandMA3, Vectorworks, Capture, Depence. |
 | `.gdtf` | Fixture definition | Yes | No | Read-only. Imported into the library and bundled into `.glow`/`.mvr`. |
 | `.glb` / `.3ds` | Geometry | Yes (via MVR) | Yes (via MVR) | Stage/truss/prop meshes. Carried inside MVR archives, never as loose files. |
@@ -44,23 +44,20 @@ Glowstone reads and writes one native project format, one scene-interchange form
 
 A single binary file that captures the entire show. Use it for everyday work: it is what `File ▸ Save` (`Cmd`/`Ctrl`+`S`) and `File ▸ Open Project…` read and write. Because all referenced assets ride along inside the file, a `.glow` project opens with no external dependencies.
 
-The body is a `bincode` dump of the same serde types the app runs on, so it captures the exact in-memory state rather than a lossy interchange (that is MVR's job). Pyro devices and per-fixture sequence numbers live in a self-describing JSON trailer appended after the binary core, so they can evolve without forcing a format-version bump.
+The body is a single self-describing [MessagePack](https://msgpack.org/) dump of the same serde types the app runs on, so it captures the exact in-memory state rather than a lossy interchange (that is MVR's job). Because structs are written as field-name maps, each value is matched by **name** on load — so a project saved by any version opens in any other: fields a build doesn't have take their defaults, and fields it doesn't recognise are ignored. Pyro devices and per-fixture sequence numbers are part of the same body.
 
 <Files>
   <Folder name="show.glow" defaultOpen>
     <File name="Magic header — GLOW\0" />
-    <File name="Format version (current: 9)" />
-    <Folder name="Serialized core (bincode)" defaultOpen>
-      <File name="Scene, fixtures, LED screens, world" />
+    <File name="Version stamp (diagnostic only)" />
+    <Folder name="MessagePack body (self-describing, field-name keyed)" defaultOpen>
+      <File name="Scene, fixtures (+ sequence numbers), LED screens, world" />
+      <File name="Pyro devices" />
       <File name="Bundled .gdtf archives (deduplicated)" />
       <File name="Bundled .glb / .3ds geometry" />
       <File name="Textures + HDRI environment" />
       <File name="Camera, render settings, DMX patch + config" />
       <File name="Selection groups, cues, preferences" />
-    </Folder>
-    <Folder name="JSON trailer (self-describing)" defaultOpen>
-      <File name="Pyro devices" />
-      <File name="Per-fixture sequence numbers" />
     </Folder>
   </Folder>
 </Files>
@@ -69,8 +66,8 @@ The body is a `bincode` dump of the same serde types the app runs on, so it capt
 Saves are atomic: Glowstone writes a temporary sibling file first, then renames it onto the target. A crash mid-save cannot corrupt your project.
 </Callout>
 
-<Callout type="warn">
-Older core layouts (versions before `8`) are rejected with a clear "predates this build's readable formats" error rather than opened incorrectly. A file newer than this build supports is likewise rejected with an "update the app" message. The current format version is `9`. Legacy `.archie` files (the previous extension and magic, with a v8 core) still open — their format is migrated up in memory.
+<Callout type="success" title="Opens across versions">
+The format is self-describing and **not** version-gated. A project from an older build opens in a newer one (new fields take their defaults); a project from a newer build opens best-effort in an older one (unrecognised fields are ignored). The leading version stamp is a diagnostic only — it never refuses a file on version alone. The earlier `.archie` format used a different binary encoding and is not read by current builds.
 </Callout>
 
 ### `.mvr` — scene exchange

@@ -165,7 +165,7 @@ The welcome (splash) screen appears at startup, and any time you choose **File â
       type: 'New',
     },
     'Openâ€¦': {
-      description: 'Open a saved project from a file dialog (native .glow; legacy .archie still opens).',
+      description: 'Open a saved project from a file dialog (native .glow).',
       type: 'New',
     },
     'Recover Last Session': {
@@ -184,7 +184,7 @@ The welcome (splash) screen appears at startup, and any time you choose **File â
 />
 
 <Callout type="idea">
-Saved projects use the native `.glow` format (magic `GLOW\0`), a single self-contained file holding the scene, preferences, the DMX patch and config, selection groups, and cues, with pyro devices in a JSON trailer. Legacy `.archie` files still open. See [Projects & the .glow Format](/docs/projects).
+Saved projects use the native `.glow` format (magic `GLOW\0`), a single self-contained file holding the scene, preferences, the DMX patch and config, selection groups, cues and pyro devices. It's a self-describing MessagePack snapshot, so a show saved by any version of Glowstone opens in any other. See [Projects & the .glow Format](/docs/projects).
 </Callout>
 
 ## The demo scene

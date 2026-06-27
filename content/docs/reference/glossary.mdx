@@ -41,7 +41,7 @@ How Glowstone treats the terms you will meet across the app. Each entry links to
 
 **MVR** — An `.mvr` interchange ZIP (`GeneralSceneDescription.xml` plus embedded GDTF and geometry) for round-tripping whole scenes with tools like grandMA3, Vectorworks, and Capture. See [MVR Scene Exchange](/docs/projects/mvr).
 
-**.glow** — Glowstone's native binary project format (magic `GLOW\0`). A complete, self-contained snapshot of the scene, fixtures, preferences, the DMX patch + config, selection groups, and cues, with pyro devices in a self-describing JSON trailer. Legacy **`.archie`** files (the previous extension) still open. See [Projects](/docs/projects).
+**.glow** — Glowstone's native project format (magic `GLOW\0`): a complete, self-contained snapshot of the scene, fixtures, preferences, the DMX patch + config, selection groups, cues and pyro devices. It's a self-describing MessagePack encoding, so a project opens across app versions. Supersedes the earlier `.archie` format. See [Projects](/docs/projects).
 
 <Files>
   <Folder name="show.mvr (ZIP)" defaultOpen>

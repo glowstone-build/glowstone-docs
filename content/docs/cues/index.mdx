@@ -132,7 +132,7 @@ The cue engine runs after live-DMX decode each frame. While a fade is in progres
 ## Persistence and undo
 
 <Callout type="info">
-Cues are saved in the `.glow` [project file](/docs/projects) alongside the scene, patch, camera and render settings (legacy `.archie` files still open). Cue state is part of the document the undo system snapshots. An in-progress fade is transient: it is not saved, and on reload the fade is cleared while the current cue index is restored.
+Cues are saved in the `.glow` [project file](/docs/projects) alongside the scene, patch, camera and render settings. Cue state is part of the document the undo system snapshots. An in-progress fade is transient: it is not saved, and on reload the fade is cleared while the current cue index is restored.
 </Callout>
 
 ## Cues vs. camera bookmarks

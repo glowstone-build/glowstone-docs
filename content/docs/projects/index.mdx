@@ -5,7 +5,7 @@ description: "Create, open and save .glow projects, and what the format bundles 
 
 import { FilePlus2, FolderOpen, Save, History, Package, Boxes, Flame } from 'lucide-react';
 
-A Glowstone project is a single self-contained `.glow` file (magic `GLOW\0`). It bundles the entire show inline — scene, fixtures, GDTF definitions, geometry, render settings, preferences, DMX patch/config, selection groups, cues and pyro devices — so a project is portable with no external assets to track. Legacy `.archie` files (the previous extension) still open.
+A Glowstone project is a single self-contained `.glow` file (magic `GLOW\0`). It bundles the entire show inline — scene, fixtures, GDTF definitions, geometry, render settings, preferences, DMX patch/config, selection groups, cues and pyro devices — so a project is portable with no external assets to track. The format is **self-describing**, so a project saved by any version of Glowstone opens in any other (see [compatibility](#backward--forward-compatible)).
 
 <ImagePlaceholder
   label="Screenshot"
@@ -22,7 +22,7 @@ Use the **File** menu (or the welcome screen) to manage projects. The window tit
     Clears the scene to a blank, untitled project.
   </Card>
   <Card icon={<FolderOpen />} title="Open Project…" href="/docs/projects">
-    Load an existing `.glow` (or legacy `.archie`) file from disk.
+    Load an existing `.glow` file from disk.
   </Card>
   <Card icon={<Save />} title="Save" href="/docs/projects">
     Write changes to the current file with `Cmd`/`Ctrl`+`S`.
@@ -37,7 +37,7 @@ Use the **File** menu (or the welcome screen) to manage projects. The window tit
 The welcome splash appears at startup, and on demand from **Window ▸ Welcome** (choosing **File ▸ New Project** also re-opens it). It offers:
 
 - **New Project** — clears the current scene (fixtures, geometry, screens, groups, cues) and opens an untitled project.
-- **Open…** — a native file picker filtered to `.glow` and legacy `.archie` files.
+- **Open…** — a native file picker filtered to `.glow` files.
 - **Recover Last Session** — reopens the auto-saved session from the last run. Shown only when a valid autosave exists (see [Crash recovery](#autosave--crash-recovery)).
 - **Recent Files** — the most recent projects (up to 8 shown here), newest first.
 
@@ -54,7 +54,7 @@ Choose **File ▸ New Project** (or **Window ▸ Welcome**), then click **New Pr
 <Step>
 ### Open an existing project
 
-Choose **File ▸ Open Project…** and pick a `.glow` (or legacy `.archie`) file. Glowstone validates the file magic and version, decodes it, and restores the scene, fixtures, GDTF library, camera, render settings, preferences, DMX patch/config, selection groups, cues and pyro devices.
+Choose **File ▸ Open Project…** and pick a `.glow` file. Glowstone checks the file magic and decodes it, restoring the scene, fixtures (with their sequence numbers), GDTF library, camera, render settings, preferences, DMX patch/config, selection groups, cues and pyro devices.
 </Step>
 <Step>
 ### Save your work
@@ -97,7 +97,7 @@ Everything the show needs lives inside the one file. GDTF definitions, geometry 
     Cues: { description: 'The cue engine — cue list plus playback state.', type: 'inline' },
     'Selection groups': { description: 'Named fixture/geometry selection groups.', type: 'inline' },
     Preferences: { description: 'App preferences saved with the show.', type: 'inline' },
-    'Pyro devices': { description: 'Placed CO2 jets and cold-spark machines (with their inline DMX patch), stored in a self-describing trailer.', type: 'trailer' },
+    'Pyro devices': { description: 'Placed CO2 jets and cold-spark machines, with their inline DMX patch.', type: 'inline' },
     'MVR metadata': { description: 'If the scene was imported from MVR: the original header and imported resources, kept for faithful round-trip export.', type: 'optional' },
   }}
 />
@@ -108,25 +108,28 @@ Because GDTF files are embedded in the `.glow` file, you can hand a project to a
 
 ### File layout
 
-The `.glow` format is a binary snapshot: a magic + version header, a positional `bincode` core, then a self-describing JSON trailer for the version-tolerant data (pyro devices and per-fixture sequence numbers).
+The `.glow` file is a short magic + version stamp followed by a single self-describing [MessagePack](https://msgpack.org/) body. Structs are written as field-name maps, so on load each value is matched by **name** rather than byte position — which is what makes the format compatible across versions (see below). Everything is in the one body; there is no separate trailer.
 
 <Files>
   <Folder name="show.glow (binary)" defaultOpen>
-    <File name="Magic header — GLOW\0 (5 bytes; legacy ARCHIE\0 = 7)" />
-    <File name="Format version — 4-byte little-endian integer" />
-    <Folder name="Core body (bincode-encoded, positional)" defaultOpen>
-      <File name="Scene, fixtures, LED screens, world, environments" />
+    <File name="Magic header — GLOW\0 (5 bytes)" />
+    <File name="Version stamp — 4-byte little-endian integer (diagnostic only)" />
+    <Folder name="MessagePack body (self-describing, field-name keyed)" defaultOpen>
+      <File name="Scene — fixtures (+ sequence numbers), geometry, LED screens, world, environments, pyro devices" />
       <File name="Bundled GDTF archive bytes + per-fixture spec keys" />
       <File name="Geometry meshes, textures, HDRI (inline in Scene)" />
       <File name="Camera, render settings, preferences" />
       <File name="DMX patch + config, selection groups, cues" />
     </Folder>
-    <File name="JSON trailer — pyro devices + per-fixture sequences" />
   </Folder>
 </Files>
 
-<Callout type="warn">
-A project from a format version newer than your build, or older than the build's minimum readable layout, is rejected on open with a clear error rather than loading partially or mis-decoding. An absent or unreadable trailer (e.g. a legacy `.archie`) is skipped silently — the rest of the project still loads.
+<Callout type="success" title="Backward & forward compatible">
+Because values are matched by field name, your shows keep opening across updates. A project from an **older** Glowstone opens in a newer build — fields it never had simply take their defaults. A project from a **newer** Glowstone opens **best-effort** in an older build — fields the old build doesn't recognise are ignored. The version stamp is a diagnostic only (it sharpens the error message in the rare case a newer file fails to decode); it never refuses a file on version alone.
+</Callout>
+
+<Callout type="info">
+The only changes that aren't automatically compatible are renaming a field, changing a field's type, or removing an enum variant — those need a deliberate migration in the app.
 </Callout>
 
 ## Autosave & crash recovery
@@ -194,11 +197,11 @@ On macOS, Config and Data resolve to the same Application Support folder. If the
   <Accordion title="Why are identical truss copies still fast after reload?">
     On load, Glowstone re-deduplicates identical geometry blobs by their resource name, restoring the memory sharing from import time so repeated meshes draw as instanced copies rather than separate objects.
   </Accordion>
-  <Accordion title="Can I still open my old .archie files?">
-    Yes. Files saved by older builds (the `.archie` magic and extension) are still read — the open dialog accepts them and they're migrated to the current format in memory. The current native format is `.glow`.
+  <Accordion title="What about old .archie files?">
+    The native format is now `.glow`. It uses a different, self-describing encoding (MessagePack) from the old `.archie` binary, so the Open dialog accepts `.glow` only and earlier `.archie` files are not loaded by current builds.
   </Accordion>
   <Accordion title="Can I open a project saved by a newer version of Glowstone?">
-    No. The loader checks the version against a supported range: a version newer than your build is reported as an error (update the app), and a layout older than the minimum readable version is skipped cleanly rather than mis-decoded. In-range versions load and migrate up.
+    Yes, best-effort. The format is self-describing and **not** version-gated: a newer file's recognised fields load, and anything the older build doesn't know is ignored. The version stamp only sharpens the error message in the rare case decoding actually fails.
   </Accordion>
 </Accordions>
 
@@ -212,6 +215,6 @@ On macOS, Config and Data resolve to the same Application Support folder. If the
     Which formats Glowstone can read and write.
   </Card>
   <Card icon={<Flame />} title="Pyro Devices" href="/docs/fixtures/pyro">
-    CO2 jets and cold-spark machines stored in the project trailer.
+    CO2 jets and cold-spark machines saved with the project.
   </Card>
 </Cards>

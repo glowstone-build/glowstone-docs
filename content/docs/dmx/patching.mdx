@@ -15,7 +15,7 @@ The **patch** maps each fixture to a universe, a starting address, a channel foo
 
 ## How the patch works
 
-The patch is a **side table** owned by the DMX engine, index-parallel to the scene's fixtures rather than embedded on each `Fixture`. Keeping it separate means duplicating a fixture never duplicates its address, and the MVR import/export round-trip stays untouched. Each fixture has at most one patch entry. The table is persisted inside the `.glow` project file (legacy `.archie` projects still open).
+The patch is a **side table** owned by the DMX engine, index-parallel to the scene's fixtures rather than embedded on each `Fixture`. Keeping it separate means duplicating a fixture never duplicates its address, and the MVR import/export round-trip stays untouched. Each fixture has at most one patch entry. The table is persisted inside the `.glow` project file.
 
 <TypeTable
   type={{
@@ -199,7 +199,7 @@ To find conflicts fast, flip on the **Conflicts** toggle in the Fixture Manager,
     Unpatch (`U`) disables the patch entry but keeps the fixture in the scene; its address stays in the table, just inactive. Delete removes the fixture and its patch entry entirely.
   </Accordion>
   <Accordion title="Where is the patch stored?">
-    Inside the `.glow` project file, as a side table separate from the scene geometry (legacy `.archie` projects still load). Manual address edits set the entry's source to Manual so they round-trip faithfully.
+    Inside the `.glow` project file, as a side table separate from the scene geometry. Manual address edits set the entry's source to Manual so they round-trip faithfully.
   </Accordion>
 </Accordions>
 
