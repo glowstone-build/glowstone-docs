@@ -1,0 +1,178 @@
+---
+title: "LED Screens"
+description: "Parametric LED walls — cabinet array, derived resolution and pitch, surface and photometry."
+---
+
+import { MonitorPlay, Grid3x3, SunMedium, Image, Network, Boxes } from 'lucide-react';
+
+An LED screen in Glowstone is parametric: describe one cabinet, tile it into an array, and Glowstone derives the resolution, pitch and physical size. Each wall is a single emissive surface that can show a test pattern, a solid colour, a still image, or a live video stream.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A 4-wide by 2-high Indoor 3.9mm LED wall standing on a stage in the 3D Viewport, displaying SMPTE colour bars, with the LED screen Inspector open on the right showing the Panel, Array and Surface sections."
+/>
+
+<Callout type="info" title="Screen vs fixture">
+LED screens are a distinct scene entity, not fixtures. They appear under the **Screens** group in the [Scene Outliner](/docs/scene/outliner), where the secondary text shows the derived resolution and current content (for example `512×256 · Test Pattern`).
+</Callout>
+
+## Adding a screen
+
+A new screen defaults to a **4 wide × 2 high** array using the **Indoor 3.9mm** cabinet profile, showing the **Grid** test pattern.
+
+<Tabs items={['Add menu', 'Library', 'MVR import']}>
+  <Tab value="Add menu">
+    Press `Shift`+`A` to open the cursor-anchored Add menu, pick the **Screens** category, and choose a cabinet profile (for example `LED Wall · Indoor 3.9mm`). The wall is placed upright over the cursor ground point, base on the floor, and named `LED Wall N`.
+  </Tab>
+  <Tab value="Library">
+    In the [Library](/docs/library) browser, pick a cabinet profile from the LED-wall components and add it to the scene. Same defaults as the Add menu.
+  </Tab>
+  <Tab value="MVR import">
+    Screens are parsed from `<VideoScreen>` elements when you import an [MVR scene](/docs/projects/mvr). For walls exported by Glowstone the array and cabinet specs round-trip via `glowstone`-namespaced attributes; otherwise the importer falls back to a default 4×2 array of 500 mm / 128 px cabinets.
+  </Tab>
+</Tabs>
+
+## Building the cabinet array
+
+Wall geometry is driven entirely by the cabinet definition and the array counts. Glowstone computes the rest.
+
+<Steps>
+<Step>
+### Pick a panel type
+The **Panel type** selects a built-in cabinet [profile](/docs/library) such as `Indoor 3.9mm`. The profile seeds the cabinet size, native pixel count and default brightness. Profiles are library components — they are not edited per screen, but every value they seed is editable on the placed wall.
+</Step>
+<Step>
+### Set the cabinet size and pixels
+**Cabinet size** is one cabinet's physical face in millimetres (width × height). **Pixels / cabinet** is the native pixel count per cabinet. The pixel **pitch is derived**, not entered:
+
+```
+pitch_mm = cabinet_mm ÷ cabinet_px
+```
+
+For example, a `500` mm cabinet with `128` pixels gives a `3.9` mm pitch. To change pitch, change the cabinet size or the pixel count.
+</Step>
+<Step>
+### Tile the array
+Set **Panels wide** and **Panels high** to the number of cabinets in each direction. Add a **Gap** (mm) to model the seam or bezel between cabinets — `0` is a seamless rental tile; `1`–`4` mm is typical for real panels.
+</Step>
+</Steps>
+
+### Derived resolution and size
+
+Glowstone reports the total resolution and the physical size from the cabinet and array values:
+
+```
+resolution = (panels_wide × cabinet_px_x) × (panels_high × cabinet_px_y)
+size_m     = ((panels × cabinet_mm) + ((panels − 1) × gap)) ÷ 1000
+```
+
+<Callout type="idea" title="Worked example">
+A `4 × 2` array of `128 × 128` px cabinets, each `500` mm wide, with a `0` mm gap:
+
+- Resolution: `4 × 128` by `2 × 128` = **512 × 256 px**
+- Width: `4 × 0.5 m + 3 × 0 m` = **2.0 m wide**
+</Callout>
+
+### Geometry reference
+
+<TypeTable
+  type={{
+    'Panel type': { description: 'Built-in cabinet profile that seeds the cabinet size, pixels and brightness.', type: 'profile', default: 'Indoor 3.9mm' },
+    'Cabinet size': { description: 'One cabinet face, width × height, in millimetres.', type: '50–2000 mm', default: 'profile' },
+    'Pixels / cabinet': { description: 'Native pixel count per cabinet (x, y). Pitch is derived from size ÷ pixels.', type: '8–1024 px', default: 'profile' },
+    'Panels wide': { description: 'Number of cabinets horizontally.', type: '1–64', default: '4' },
+    'Panels high': { description: 'Number of cabinets vertically.', type: '1–64', default: '2' },
+    Gap: { description: 'Inter-cabinet seam or bezel width. 0 = seamless tile.', type: '0–50 mm', default: '0' },
+  }}
+/>
+
+## Surface and photometry
+
+These properties control how the wall looks and how much it contributes light to the stage and to volumetric [haze](/docs/rendering/volumetrics).
+
+<TypeTable
+  type={{
+    Brightness: { description: 'Peak output in nits. Scales the emissive surface and the wall’s light contribution to haze.', type: '50–8000 nits', default: 'profile' },
+    'Light emit': { description: 'Multiplier for how much the wall illuminates fixtures and fog. 0 = purely visual display, lights nothing.', type: '0–4.0', default: '1.0' },
+    Gamma: { description: 'Display gamma applied to content before display. Typical values 1.8–2.4.', type: '1.0–3.0', default: '2.2' },
+    Transparency: { description: 'Slider, 0 = fully opaque, 1 = fully transparent. Use higher values for mesh/transparent LED.', type: '0–1', default: '0 (opaque)' },
+    Curvature: { description: 'Horizontal arc across the wall. Positive bows outward (convex), negative inward (concave).', type: '−60°–+60°', default: '0° (flat)' },
+    Pixel: { description: 'Up-close pixel appearance: SMD round, SMD square, or discrete RGB sub-pixel stripes.', type: 'dropdown', default: 'SMD round' },
+  }}
+/>
+
+<Callout type="warn" title="Curvature is stored, not yet rendered">
+The **Curvature** value is saved in the project but the renderer does not yet bow the wall — it always displays flat. Treat curvature as data for a later phase.
+</Callout>
+
+### Pixel shape
+
+The **Pixel** dropdown changes how individual LEDs are drawn when you zoom in close. The shader applies a screen-space dot mask, so the effect is only visible in the detail view.
+
+| Option | Look |
+| --- | --- |
+| `SMD round` | Single combined round dot (surface-mount diode). Default. |
+| `SMD square` | Single combined square dot (square-lens surface mount). |
+| `Discrete RGB` | Vertical RGB sub-pixel stripes — the DIP / old-style real-pixel look. |
+
+<ImagePlaceholder
+  label="Close-up"
+  ratio="16 / 9"
+  caption="Zoomed-in detail of an LED wall surface showing the three pixel shapes side by side: round SMD dots, square SMD dots, and discrete RGB vertical sub-pixel stripes."
+/>
+
+## Built-in cabinet profiles
+
+Each profile defines a cabinet's physical size, native pixel count, derived pitch and default brightness. A placed screen tiles these into the array.
+
+| Profile | Cabinet (mm) | Pixels / cabinet | Pitch (mm) | Default nits | Transparent |
+| --- | --- | --- | --- | --- | --- |
+| Indoor 3.9mm | 500 × 500 | 128 × 128 | 3.9 | 1200 | No |
+| Indoor 2.6mm | 500 × 500 | 192 × 192 | 2.6 | 1500 | No |
+| Broadcast / XR 1.56mm | 500 × 500 | 320 × 320 | 1.56 | 1000 | No |
+| Outdoor 4.8mm | 500 × 1000 | 104 × 208 | 4.8 | 4500 | No |
+| Outdoor 10mm | 960 × 960 | 96 × 96 | 10.0 | 6000 | No |
+| Transparent 7.8mm | 1000 × 500 | 128 × 64 | 7.8 | 4500 | Yes |
+| Floor Tile 4.8mm | 500 × 500 | 104 × 104 | 4.8 | 1500 | No |
+
+<Callout type="info">
+The **Transparent 7.8mm** profile defaults to a partly see-through surface (transparency around `0.65`) so light and the stage behind show through the mesh.
+</Callout>
+
+## Frequently asked
+
+<Accordions type="single">
+  <Accordion title="Why can't I type a pixel pitch directly?">
+    Pitch is read-only and derived: `pitch = cabinet_mm ÷ cabinet_px`. To hit a target pitch, set the cabinet size and pixel count to match your panel's spec sheet.
+  </Accordion>
+  <Accordion title="The wall shows but lights nothing on stage.">
+    Check **Light emit**. At `0` the wall is a purely visual display and contributes no light to fixtures or haze. Raise it toward `1.0` (or higher) to feed the volumetric and area-light path.
+  </Accordion>
+  <Accordion title="How do I hide a screen without deleting it?">
+    Toggle the eye icon on the screen's row in the Outliner, or clear its **Visible** checkbox. A hidden screen is not drawn and is not pickable in the viewport.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<MonitorPlay />} title="Screen Content Sources" href="/docs/media/content-sources">
+    Drive the wall with test patterns, solid colour, images or live video.
+  </Card>
+  <Card icon={<Network />} title="Media Servers (CITP/MSEX)" href="/docs/media/media-servers">
+    Stream live layers from Resolume, grandMA, Capture and more.
+  </Card>
+  <Card icon={<Image />} title="NDI Video" href="/docs/media/ndi">
+    Receive NDI sources from devices on the LAN.
+  </Card>
+  <Card icon={<Grid3x3 />} title="Pixel-Map DMX" href="/docs/media/pixel-mapping">
+    Drive a low-res RGB cell grid from Art-Net or sACN.
+  </Card>
+  <Card icon={<Boxes />} title="MVR Scene Exchange" href="/docs/projects/mvr">
+    Import walls and rigs from an MVR file.
+  </Card>
+  <Card icon={<SunMedium />} title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    How a wall's light feeds fog and beam rendering.
+  </Card>
+</Cards>

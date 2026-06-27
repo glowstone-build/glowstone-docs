@@ -1,0 +1,219 @@
+---
+title: "Interface Overview"
+description: "A tour of the Glowstone window: panels, the viewport, menus and the status bar."
+---
+
+import { Folder, BookOpen, SlidersHorizontal, Monitor, Menu, LayoutGrid, Rows3 } from 'lucide-react';
+
+Glowstone opens into a dark, three-panel workspace built around a central 3D viewport. This page maps out every region of the default window.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The default Glowstone window at first launch (window title 'glowstone — lighting previsualization'): Scene/Library tabbed panel docked left, 3D Viewport in the centre showing the demo PAR Can 1 beam in haze over the ground plane, Inspector docked right, and the data strip (Fixtures/DMX/Cues/Connectivity) docked along the bottom. The menu bar runs across the top; the status bar runs across the bottom. Label each region: left panel, viewport, inspector, data strip, menu bar, status bar."
+/>
+
+## The default layout
+
+A standard three-panel split with a data strip along the bottom. Every panel can be dragged, resized, hidden, or rearranged, and the arrangement is remembered per [workspace](/docs/interface/workspaces).
+
+<TypeTable
+  type={{
+    'Left panel (Scene / Library)': {
+      description: 'Tabbed sidebar. Scene is the project outliner; Library is the fixture and content browser.',
+      type: 'left dock',
+      default: '~17% width',
+    },
+    'Viewport': {
+      description: 'The live 3D stage preview. Always present — it is the anchor every other panel docks around.',
+      type: 'centre',
+      default: 'fills remaining space',
+    },
+    'Inspector': {
+      description: 'Context-sensitive property editor for whatever you have selected.',
+      type: 'right dock',
+      default: 'right sidebar',
+    },
+    'Data strip (Fixtures / DMX / Cues / Connectivity)': {
+      description: 'Tabbed strip of data-heavy panels along the bottom edge.',
+      type: 'bottom dock',
+      default: '~30% height',
+    },
+  }}
+/>
+
+<Callout type="info">
+The viewport is the only panel that can never be closed. Every other panel can be toggled from the **Window ▸ Panels** menu and reopens at its natural edge — Scene and Library on the left, Inspector on the right, the data panels along the bottom.
+</Callout>
+
+## The panels
+
+### Scene
+
+The [Scene outliner](/docs/scene/outliner) is a tree of everything in your project: the world, fixtures, objects (static geometry), screens, environments, and [pyro devices](/docs/fixtures/pyro). Rename items, toggle visibility, and build named [selection groups](/docs/scene/selection) here. Fixture rows carry an editable [sequence number](/docs/scene/outliner) (a channel-number-style id) that you can sort and renumber by. Type-filter chips along the top narrow the tree to **All / Fixtures / Objects / Screens / Pyro**; orthogonal state chips (Unpatched / Selected / Conflicts) further restrict fixtures.
+
+### Library
+
+The [Library](/docs/library) browses the fixture and content catalogue with search, sort, content-class chips (including **Imported** for GDTF you've brought in), and multi-select. It keeps persistent Recent and Favourites sections, and an **Add** button drops the selected templates into the scene. Single-click selects; `Cmd`/`Ctrl`+click multi-selects. (GDTF and MVR are imported from the **File** menu, not from this panel.)
+
+### Viewport
+
+The [viewport](/docs/navigation/views) renders the live 3D stage with DMX-driven lighting. It is the only panel with a header bar, which holds display-mode, exposure, grid, beam, snap, pivot, and transform-orientation controls.
+
+### Inspector
+
+The Inspector is a single property editor that adapts to the current selection — fixture optics, geometry transform, screen content, environment fog, pyro device, or the world (which also holds the render properties). It offers a property filter and a "show only modified" toggle, and it goes read-only while a still render is running.
+
+### The data strip
+
+The bottom strip groups the four data-heavy panels:
+
+<Cards>
+  <Card icon={<LayoutGrid />} title="Fixtures" href="/docs/dmx/patching">
+    The fixture manager (tab labelled **Fixtures**): every fixture with its sequence number, DMX address, mode, and patch status.
+  </Card>
+  <Card icon={<Rows3 />} title="DMX" href="/docs/dmx/dmx-monitor">
+    A live 512-channel universe grid showing values and patch mapping.
+  </Card>
+  <Card title="Cues" href="/docs/cues">
+    Saved lighting looks with crossfade playback.
+  </Card>
+  <Card title="Connectivity" href="/docs/dmx/connectivity">
+    Art-Net / sACN settings and source status.
+  </Card>
+</Cards>
+
+<Callout type="info" title="DMX is input-only">
+Glowstone visualises DMX coming from a console or software — it never outputs or transmits DMX. See [Connecting a Console](/docs/dmx/consoles).
+</Callout>
+
+There is also a **Render** panel (not docked by default) for [still-image rendering](/docs/rendering/render-image). Open it from **Window ▸ Panels ▸ Render** or the **Render** menu.
+
+## The menu bar
+
+The menu bar runs across the top of the window. From left to right:
+
+| Menu | What it covers |
+| --- | --- |
+| **File** | New Project, Open Project, Open Recent, Save (`Ctrl`+`S`), Save As, Import GDTF Fixture, Import / Export MVR Scene, Preferences. |
+| **Edit** | Undo / Redo, Run Operator (`F3`), Adjust Last Operation (`F9`), Duplicate / Array, Delete Selected, and Select All (`A`) / Invert (`Ctrl`+`I`) / Deselect (`Alt`+`A`). |
+| **View** | Camera (preset views), Frame Selection (`F`) / Frame All (`Shift`+`F`), Toggle Fullscreen (`F11`), and an Overlays submenu of toggles. |
+| **Fixture** | Online Library and Edit Profile (the GDTF profile editor, enabled for a selected GDTF fixture). |
+| **Render** | Render Image (`F12`), Render Animation (disabled), Cancel Render, Open Render View. |
+| **Window** | Workspace, View Bookmarks, Performance, Report Log, Welcome, Panels, Reset Layout. |
+| **Help** | Keyboard Shortcuts and About glowstone. |
+
+For the full breakdown of every menu item, see [the Menu Bar reference](/docs/interface/menus).
+
+<Callout type="warn">
+**Render Animation** is visible in the Render menu but disabled — its tooltip reads "coming soon".
+</Callout>
+
+## The status bar
+
+A thin status bar runs along the bottom of the window. It shows the current selection on the left and live scene info on the right.
+
+<ImagePlaceholder
+  label="Close-up"
+  ratio="21 / 9"
+  caption="Close-up of the status bar. Left: a small log icon followed by a selection summary such as 'PAR Can 1 · PAR Can', then a grey context hint after a separator. Right (right-to-left): an FPS counter like '60 fps', a fixture count like '1 fixtures', and a DMX status dot — green with 'DMX live' when receiving, grey with 'DMX off' when idle."
+/>
+
+<TypeTable
+  type={{
+    'Log icon': {
+      description: 'Click to toggle the Report Log window.',
+      type: 'left',
+    },
+    'Selection summary': {
+      description: '"nothing selected", a single "[name] · [profile]", or "[N] fixtures selected". A pushed transient message masks it, and a grey context hint can follow after a separator.',
+      type: 'left',
+    },
+    'FPS': {
+      description: 'Current viewport frame rate, e.g. "60 fps". (Far right.)',
+      type: 'right',
+    },
+    'Fixture count': {
+      description: 'Total fixtures in the scene, shown as "[N] fixtures".',
+      type: 'right',
+    },
+    'DMX status': {
+      description: 'A coloured dot — green "DMX live" when receiving Art-Net/sACN, grey "DMX off" when idle.',
+      type: 'right',
+    },
+  }}
+/>
+
+<Callout type="info">
+The status bar no longer shows a units (m / ft) indicator — measurement units are set in [Preferences](/docs/interface/preferences) and surface in the viewport (e.g. the Measure tool readout) instead.
+</Callout>
+
+## The welcome screen
+
+The welcome (splash) screen appears at startup, and any time you choose **File ▸ New Project** or **Window ▸ Welcome**. It is a centred modal with a hero image carrying the Glowstone wordmark and version label, plus two columns of actions.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="4 / 3"
+  caption="The Glowstone welcome splash screen: a hero image at the top with the 'glowstone' wordmark bottom-left and a 'v[VERSION] alpha' label bottom-right. Below, two columns — left 'New' with New Project, Open…, and (if an autosave exists) Recover Last Session; right 'Recent Files' listing the last ~8 projects. A 'Continue without a project' link sits in the footer."
+/>
+
+<TypeTable
+  type={{
+    'New Project': {
+      description: 'Create a blank scene.',
+      type: 'New',
+    },
+    'Open…': {
+      description: 'Open a saved project from a file dialog (native .glow; legacy .archie still opens).',
+      type: 'New',
+    },
+    'Recover Last Session': {
+      description: 'Re-open the auto-saved session from the last run. Shown only when an autosave exists.',
+      type: 'New',
+    },
+    'Recent Files': {
+      description: 'The last ~8 projects, each clickable to open. Falls back to "No recent projects" when empty.',
+      type: 'right column',
+    },
+    'Continue without a project': {
+      description: 'Dismiss the splash and keep the current demo scene.',
+      type: 'footer',
+    },
+  }}
+/>
+
+<Callout type="idea">
+Saved projects use the native `.glow` format (magic `GLOW\0`), a single self-contained file holding the scene, preferences, the DMX patch and config, selection groups, and cues, with pyro devices in a JSON trailer. Legacy `.archie` files still open. See [Projects & the .glow Format](/docs/projects).
+</Callout>
+
+## The demo scene
+
+A New Project starts with a small demo so you can see the renderer immediately: one **PAR Can 1** (a built-in PAR Can profile) up 4 m and tilted 45° at full intensity, inside one **Fog Box** haze volume resting on the floor. The renderer always draws a diffuse ground plane beneath it. It exercises the [beam engine](/docs/fixtures/beam-engine) and [volumetric beams](/docs/rendering/volumetrics).
+
+## Reset and rearrange
+
+If you drag the layout into a mess, **Window ▸ Reset Layout** restores the active workspace's saved arrangement. To switch between layouts, use the workspace tab strip or **Window ▸ Workspace**.
+
+## See also
+
+<Cards>
+  <Card icon={<Folder />} title="Panels" href="/docs/interface/panels">
+    A reference for all nine dockable panels.
+  </Card>
+  <Card icon={<LayoutGrid />} title="Workspace & Docking" href="/docs/interface">
+    How docking, resizing, and tab dragging work.
+  </Card>
+  <Card icon={<Menu />} title="Menu Bar" href="/docs/interface/menus">
+    Every menu and command, in full.
+  </Card>
+  <Card icon={<Monitor />} title="Views, Gizmo & Pie Menus" href="/docs/navigation/views">
+    Move the camera around the 3D viewport.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Preferences & Theme" href="/docs/interface/preferences">
+    Set units, display, and DMX options.
+  </Card>
+  <Card icon={<BookOpen />} title="Key Concepts" href="/docs/getting-started/key-concepts">
+    The ideas behind fixtures, cues, and DMX.
+  </Card>
+</Cards>

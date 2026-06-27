@@ -1,0 +1,169 @@
+---
+title: "Panels"
+description: "Reference for every dockable panel: Scene, Library, Inspector, DMX, Patch, Cues, Connectivity, Render and Viewport."
+---
+
+import { Monitor, ListTree, Library, SlidersHorizontal, Grid3x3, Plug, Cable, ListChecks, Image } from 'lucide-react';
+
+Glowstone arranges its interface as dockable panels around a fixed central Viewport. This page documents each panel: what it shows, what you do in it, and the deep page that covers it in full. Toggle any panel except the Viewport from **Window › Panels** (Render is included in that list).
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The default 'Design' workspace: Scene/Library tabs docked left, 3D Viewport centre showing the demo scene with a hazy beam, Inspector docked right, and the Fixtures/DMX/Cues/Connectivity strip docked along the bottom edge."
+/>
+
+<Callout type="info" title="Tab title vs. panel name">
+A few panels show a tab label that differs from their function. The **Patch** panel is labelled **Fixtures** in the dock, and the **DMX Monitor** panel is labelled **DMX**. This page uses the functional name and notes the tab title for each.
+</Callout>
+
+## Viewport
+
+The 3D stage preview and the immovable anchor of every layout — all other panels dock around it. It renders the live scene with DMX-driven lighting, volumetric beams in haze, and fixture optical output in real time. The Viewport has its own header bar (display mode, exposure, grid, snap, pivot, transform orientation), and it is always present — it never appears in the **Window › Panels** toggle list.
+
+See [Camera & Navigation](/docs/navigation), [Views, Gizmo & Pie Menus](/docs/navigation/views), and [Display Modes & Overlays](/docs/navigation/overlays).
+
+## Scene
+
+Tab title: **Scene**. A custom recursive outliner of the project hierarchy under one **Scene** root: **World** (sky/HDRI) with **Environment** fog volumes nested beneath it, then **Fixtures**, **Objects** (static geometry), **Screens** (LED content), and **Pyro** devices. Use it to select, rename (double-click), toggle visibility (the eye column), and build selections. A name filter and type/state filter chips narrow the tree, and a Sort control orders fixtures by **Patch**, **Name**, **Type**, or **Seq** (sequence number).
+
+Fixture rows show the **sequence number** (the lighting-console "channel" id) leading the name, plus a right-aligned patch (`universe.address`) chip and channel footprint.
+
+<Callout type="info">
+The outliner's expand/collapse state, filter chips, and search text are session state held in memory — they survive closing and reopening the panel within a run, but are not persisted to disk.
+</Callout>
+
+See [The Scene Outliner](/docs/scene/outliner) and [Selecting Objects](/docs/scene/selection).
+
+### Type & state filter chips
+
+The chip row narrows the tree. The **type** chips are mutually exclusive: **All, Fixtures, Objects, Screens, Pyro** (selecting one restricts the tree to that kind; World/Environment only show under **All**). The **state** chips are composable toggles that constrain fixtures only: **Unpatched**, **Selected**, **Conflicts**. Activating any state chip puts the tree into fixture-focus mode and hides the non-fixture kinds.
+
+## Library
+
+Tab title: **Library**. The content browser — a searchable, sortable, multi-select list of fixture / laser / screen / environment templates, with **Recent** and **Favourites** sections pinned at the top when not searching. Sort by **Category**, **Name**, or **Maker**, and narrow by content-class chip (**All / Fixtures / Lasers / Screens / Environments / Imported**). Single-click selects; `Cmd`/`Ctrl`+click toggles; `Shift`+click range-selects. Double-click adds an entry, drag one into the Viewport to place it, or select and press `Enter`. The header toolbar hosts **Online** (GDTF Share), **Export** (MVR), **Import MVR**, and **Import GDTF**.
+
+<Callout type="info">
+Pinned Recents and Favourites persist between sessions (stored in `library.json` in the config dir).
+</Callout>
+
+See [The Fixture Library](/docs/library) and [Importing GDTF Fixtures](/docs/library/import-gdtf).
+
+## Inspector
+
+Tab title: **Inspector**. Glowstone's unified property editor. The Inspector is selection-aware: it shows different controls depending on what is selected, and edits apply live with immediate feedback in the Viewport.
+
+<ImagePlaceholder
+  label="UI panel"
+  ratio="4 / 3"
+  caption="The Inspector docked on the right edge with a GDTF moving head selected, showing collapsible categories, the property filter box at the top, and the 'Modified only' and 'Pin' header toggles."
+/>
+
+### What the Inspector shows
+
+The displayed editor follows the active selection:
+
+| Selection | Editor shown |
+| --- | --- |
+| Fixture (built-in) | Heading + provenance chip, Transform, and the Fixture optics/level/beam grid |
+| Fixture (GDTF) | Thumbnail, beam spec, emitter/cell summary, Transform + Fixture grid, Optics, Wheels, and a DMX-modes reference table |
+| Geometry (Object) | Name, visibility, world transform (position / rotation / uniform scale), size note |
+| Screen | Name, transform, and the LED-screen content/layout controls |
+| Pyro | Heading, visibility, transform, and the kind-aware Effect/Movement/Quality/DMX grid |
+| Environment | Transform (Center, Size W/H/D), Density, Tint, and advanced scattering knobs |
+| World (Sky) | Render Properties + the shared World controls (HDRI / ambient / fog) |
+
+Pyro devices are a placed entity with their own inline DMX patch — see [Pyro Devices](/docs/fixtures/pyro).
+
+### Filtering and categories
+
+- **Property filter** — type in the filter box to hide rows whose labels don't fuzzy-match; a category with no matching row hides entirely. The filter is per-session (not saved).
+- **Modified only** — when on, hides any property still at its default value, so you see only what you've changed. Per-session (not saved).
+- **Pin** — lock the Inspector to the currently-selected single fixture so it stays put as the Viewport/outliner selection changes. Per-session.
+- **Collapsible categories** — click a section header to fold or unfold it. Each category's open/closed state persists across sessions (saved to `inspector.json`).
+
+See [Beam Parameter Reference](/docs/fixtures/parameters) and [Transforming](/docs/scene/transforming).
+
+## DMX Monitor
+
+Tab title: **DMX**. A live 512-channel universe grid (16 × 32 cells) — one cell per channel — showing each channel's live level (as a percentage bar; the raw `0`–`255` value appears in the cell tooltip) and its patch occupant (the fixture + attribute mapped to that address, tinted by a per-fixture identity colour). A universe selector dropdown (with prev/next) switches which universe you're viewing, conflicts ring in red, and a live/idle indicator with source count tracks incoming DMX. Clicking an occupied cell selects its fixture.
+
+<Callout type="warn">
+Glowstone is input-only for DMX: it visualizes DMX received from a console or software but never outputs or transmits DMX.
+</Callout>
+
+See [The DMX Monitor](/docs/dmx/dmx-monitor) and [DMX Overview](/docs/dmx).
+
+## Patch (Fixtures)
+
+Tab title: **Fixtures**. The Fixture Manager — a data-dense, sortable, filterable table of every fixture with multi-select synced to the 3D/Inspector selection and bulk patch editing. Columns are **Seq, Fixture, Type, Univ, Addr, Mode, Ch** (channel footprint), and a status cell (conflict / off). Sort by **Patch / Name / Type / Seq**; filter by search, **conflicts-only**, or **unpatched-only**. Editable cells per row: the sequence number, universe, address, and DMX mode. A bulk toolbar (shown when fixtures are selected) patches a range sequentially, sets the universe, enables/disables, and sets a shared mode; **Renumber** reassigns sequence numbers by stage position.
+
+See [Patching Fixtures](/docs/dmx/patching) and [DMX Modes & Channels](/docs/library/dmx-modes).
+
+## Cues
+
+Tab title: **Cues**. Saved looks plus crossfade playback. **Record** captures the current look of every fixture (pan/tilt/colour/intensity/beam/optics) as a cue with a fade time. The cue list lets you recall a cue by click (crossfading the continuous fields, snapping the discrete optics), step with **Prev** / **Go**, edit each cue's fade time inline, and delete a cue. A progress bar tracks an in-flight fade.
+
+<Callout type="info">
+Cues are the offline look engine — while a fade is in progress the recalled look overrides live DMX. They're meant for building and showing looks without a console; don't run both at once.
+</Callout>
+
+See [Cues & Playback](/docs/cues).
+
+## Connectivity
+
+Tab title: **Connectivity**. Art-Net and sACN input settings plus per-source status. A **Receive DMX** toggle starts/stops the listener; below it you set the active protocols (**Art-Net** / **sACN**), the bind interface IP, the sACN universe list, the merge policy, and the Art-Net priority, with a **Reapply** button for protocol/interface changes. A live **Sources** table lists each source (protocol, name, universes, priority, FPS, sequence errors, age).
+
+<Tabs items={['Art-Net', 'sACN']}>
+  <Tab value="Art-Net">Art-Net input — broadcast, so every universe is received regardless of the universe list.</Tab>
+  <Tab value="sACN">sACN / E1.31 input — the universe list selects which multicast groups to join.</Tab>
+</Tabs>
+
+See [Connectivity: Art-Net & sACN](/docs/dmx/connectivity) and [Connecting a Console](/docs/dmx/consoles).
+
+## Render
+
+Tab title: **Render**. The still-image render output: a toolbar (**Render** / **Re-render** / **Cancel**, **Save to Disk**, **Save Copy**), a progress strip (Sample i/N + elapsed time), and the large converging preview that refines as accumulation passes complete. The render *settings* themselves — output resolution, scale, format, sampling, and performance options — live in **World › Render Properties** (select World, then the Inspector); the Render tab drives and displays the result.
+
+<Callout type="warn">
+Some render-related features are visible but not yet functional: the **Animation** render button (greyed), **Motion blur**, **Caustics**, and the **"New Window"** render-display option. The froxel volumetric grid is off by default — the per-pixel raymarch is the default and looks better.
+</Callout>
+
+See [Rendering Overview](/docs/rendering) and [Rendering a Still Image](/docs/rendering/render-image).
+
+## Panel reference
+
+Each toggleable panel reopens on a canonical edge: when toggled closed and reopened, it returns to that edge as a full pane rather than merging into the Viewport tab strip.
+
+| Panel | Tab title | Purpose | Reopen edge |
+| --- | --- | --- | --- |
+| Viewport | Viewport | Live 3D stage preview (anchor) | Centre (always open) |
+| Scene | Scene | Outliner of the project hierarchy | Left |
+| Library | Library | Browse and place fixtures | Left |
+| Inspector | Inspector | Selection-aware property editor | Right |
+| DMX Monitor | DMX | Live 512-channel universe grid | Bottom |
+| Patch | Fixtures | Fixture manager / patch table | Bottom |
+| Cues | Cues | Saved looks + crossfade playback | Bottom |
+| Connectivity | Connectivity | Art-Net / sACN input settings | Bottom |
+| Render | Render | Still-render output and preview | Focused leaf (no canonical edge) |
+
+<Callout type="idea">
+Press `N` to toggle the Inspector (N-panel) and `T` to toggle the tool rail (T-panel) without reaching for the menu. Use **Window › Reset Layout** to re-apply the active workspace's saved arrangement.
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Grid3x3 />} title="Workspace & Docking" href="/docs/interface">
+    How panels dock, resize, and save into reusable layouts.
+  </Card>
+  <Card icon={<ListChecks />} title="Workspaces" href="/docs/interface/workspaces">
+    Save panel arrangements, tools, and overlays as named presets.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Preferences & Theme" href="/docs/interface/preferences">
+    App-wide settings, units, and display options.
+  </Card>
+  <Card icon={<Monitor />} title="Interface Overview" href="/docs/getting-started/interface-overview">
+    A guided tour of the Glowstone window and its regions.
+  </Card>
+</Cards>

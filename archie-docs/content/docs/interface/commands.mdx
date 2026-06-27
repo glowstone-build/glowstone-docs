@@ -1,0 +1,285 @@
+---
+title: "Commands & Operator Search"
+description: "The F3 operator palette, F9 adjust-last, the Shift+A Add menu and Quick-Select."
+---
+
+import { Search, RotateCcw, Plus, MousePointerSquareDashed, History, Keyboard, ListChecks } from 'lucide-react';
+
+Glowstone uses a single, unified command registry: every action lives in exactly one place and is reachable through the keymap, the menus, the `F3` operator-search palette, and `F9` to adjust the last operation. A shortcut, a menu entry and a palette row all dispatch the same underlying command.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The 3D viewport with the F3 operator-search palette open and floating in the center: title row reading 'Run Operator' with an Esc hint, a single-line filter box containing 'patch', and a scrollable list below showing command labels on the left, bound shortcuts in the middle, and category badges (OBJECT, VIEW, TRANSFORM) on the right. One disabled (greyed) row visible."
+/>
+
+## How commands are dispatched
+
+Each command carries an `id` (such as `object.delete` or `fixture.duplicate`), a human-readable `label`, and a `category` (Navigation, Selection, Transform, Add, Object, View, File, App). Commands that change the document run through the operator pipeline, which integrates undo/redo and records the last operation for `F9`.
+
+<Cards>
+  <Card icon={<Keyboard />} title="Keymap">
+    Bound keys fire commands directly. Global keys work when the viewport is not focused; viewport keys (like `G`/`R`/`S`) work only when it is.
+  </Card>
+  <Card icon={<Search />} title="F3 palette">
+    Fuzzy-search and run almost any command by name, with live enabled/disabled state.
+  </Card>
+  <Card icon={<RotateCcw />} title="F9 adjust last">
+    Re-open the last operator's dialog to tweak its parameters and repeat it.
+  </Card>
+  <Card icon={<Plus />} title="Add menu">
+    `Shift`+`A` adds fixtures, screens, pyro and environments at the cursor.
+  </Card>
+</Cards>
+
+<Callout type="info">
+`Cmd` on macOS is `Ctrl` on Windows and Linux. Shortcuts below are written with the macOS key; substitute `Ctrl` where you see `Cmd`.
+</Callout>
+
+## The F3 operator-search palette
+
+Press `F3` or `Space` to open the operator-search palette — a centered, floating window that lets you find and run a command by typing its name.
+
+<Callout type="info" title="Space during a transform">
+`Space` is suppressed while a modal transform (`G`/`R`/`S`) is active, so that `Space` can confirm the transform. Use `F3` if you need the palette mid-edit.
+</Callout>
+
+### Anatomy
+
+Each row in the list shows three things:
+
+- **Label** on the left — the command name.
+- **Shortcut** in the middle — the currently-bound key, if any.
+- **Category badge** on the right — `OBJECT`, `VIEW`, `TRANSFORM`, and so on.
+
+### Navigating the palette
+
+| Key | Action |
+| --- | --- |
+| `Type` | Filter the list by label (case-insensitive fuzzy match) |
+| `Up` / `Down` | Move the highlight within the filtered list |
+| `Enter` | Run the highlighted command, if it is enabled |
+| `Esc` | Dismiss the palette |
+
+The filter is fuzzy: typing `mvx` finds `Move on X`. Contiguous matches rank higher, and an empty query keeps the registry's natural order.
+
+### Enabled and disabled commands
+
+A command is enabled only if its `poll()` check passes. For example, `Delete Selected` is greyed out when nothing is selected, and you cannot pick it. Pure view, navigation and selection actions are always enabled.
+
+### What the palette lists
+
+The palette lists every palette-runnable command. A few categories are deliberately excluded:
+
+<Accordions type="single">
+  <Accordion title="What is hidden from the F3 palette, and why?">
+    - **Modal, viewport-only actions** — the `G`/`R`/`S` move/rotate/scale transforms, the `X`/`Y`/`Z` axis-lock keys, and the camera view. These need live viewport mouse state, so they can't run from a floating window.
+    - **Keymap-only twins** (`kmi.*`) — internal duplicates of canonical commands, hidden so the list isn't doubled up.
+    - **Alias binds** (`*_alias`) — alternate shortcuts such as `Cmd`+`Y` for Redo, which already appear under their canonical entry.
+  </Accordion>
+</Accordions>
+
+When you pick a command, dialog operators (like `Duplicate / Array…` or `Patch Fixtures…`) open their parameter dialog; direct operators (like `Delete Selected` or `Unpatch Fixtures`) run immediately; pure actions dispatch straight away.
+
+## F9 — adjust the last operation
+
+After you run an operator, press `F9` to re-invoke it. For **dialog operators**, this re-opens the dialog pre-filled with the values you last used, so you can tweak a parameter and confirm to repeat. For **direct operators** (such as Delete), `F9` simply runs it again.
+
+<Callout type="idea">
+`F9` is ideal for "patch a row, then patch the next row at the next address" or "duplicate, then duplicate again with a different count" without re-typing every value.
+</Callout>
+
+### Example: repeat a patch at the next address
+
+<Steps>
+<Step>
+### Patch the first batch
+Select some fixtures and press `P`. In the Patch dialog, set the universe and starting address (for example `Universe` `1`, `Address` `1`) and confirm. The operator records itself as the last operation.
+</Step>
+<Step>
+### Press F9
+The Patch dialog re-opens with the same settings you just used.
+</Step>
+<Step>
+### Change one value
+Select the next batch of fixtures and bump `Address` to `21` (or change the universe), leaving everything else as it was.
+</Step>
+<Step>
+### Confirm
+Press `Enter`. The operator re-runs with the new parameters, patching the new batch where you wanted it.
+</Step>
+</Steps>
+
+<Callout type="warn">
+`F9` only works if the last command declared itself for re-registration. View, navigation and selection actions don't register as the "last operation" — only mutating operators do.
+</Callout>
+
+## The Add menu (Shift+A)
+
+Press `Shift`+`A` in the viewport to open the Add menu at the mouse position. It is a cursor-anchored popup for adding new objects to the scene. You can also open it from the `F3` palette via `Add Object…`.
+
+<ImagePlaceholder
+  label="UI panel"
+  ratio="4 / 3"
+  caption="The Add menu popup anchored near the cursor: a left column under an ADD heading with four category entries (Fixtures, Screens, Pyro, Environment) with Fixtures active, and a right column showing a filter box plus a scrollable list of entries. Each row shows a leading star toggle, an icon (or GDTF thumbnail), and a 'manufacturer · name' label (one starred row tinted with the accent color). A pinned RECENT section and FAVOURITES section are visible above the catalog list because the filter is empty."
+/>
+
+### Categories
+
+<Tabs items={['Fixtures', 'Screens', 'Pyro', 'Environment']}>
+  <Tab value="Fixtures">
+    Imported GDTF definitions (shown as `manufacturer · name`, with a thumbnail from the GDTF where available) listed first, then built-in fixture profiles (shown as `category · name`). Built-in laser profiles use a distinct icon; other fixtures use the fixture icon.
+  </Tab>
+  <Tab value="Screens">
+    LED-wall components, shown as `category · name`. See [LED Screens](/docs/media).
+  </Tab>
+  <Tab value="Pyro">
+    Stage pyro devices (CO2 jets and cold-spark machines), shown as `category · name`. Pyro is patched inline rather than through the fixture patch table — see [Pyro](/docs/fixtures/pyro).
+  </Tab>
+  <Tab value="Environment">
+    Environment volumes, shown as `category · name`. See [Environments: Fog & Haze](/docs/scene/environment).
+  </Tab>
+</Tabs>
+
+### Navigating the Add menu
+
+| Key | Action |
+| --- | --- |
+| `Up` / `Down` | Move the highlight within the current category |
+| `Left` / `Right` | Switch categories (wraps around) |
+| `Type` | Filter entries by label (fuzzy, case-insensitive) |
+| `Enter` | Add the highlighted entry at the click position |
+| `Esc` | Dismiss without adding |
+
+Clicking outside the menu also closes it. Picking an entry closes the menu, adds the object to the scene at the mouse position, and selects it — the Inspector then shows its properties.
+
+### Recent and Favourites
+
+When the filter box is **empty**, two pinned sections appear above the catalog list:
+
+- **RECENT** — the items you added most recently.
+- **FAVOURITES** — every starred item.
+
+Entering a query hides both pinned sections and shows only the filtered catalog. Each row has a trailing star: click it to toggle that entry's favourite state. Starring **persists** to your preferences and does **not** close the menu, so you can star several entries in one pass.
+
+### Example: add an ETC Source Four
+
+<Steps>
+<Step>
+### Open the menu
+Move the mouse to where you want the fixture and press `Shift`+`A`. The menu appears at the cursor.
+</Step>
+<Step>
+### Pick a category
+Make sure the **Fixtures** category is active (it usually is). Use `Left`/`Right` to switch if needed.
+</Step>
+<Step>
+### Filter
+Type `ETC` to narrow the list to ETC entries.
+</Step>
+<Step>
+### Choose and add
+Highlight `ETC · Source Four` with `Up`/`Down`, then press `Enter` (or click the row). The fixture is added at the mouse position and selected, ready to patch.
+</Step>
+</Steps>
+
+<Callout type="info">
+New fixtures still need a DMX patch before a console can drive them. See [Patching Fixtures](/docs/dmx/patching). Remember that Glowstone only ever reads DMX from a console — it never outputs DMX.
+</Callout>
+
+## Quick-Select (S)
+
+Press `S` (when the viewport is **not** focused) to open the Quick-Select palette — a centered window titled **Select** with five fast ways to change the selection. It operates on the **active selection kind** (fixtures, objects, screens or pyro — whichever currently holds the selection, defaulting to fixtures), so the same five keys batch-select whatever you're working with.
+
+<Callout type="warn">
+Inside a focused 3D viewport, `S` maps to the Scale transform instead. Move focus out of the viewport, or use the `F3` palette, to reach Quick-Select while editing.
+</Callout>
+
+<TypeTable
+  type={{
+    'All … (A)': { description: 'Select every item of the active kind (label reads “All fixtures” / “All objects” / “All screens” / “All pyro”).', type: 'key A', default: 'always enabled' },
+    'All of this type (T)': { description: 'Select every fixture sharing the primary selection’s profile.', type: 'key T', default: 'fixtures only; needs a profiled primary' },
+    'All by this maker (M)': { description: 'Select every fixture from the same manufacturer as the primary selection’s GDTF.', type: 'key M', default: 'fixtures only; needs a GDTF maker' },
+    'Invert selection (I)': { description: 'Flip the selected state of every item of the active kind.', type: 'key I', default: 'always enabled' },
+    'Select none (N)': { description: 'Deselect everything in the active kind.', type: 'key N', default: 'always enabled' },
+  }}
+/>
+
+Each row shows its label on the left and, on the right, a live count of how many items the option would select plus its key badge. The **All of this type** and **All by this maker** options are fixture-only: they enable only when the active kind is fixtures and the primary selection has a profile (Type) or a GDTF manufacturer (Maker); for objects, screens or pyro they render greyed. Disabled rows render greyed. `Esc` dismisses the palette without changing the selection.
+
+### Example: select all fixtures by one maker
+
+<Steps>
+<Step>
+### Pick a reference fixture
+Select one fixture from the manufacturer you want, for example an ETC Source Four.
+</Step>
+<Step>
+### Open Quick-Select
+Press `S`. The palette opens with live counts beside each option.
+</Step>
+<Step>
+### Select by maker
+Press `M` (or click **All by this maker**). Every ETC fixture in the scene is now selected.
+</Step>
+</Steps>
+
+<Callout type="info">
+Quick-Select complements the standard selection shortcuts: `A` selects all, `Cmd`/`Ctrl`+`I` inverts, and `Alt`+`A` or `Esc` deselects. See [Selecting Objects](/docs/scene/selection).
+</Callout>
+
+## Undo, redo and named history
+
+Mutating operators run through the operator pipeline, which snapshots the document before and after each step. This gives you reliable, named history.
+
+| Shortcut | Action |
+| --- | --- |
+| `Cmd`/`Ctrl`+`Z` | Undo |
+| `Cmd`/`Ctrl`+`Shift`+`Z` | Redo |
+| `Cmd`/`Ctrl`+`Y` | Redo (alias) |
+
+<Accordions type="single">
+  <Accordion title="How does history behave during drags and rapid edits?">
+    - **Drag gestures** (gizmo handles, Inspector sliders) capture the before-state once at drag-start and push exactly one undo step on release. Pressing `Esc` mid-drag restores the original state with no step pushed.
+    - **Rapid like-edits** coalesce: a burst of arrow-key nudges within 600 ms (including a held key that repeats) collapses into a single undo step.
+    - **Cancelled operators** (you press `Esc` in a dialog) push nothing and leave the document untouched.
+    - History retains up to 64 steps, dropping the oldest when a memory cap is reached.
+  </Accordion>
+</Accordions>
+
+## Operator Search vs Add menu vs Quick-Select
+
+<Tabs items={['Operator Search', 'Add menu', 'Quick Select']}>
+  <Tab value="Operator Search">
+    **Open with `F3` / `Space`.** A global, searchable list of almost every command. Best when you know roughly what an action is called but not its shortcut. Honors each command's enabled/disabled poll.
+  </Tab>
+  <Tab value="Add menu">
+    **Open with `Shift`+`A`.** A cursor-anchored picker for adding new objects (fixtures, screens, pyro, environments), with Recent, Favourites and per-entry starring. Best when you want to place something new in the scene.
+  </Tab>
+  <Tab value="Quick Select">
+    **Open with `S`** (outside the viewport). Five one-key ways to change the selection within the active kind — All, of this type, by this maker, Invert, none — with live counts. Best for building a selection fast before a bulk edit.
+  </Tab>
+</Tabs>
+
+## See also
+
+<Cards>
+  <Card icon={<ListChecks />} title="Command Reference" href="/docs/reference/commands">
+    The complete list of every command, grouped by category.
+  </Card>
+  <Card icon={<Keyboard />} title="Keyboard Shortcuts" href="/docs/reference/keyboard-shortcuts">
+    Every default key bind for global, viewport and modal contexts.
+  </Card>
+  <Card icon={<Plus />} title="Adding Fixtures & Objects" href="/docs/scene/adding-objects">
+    More on placing fixtures, screens, pyro and environments.
+  </Card>
+  <Card icon={<MousePointerSquareDashed />} title="Selecting Objects" href="/docs/scene/selection">
+    Selection tools and how the primary selection works.
+  </Card>
+  <Card icon={<History />} title="Duplicate & Array" href="/docs/scene/duplicate-array">
+    The `D` dialog operator that pairs perfectly with `F9`.
+  </Card>
+  <Card icon={<Search />} title="Menu Bar" href="/docs/interface/menus">
+    Where the same commands appear as menu entries.
+  </Card>
+</Cards>

@@ -1,0 +1,177 @@
+---
+title: "Cues & Playback"
+description: "Record rig looks and recall them with per-cue crossfades."
+---
+
+import { Camera, Disc, Play, RotateCcw, SlidersHorizontal, Trash2, Bookmark } from 'lucide-react';
+
+A cue is a snapshot of your rig's look — every fixture's pan, tilt, colour, intensity, beam and full optical chain captured in one click. Recall a cue and Glowstone crossfades back to that look over a fade time you set. Built for shaping and showing looks offline, without a live console.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Cues panel docked in the right sidebar mid-fade: a cue list of four rows (e.g. '1. Cyc Wash | 8 fx | 2.5 s | trash'), the highlighted current cue in accent colour, the transport row showing Prev / Go / '▶ Cyc Wash', and a thin horizontal fade-progress bar under the transport labelled '→ Spot A' partway across. The 3D viewport behind shows beams crossfading position and colour."
+/>
+
+## What a cue stores
+
+Recording a cue captures one look per fixture, aligned to the fixtures in the scene at record time. Each look holds the fixture's full controllable state.
+
+<TypeTable
+  type={{
+    pan: { description: 'Rotation about the world Y-axis.', type: 'degrees', default: 'captured' },
+    tilt: { description: 'Tilt about the fixture\'s local X-axis (0° = straight down).', type: 'degrees', default: 'captured' },
+    color: { description: 'Linear RGB colour of the beam.', type: '0.0–1.0 RGB', default: 'captured' },
+    intensity: { description: 'Master dimmer level.', type: '0.0–1.0', default: 'captured' },
+    beam_angle: { description: 'Full beam cone angle.', type: 'degrees', default: 'captured' },
+    optics: { description: 'The complete optical chain (zoom, focus, iris, CTO, green, CMY, shutter, strobe and all wheels).', type: 'OpticalControls', default: 'captured' },
+  }}
+/>
+
+The captured optical chain covers everything the [beam engine](/docs/fixtures/beam-engine) renders:
+
+<TypeTable
+  type={{
+    dimmer: { description: 'Optics-stage master intensity. Crossfades on recall.', type: '0.0–1.0', default: 'captured' },
+    zoom: { description: 'Beam angle across the GDTF zoom range (0 = narrow, 1 = wide).', type: '0.0–1.0', default: 'captured' },
+    focus: { description: 'Focus position (0.5 ≈ in focus; extremes blur the gobo edge).', type: '0.0–1.0', default: 'captured' },
+    iris: { description: 'Iris openness (1 = fully open).', type: '0.0–1.0', default: 'captured' },
+    cto: { description: 'CTO filter (0 = off, 1 = full warm).', type: '0.0–1.0', default: 'captured' },
+    green: { description: 'Green / magenta tint on the CC axis.', type: '-1.0 to +1.0', default: 'captured' },
+    cmy: { description: 'Cyan, magenta, yellow subtractive flag targets.', type: '0.0–1.0 each', default: 'captured' },
+    wheels: { description: 'Per-component gobo, colour, prism, animation and frost wheel slots and rotations.', type: 'discrete', default: 'captured' },
+  }}
+/>
+
+<Callout type="info" title="How recall fades">
+Continuous fields — pan, tilt, colour, intensity, beam, dimmer, zoom, focus, iris, CTO, green and CMY — crossfade smoothly over the cue's fade time. Discrete optics — gobo, colour, animation, prism and frost wheel slots — **snap instantly** at the start of the fade, because wheel slots don't interpolate. Pan and tilt take the shortest path (e.g. `+170°` to `-170°` crosses `0°`, not the long way round).
+</Callout>
+
+## The Cues panel
+
+Open the **Cues** tab in the dockable sidebar. The panel has three parts: a record section, a transport, and the scrollable cue list.
+
+<ImagePlaceholder
+  label="UI panel"
+  ratio="4 / 3"
+  caption="Close-up of the Cues panel: top-right cue counter ('4'); record section with a name field (placeholder 'Cue 5'), a fade-time drag control reading '2.0 s', and a Record button; transport row with Prev, an accent-coloured Go button, and the current-cue label '▶ Cyc Wash'; below it the cue list grid with four rows."
+/>
+
+### Cue list columns
+
+The cue list is a scrollable grid showing every recorded cue in order. The current cue (the one last fully recalled) is highlighted in the panel's accent colour.
+
+| Column | Content | Interaction |
+| --- | --- | --- |
+| `N. Name` | Cue index and label, e.g. `1. Cyc Wash` | Left-click to recall the cue |
+| `X fx` | Fixture count captured in the cue | Read-only |
+| Fade slider | Per-cue crossfade time, range `0.0`–`60.0 s` | Drag to edit (suffix `s`) |
+| Trash icon | Delete | Left-click removes the cue |
+
+<Callout type="idea">
+The `X fx` column is handy for verifying a cue's content — if a cue shows fewer fixtures than the rig, it was recorded before you added the rest.
+</Callout>
+
+### Record section
+
+- **Name field** — type a label such as `Intro WL`. Leave it blank and the cue auto-numbers (the placeholder shows the next number, e.g. `Cue 5`).
+- **Fade-time control** — drag to set the new cue's crossfade duration. Default `2.0 s`, range `0.0`–`60.0 s`.
+- **Record button** — captures the current look of every fixture. Disabled when the scene has no fixtures.
+
+### Transport
+
+- **Prev** — steps to and recalls the previous cue. Only works when a cue is already active; it does not jump to the last cue from a cold start.
+- **Go** — the strong, accent-coloured button. Fires the next cue in the list (or cue 1 if none is active) and stops at the last cue.
+- **Current cue label** — shows a play icon and the active cue name, e.g. `▶ Cyc Wash`, or `—` when none is active.
+- **Fade progress bar** — appears only during an active fade, showing progress from `0` to `1.0` with the target cue name, e.g. `→ Spot A`.
+
+When the list is empty the panel reads `none — set a look (Inspector / DMX), then Record`.
+
+## Record a cue
+
+<Steps>
+<Step>
+### Set the look
+Position, colour and control every fixture using the [Inspector](/docs/interface/panels) or [live DMX input](/docs/dmx/consoles) until the rig shows the look you want.
+</Step>
+<Step>
+### Name it (optional)
+Type a label in the Cues panel name field, or leave it blank to auto-number.
+</Step>
+<Step>
+### Set the fade time (optional)
+Drag the record-section fade control. This is the crossfade duration used when you later recall this cue. Default `2.0 s`.
+</Step>
+<Step>
+### Click Record
+Glowstone captures the position, colour, intensity and optics of every fixture into a new cue at the bottom of the list. The name field clears, ready for the next cue.
+</Step>
+</Steps>
+
+## Play back a cue
+
+<Tabs items={['Click the list', 'Go / Prev']}>
+  <Tab value="Click the list">
+Left-click a cue's name in the list to recall it immediately. Discrete optics snap, then the continuous fields crossfade from the current state to the cue's look over its fade time.
+  </Tab>
+  <Tab value="Go / Prev">
+Use **Go** to step forward through the list one cue at a time and **Prev** to step back. Both recall the cue they land on using that cue's fade time. Go stops at the last cue; Prev only works once a cue is active.
+  </Tab>
+</Tabs>
+
+<Callout type="success">
+Set the fade time to `0 s` for an instant snap with no crossfade — useful for blackout or bump cues.
+</Callout>
+
+## Cues and a live console
+
+<Callout type="warn" title="Don't run cues and a console at once">
+The cue engine runs after live-DMX decode each frame. While a fade is in progress, **the cue output wins over live DMX**; outside a fade, live DMX drives the rig normally. Running cues and a live console at the same time makes them fight for control. Glowstone is an offline previsualization tool — drive the rig from one source at a time. See [Connecting a Console](/docs/dmx/consoles).
+</Callout>
+
+## Persistence and undo
+
+<Callout type="info">
+Cues are saved in the `.glow` [project file](/docs/projects) alongside the scene, patch, camera and render settings (legacy `.archie` files still open). Cue state is part of the document the undo system snapshots. An in-progress fade is transient: it is not saved, and on reload the fade is cleared while the current cue index is restored.
+</Callout>
+
+## Cues vs. camera bookmarks
+
+A cue stores a **fixture look**. A [camera bookmark](/docs/navigation/bookmarks) stores a **camera pose** — where you are looking from in the 3D scene. They are separate systems: bookmarks never touch fixtures, and cues never move the camera. Use bookmarks (9 numbered slots) to jump between viewpoints, and cues to switch between rig states.
+
+## Limitations
+
+<Callout type="warn">
+The cue list does not yet support renaming or reordering. A cue's name is set at record time only, and cues stay in the order they were recorded — to change the order, delete and re-record. Cue groups and submasters are not implemented.
+</Callout>
+
+## Frequently asked questions
+
+<Accordions type="single">
+  <Accordion title="What happens to my cues if I delete a fixture?">
+    Every cue's look list drops that fixture's entry, the current cue index is adjusted if needed, and any in-progress fade is aborted because its snapshot no longer aligns with the rig.
+  </Accordion>
+  <Accordion title="Can I change a cue's fade time after recording?">
+    Yes. Drag the fade slider in the cue list's third column. The change is per-cue and does not require re-recording.
+  </Accordion>
+  <Accordion title="Why did my gobo change instantly while the colour faded?">
+    Discrete optics — gobo, colour, prism, animation and frost wheel slots — snap at the start of the recall because wheel slots can't interpolate. Only continuous fields crossfade.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<SlidersHorizontal />} title="The Inspector & panels" href="/docs/interface/panels">
+    Set fixture looks before recording a cue.
+  </Card>
+  <Card icon={<Disc />} title="Connecting a console" href="/docs/dmx/consoles">
+    Drive the rig from live DMX — but not at the same time as cues.
+  </Card>
+  <Card icon={<Bookmark />} title="Camera bookmarks" href="/docs/navigation/bookmarks">
+    Save and recall camera viewpoints, separate from cues.
+  </Card>
+  <Card icon={<Camera />} title="The beam engine" href="/docs/fixtures/beam-engine">
+    Understand the optical chain a cue captures.
+  </Card>
+</Cards>

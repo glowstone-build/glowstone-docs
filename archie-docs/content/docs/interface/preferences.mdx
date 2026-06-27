@@ -1,0 +1,177 @@
+---
+title: "Preferences & Theme"
+description: "Configure units, theme and accent, viewport overlays, rendering defaults, DMX protocols and keybindings."
+---
+
+import { SlidersHorizontal, Palette, Eye, Keyboard, Network, Gauge } from 'lucide-react';
+
+The **Preferences** window is a modeless, resizable dialog. Settings are organised into collapsible sections (General, Theme & Display and Viewport open by default; Rendering, DMX / Network and Keymap collapsed) and applied live as you change them.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="4 / 3"
+  caption="The Preferences window (dark theme) showing the collapsible sections: General, Theme & Display, Viewport, Rendering, DMX / Network and Keymap, with Theme & Display expanded to reveal the Theme radio buttons, Accent colour swatch and UI scale slider."
+/>
+
+<Callout type="warn" title="Not everything persists yet">
+General preferences are applied live each frame but are **not yet saved between sessions**. Two things that *do* persist to disk are the keymap (`keymap.json`) and your [camera bookmarks](/docs/navigation/bookmarks) (`bookmarks.json`), both in the per-user config dir. If you rely on a setting surviving a restart and it is not the keymap, re-check it on next launch.
+</Callout>
+
+## General
+
+<TypeTable
+  type={{
+    Units: { description: 'Display units for length controls and readouts. Drives the unit suffix (m / ft) on numeric DragValues throughout the interface.', type: 'Metres / Feet', default: 'Metres' },
+  }}
+/>
+
+## Theme & Display
+
+Glowstone uses a dense console/CAD palette: one hue stepped by lightness for surface depth, your accent for selection and live states, and semantic green/amber/red for status. Panels use hairline borders rather than drop shadows; numbers are set in tabular monospace.
+
+<TypeTable
+  type={{
+    Theme: { description: 'Switch between the dark and light interface palettes.', type: 'Dark / Light', default: 'Dark' },
+    Accent: { description: 'RGB colour picker for the accent used by selection, primary buttons and live indicators.', type: 'RGB colour', default: 'Cyan-blue' },
+    'UI scale': { description: 'Scales the entire interface — fonts, controls and spacing — uniformly. Snaps to whole device pixels for crisp 1px hairlines at any zoom. Shown as a percentage of the 1.0 base.', type: '70%–200%', default: '100%' },
+  }}
+/>
+
+<Callout type="idea">
+Set a high-contrast accent (the default cyan-blue works well) so selected fixtures and live DMX indicators stay legible against the dark surfaces of a busy rig.
+</Callout>
+
+## Viewport
+
+Controls what the 3D viewport draws on top of the scene. See [Display Modes & Overlays](/docs/navigation/overlays) for the overlays themselves.
+
+<TypeTable
+  type={{
+    'Fixture labels': { description: 'Show text labels above fixtures.', type: 'On / Off', default: 'On' },
+    'Selected only': { description: 'Sub-toggle of Fixture labels: show labels only for selected fixtures (enabled only while labels are on).', type: 'On / Off', default: 'Off' },
+    'Show': { description: 'What each label displays — fixture Name, Fixture ID, DMX address, or the fixture Sequence (channel) number.', type: 'Name / Fixture ID / DMX address / Sequence', default: 'Name' },
+    'FPS overlay': { description: 'Frame-rate counter in the viewport.', type: 'On / Off', default: 'On' },
+    'Scene statistics': { description: 'Quiet corner readout of fixture, object, screen and environment counts plus the selected count.', type: 'On / Off', default: 'Off' },
+    'Grid + world axes': { description: 'Construction grid and world reference axes.', type: 'On / Off', default: 'On' },
+    'Navigation gizmo': { description: 'The 3D axis indicator for orientation.', type: 'On / Off', default: 'On' },
+    'Transform hint line': { description: 'The G/R/S key-cluster hint pill shown during modal transforms.', type: 'On / Off', default: 'On' },
+  }}
+/>
+
+<Callout type="info">
+The `Sequence` label option shows each fixture's editable [sequence number](/docs/fixtures/patching) (a channel-number-style id; `0` = unassigned). The `FPS overlay` is a lightweight counter — for a full performance HUD with GPU pass timings and quality levers, see the [Performance Overlay](/docs/navigation/performance-overlay).
+</Callout>
+
+## Rendering
+
+Advanced viewport rendering defaults. The six scalars are sliders; **Display mode** is a row of mode buttons. These set the global look; see [Look & Colour Management](/docs/rendering/look) and [Performance & Quality Tuning](/docs/rendering/performance) for how they fit together.
+
+<TypeTable
+  type={{
+    Exposure: { description: 'Tone-mapping / exposure compensation.', type: '0.05–8.0' },
+    Bloom: { description: 'Glow strength on bright areas.', type: '0.0–3.0' },
+    'Beam intensity': { description: 'Volumetric beam brightness scalar.', type: '0.0–4000.0' },
+    'Chroma in haze': { description: 'Lifts saturated beam colours (blue/red) in fog so they read; 0 disables it.', type: '0.0–3.0' },
+    'Volumetric steps': { description: 'Step count for raymarched volumetric beams; higher is sharper at a performance cost.', type: '8–192' },
+    'Gobo sharpen': { description: 'Gobo projection sharpness.', type: '0.0–2.0' },
+    'Display mode': { description: 'Viewport shading mode.', type: 'Beauty / Unlit / Wireframe' },
+  }}
+/>
+
+<Callout type="warn">
+The default volumetric beams are rendered with a per-pixel raymarch, which generally looks best. The alternative **froxel** (compute fog grid) path is off by default and toggled from the environment inspector, not here; it trades crispness for speed on very large rigs. See [Volumetric Beams & Haze](/docs/rendering/volumetrics) for details.
+</Callout>
+
+## DMX / Network
+
+Toggle which DMX input protocols Glowstone listens for. Glowstone is **input-only** — it visualises incoming DMX and never outputs or transmits it.
+
+<Tabs items={['Art-Net', 'sACN']}>
+  <Tab value="Art-Net">Enable Art-Net protocol input.</Tab>
+  <Tab value="sACN">Enable sACN (Streaming ACN, E1.31) protocol input.</Tab>
+</Tabs>
+
+<Callout type="info">
+These checkboxes only choose which protocols are active. You start the actual feed in the Connectivity panel — see [Connectivity: Art-Net & sACN](/docs/dmx/connectivity) and [Connecting a Console](/docs/dmx/consoles).
+</Callout>
+
+## Keymap
+
+A searchable, category-grouped keybinding editor (collapsed by default). Use it to rebind any command to a key chord of your choice. Unlike most preferences, keymap overrides are written to `keymap.json` immediately and **persist between sessions**.
+
+<ImagePlaceholder
+  label="UI panel"
+  ratio="16 / 9"
+  caption="The Keymap section expanded: search bar with a clear button at the top, a Reset all button, and command rows each showing a label (with a customised dot), a monospace shortcut chip, a per-row Reset button, and an eye-off disable toggle. One row is in capture mode showing 'Press a key…  (Esc cancels)'."
+/>
+
+Commands are grouped under category headers (Navigation, Selection, Transform, Add, Object, View, File, App). Each command row shows:
+
+- The command label, with a small accent dot when it differs from the shipped default.
+- The effective shortcut as a monospace chip — click it to rebind. Unbound commands show `—`.
+- A **Reset** button (enabled only when customised) that restores the default.
+- An **eye-off** toggle (for commands that ship with a binding) that disables the shortcut without deleting it.
+
+### Rebind a shortcut
+
+<Steps>
+<Step>
+### Find the command
+Type into the search bar to filter by command label, command ID, or category.
+</Step>
+<Step>
+### Enter rebind mode
+Click the command's shortcut **chip**. It switches to capture mode and shows `Press a key…  (Esc cancels)`.
+</Step>
+<Step>
+### Press the new chord
+Press the desired key combination — any chord is valid (for example `Cmd`/`Ctrl`+`Shift`+`B`). The override is written to `keymap.json` straight away.
+</Step>
+<Step>
+### Cancel if needed
+Press `Esc` while capturing to leave the binding unchanged.
+</Step>
+</Steps>
+
+<Callout type="warn" title="Conflicts">
+If two enabled commands share the same trigger in the same context, both chips are drawn in **red** with a tooltip. Resolve the conflict by rebinding or disabling one of them.
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="How do I undo my changes?">
+    Use a row's **Reset** button to restore that one command to its shipped default, or **Reset all** at the top of the Keymap section to clear every custom override at once. **Reset all** is disabled when you have no overrides.
+  </Accordion>
+  <Accordion title="Can I disable a shortcut without losing it?">
+    Yes. Use the **eye-off** toggle on the row. The binding is disabled but not deleted, so you can re-enable it later.
+  </Accordion>
+  <Accordion title="What does the Reset to defaults button in the footer do?">
+    The **Reset to defaults** button at the bottom of the Preferences window restores the General, Theme & Display and Viewport preferences to their factory defaults. It does **not** touch your rendering sliders, DMX protocol toggles or the keymap — reset the keymap with **Reset all** in the Keymap section instead.
+  </Accordion>
+</Accordions>
+
+<Callout type="idea">
+`Cmd` on macOS is `Ctrl` on Windows and Linux. For a full list of the shipped bindings, see the [Keyboard Shortcuts](/docs/reference/keyboard-shortcuts) reference.
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Keyboard />} title="Keyboard Shortcuts" href="/docs/reference/keyboard-shortcuts">
+    The complete list of shipped keybindings, grouped by context.
+  </Card>
+  <Card icon={<Gauge />} title="Performance Overlay" href="/docs/navigation/performance-overlay">
+    The in-viewport HUD with FPS, GPU timings and live quality levers.
+  </Card>
+  <Card icon={<Eye />} title="Display Modes & Overlays" href="/docs/navigation/overlays">
+    Shading modes and the viewport overlays toggled here.
+  </Card>
+  <Card icon={<Network />} title="Connectivity: Art-Net & sACN" href="/docs/dmx/connectivity">
+    Start receiving DMX once a protocol is enabled.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Performance & Quality Tuning" href="/docs/rendering/performance">
+    Balance render quality against frame rate.
+  </Card>
+  <Card icon={<Palette />} title="Look & Colour Management" href="/docs/rendering/look">
+    How exposure, bloom and beam intensity shape the render.
+  </Card>
+</Cards>

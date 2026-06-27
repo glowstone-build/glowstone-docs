@@ -1,0 +1,12 @@
+{
+  "title": "Rendering",
+  "icon": "Clapperboard",
+  "pages": [
+    "index",
+    "look",
+    "volumetrics",
+    "shadows",
+    "render-image",
+    "performance"
+  ]
+}

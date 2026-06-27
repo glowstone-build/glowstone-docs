@@ -1,0 +1,66 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/* Landing page only: reshape the home navbar into a floating "dynamic island"
+   glass pill. Scoped under #nd-home-layout so the docs navbar is untouched. */
+#nd-home-layout #nd-nav {
+  height: auto;
+  padding-top: 0.7rem;
+  background: transparent;
+  border: 0;
+}
+
+#nd-home-layout #nd-nav > div {
+  width: calc(100% - 1rem);
+  margin-inline: auto;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 12px 32px -12px rgba(15, 33, 46, 0.45);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+}
+
+/* Dark mode: swap the pill to black glass (matches the Download button). */
+.dark #nd-home-layout #nd-nav > div {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.42);
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* Floating island on desktop; near-full-width and easy to tap on mobile. */
+@media (min-width: 1024px) {
+  #nd-home-layout #nd-nav > div {
+    width: 70%;
+  }
+}
+
+/* When the mobile menu is open the bar expands into a card — soften the full-pill
+   radius so it doesn't look like an over-rounded blob. */
+#nd-home-layout #nd-nav > div[class*="rounded-b-2xl"] {
+  border-radius: 1.5rem;
+}
+
+/* Let the bar content fill the wider island instead of capping at the layout width. */
+#nd-home-layout #nd-nav > div > * {
+  max-width: none;
+}
+
+/* Give content room to clear the rounded ends, and drop the empty nav-links gap. */
+#nd-home-layout #nd-nav nav {
+  padding-inline: 1.25rem;
+}
+
+#nd-home-layout #nd-nav ul:empty {
+  display: none;
+}

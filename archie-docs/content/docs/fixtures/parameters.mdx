@@ -1,0 +1,285 @@
+---
+title: "Beam Parameter Reference"
+description: "Every optical control on a fixture, with ranges, defaults and behaviour."
+---
+
+import { SlidersHorizontal, Palette, Aperture, Settings2, CircleDot, Sparkles } from 'lucide-react';
+
+Complete reference for the optical controls Glowstone exposes on a fixture. Each control is a normalized fader that Glowstone resolves through the fixture's GDTF profile and feeds to the GPU renderer every frame. Set them in the Inspector, or drive them from a console — Glowstone visualizes incoming DMX, it never outputs DMX.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Inspector's Optics group for a selected moving-head fixture: a Shutter blades dropdown, then data-driven slider rows under BEAM SHAPING and COLOR MIXING subheads, then one WHEELS block per GDTF component. The 3D Viewport behind shows the resulting beam."
+/>
+
+<Callout type="info" title="Controls are normalized">
+  Almost every optical control is a `0.0`–`1.0` fader. The fixture's GDTF profile maps that fader onto the real physical range (degrees, Hz, metres), so the same `zoom` value produces a different cone angle on every fixture. The one exception is `green`, which is bipolar (`-1.0`–`1.0`).
+</Callout>
+
+<Callout type="warn" title="Unavailable controls are hidden">
+  A control only appears if the active GDTF mode declares the matching attribute. If a mode has no `Iris` attribute, the iris control is hidden — it is not greyed out, it simply does not exist for that fixture. The [DMX Modes & Channels](/docs/library/dmx-modes) page covers how a mode's attributes map to controls. A handful of controls (`green`, `ca`, `dimmer`) are always synthesized and therefore always present.
+</Callout>
+
+<Callout type="info" title="Where the controls live in the UI">
+  Glowstone splits these across the Inspector. The fixture **Dimmer** is a slider in the Fixture section (the head's own level). Everything else lives in the **Optics** group, under a **Shutter blades** dropdown plus two subheads: **BEAM SHAPING** (Zoom, Focus, Iris, and under the advanced toggle: Chromatic ab., Shutter, Strobe) and **COLOR MIXING** (CTO (warm), Cyan, Magenta, Yellow, and under advanced: Tint ±green). Per-component wheel rows follow under a **WHEELS** subhead.
+</Callout>
+
+## Intensity & shutter
+
+Master brightness, the shutter gate, and strobe. The DMX `Dimmer` and `Shutter1` channels drive these directly. `dimmer` is edited in the Fixture section; `shutter` and `strobe` sit under the Optics group's advanced toggle.
+
+<TypeTable
+  type={{
+    dimmer: {
+      description: 'Master intensity multiplier. 0 = blackout, 1 = full brightness. Always available (synthesized as 1.0 for pixel fixtures without a Dimmer attribute).',
+      type: '0.0–1.0',
+      default: '1.0',
+    },
+    shutter: {
+      description: 'Shutter open amount. 1 = fully open, 0 = fully closed. Gated on the GDTF Shutter1 attribute.',
+      type: '0.0–1.0',
+      default: '1.0',
+    },
+    strobe: {
+      description: 'Strobe rate. 0 = off. Above 0.01 it becomes a square-wave strobe mapped to the GDTF range (default 0.5–25 Hz). Gated on Shutter1.',
+      type: '0.0–1.0',
+      default: '0.0',
+    },
+  }}
+/>
+
+When `strobe` is above `0.01`, the shutter gate flips to a 50%-duty square wave at the resolved Hz; `shutter` then sets the ON level of each flash (typically `1.0`). With `strobe` at `0`, `shutter` simply opens and closes the gate.
+
+### Shutter style
+
+Each fixture has an editable shutter style (the **Shutter blades** dropdown) that controls how the mechanical blade is drawn and projected onto the beam. The dropdown is offered to fixtures that have a shutter (or already have a style set). On GDTF import Glowstone defaults a mode with a `Shutter1` channel to `Blade`; otherwise the default is `None`.
+
+<TypeTable
+  type={{
+    None: {
+      description: 'Labelled "None (electronic)". No mechanical blade — electronic dimming only with a uniform gate.',
+      type: 'style',
+      default: 'import default with no Shutter1',
+    },
+    Blade: {
+      description: 'Two straight blades closing from top and bottom. A typical strobe shutter with a crisp transition.',
+      type: 'style',
+      default: 'import default with Shutter1',
+    },
+    Sawtooth: {
+      description: 'Blades with a sawtooth edge, giving a softer strobe transition.',
+      type: 'style',
+      default: '—',
+    },
+  }}
+/>
+
+<Callout type="idea">
+  Set the shutter style to `Sawtooth` on hard-edged spots for a gentler, more analogue-looking strobe than the crisp `Blade` transition.
+</Callout>
+
+### Beam multiplier
+
+Beam brightness is anchored to a reference of 40,000 lm at a 25° cone. Glowstone derives per-fixture radiance from the GDTF `LuminousFlux` (or 10,000 lm split across emitters if the profile omits it), then scales by the zoom concentration. The whole fixture is capped at 60,000 lm to tame GDTF files that duplicate a group total onto every pixel. Narrower beams get brighter because the same flux fills a smaller solid angle.
+
+## Beam shape
+
+Cone angle, aperture, and focus. These define the geometry of the beam before colour is applied. Zoom, Focus, and Iris are the common BEAM SHAPING rows in the Optics group.
+
+<TypeTable
+  type={{
+    zoom: {
+      description: '0 = the GDTF Zoom minimum (narrow), 1 = the GDTF Zoom maximum (wide). Narrow beams are brighter and more concentrated; wide beams are softer. The Zoom row shows the resolved cone angle in degrees. Gated on the Zoom attribute.',
+      type: '0.0–1.0',
+      default: '0.3',
+    },
+    iris: {
+      description: 'Aperture openness. 1 = fully open, 0 = closed to the GDTF minimum. Gated on the Iris attribute.',
+      type: '0.0–1.0',
+      default: '1.0',
+    },
+    focus: {
+      description: 'Gobo edge sharpness. 0.5 ≈ in-focus; both extremes blur the gobo edge. Reciprocal-mapped to 2–40 m by default, or the GDTF Focus1Distance range if present. Gated on the Focus1 attribute.',
+      type: '0.0–1.0',
+      default: '0.5',
+    },
+  }}
+/>
+
+<Callout type="info" title="Frost is a wheel component, not a beam-shape fader">
+  There is no top-level `frost` fader. Diffusion comes from a GDTF Frost component, which appears as its own WHEELS row (its `value` slides the frost in). The renderer takes the **maximum** insertion over all engaged frost components as the effective frost amount, softening the gobo edge and widening the cone. See [Per-wheel controls](#per-wheel-controls).
+</Callout>
+
+<Callout type="info" title="Beam angle vs field angle">
+  In the renderer, `zoom` sets the half-cone angle (`tan_half`), which is then widened by `1 + 0.4 × frost` for diffusion. The full beam angle is twice the half-cone angle. Frost also pushes the edge softness toward its softest setting, blurring the hard cut-off of a hard-edged spot.
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="How does focus map to distance?">
+    With no `Focus1Distance` in the GDTF, focus uses a reciprocal model between a near of 2 m and a far of 40 m: `focus = 0` → 40 m (everything sharp), `focus = 0.5` → ~3.8 m (the in-focus point), `focus = 1` → 2 m (close, extreme defocus). With a GDTF `Focus1Distance` whose range exceeds 0.5 m, Glowstone uses a linear map over that range instead.
+  </Accordion>
+  <Accordion title="Why do my gobo edges get coloured fringing?">
+    Defocus is computed as `|focus − 0.5| × 2` and amplifies chromatic aberration. At either extreme (`0` or `1`) the gobo edge picks up warm/cool fringing, mimicking real lens astigmatism. Return `focus` toward `0.5` to remove it. See the `ca` control under [Effects](#effects).
+  </Accordion>
+</Accordions>
+
+## Colour
+
+Warm filtering, plus/minus-green tint, and CMY subtractive mixing. The colour pipeline is deep — this page covers only the control faders. For dichroic wheels, the white point, and how flags render, see [Colour](/docs/fixtures/color).
+
+The COLOR MIXING rows are CTO (warm), Cyan, Magenta, Yellow; Tint ±green is under the advanced toggle.
+
+<TypeTable
+  type={{
+    cto: {
+      description: 'Colour-temperature-orange (warm) filter. 0 = off, 1 = full warm toward a 2800 K target from a 6800 K source white point. Gated on the CTO attribute. Labelled "CTO (warm)".',
+      type: '0.0–1.0',
+      default: '0.0',
+    },
+    green: {
+      description: 'Plus/minus-green tint on the CC axis, orthogonal to colour temperature. -1 = magenta, 0 = neutral, +1 = green. Always available (synthesized). Labelled "Tint ±green".',
+      type: '-1.0–1.0',
+      default: '0.0',
+    },
+    'cmy[3]': {
+      description: 'Cyan / Magenta / Yellow subtractive flags (indices 0/1/2). Each 0 = open (removed), 1 = full insertion. Rendered per-fragment as sliding graduated dichroic flags. Gated on ColorSub_C / ColorSub_M / ColorSub_Y.',
+      type: '0.0–1.0 each',
+      default: '[0, 0, 0]',
+    },
+  }}
+/>
+
+<Callout type="info">
+  `green` is always present because it is synthesized rather than read from a GDTF attribute. CTO and the three CMY flags only appear when the mode declares the matching attributes.
+</Callout>
+
+<Callout type="info" title="CMY slew speed is DMX-only">
+  CMY flags slew toward their targets at a motor speed taken from the GDTF `ColorMixMSpeed` channel (`0` = fastest, ~0.25 s full travel; `1` = slowest, ~25.5 s). This is driven by incoming DMX — there is no `color_mix_speed` fader in the Inspector.
+</Callout>
+
+## Effects
+
+Lens dispersion. Chromatic aberration is always available and adds the subtle warm/cool edge fringing of a real lens. It is the `Chromatic ab.` row under the BEAM SHAPING advanced toggle.
+
+<TypeTable
+  type={{
+    ca: {
+      description: 'Chromatic aberration (lens dispersion). 0 = no dispersion, 1 = strong. Always available (synthesized). The effect is amplified by defocus (extreme focus values) and is damped on open beams with no real gobo engaged, so clean spots stay clean.',
+      type: '0.0–1.0',
+      default: '0.25',
+    },
+  }}
+/>
+
+The resolved pixel offset is `0.004 + 0.04 × ca + 0.03 × defocus`. At the default `0.25` it is a hint-level fringe on a crisp edge; crank it up, defocus the beam, or engage a gobo to make it visible.
+
+## Per-wheel controls
+
+Every optical component the GDTF mode declares — each gobo wheel, colour wheel, prism, animation wheel, and frost filter — gets its own WHEELS block. Glowstone sizes this list to the number of components in the active mode, so the number of wheel rows in the Inspector varies per fixture. Each row is labelled `Attribute · WheelName`.
+
+<TypeTable
+  type={{
+    value: {
+      description: 'Slot selection for gobo/colour wheels (tooltip "select"), or insertion amount for prism/frost/animation (tooltip "insert"). 0 = open / removed, 1 = fully inserted (or the last slot).',
+      type: '0.0–1.0',
+      default: '0.0',
+    },
+    index: {
+      description: 'Indexed rotation of the inserted element (gobo image, prism facet). 0–1 wraps one full turn.',
+      type: '0.0–1.0',
+      default: '0.0',
+    },
+    spin: {
+      description: 'Continuous rotation / scroll speed (bipolar; tooltip "0.5 = stopped · below CCW · above CW"). 0.5 = stopped, 0 = full reverse, 1 = full forward.',
+      type: '0.0–1.0',
+      default: '0.5',
+    },
+    shake: {
+      description: 'Shake / oscillation amount (gobo and colour wheels only). 0 = none, 1 = maximum. The indexed element oscillates back and forth at 1–9 Hz with up to ~20° amplitude.',
+      type: '0.0–1.0',
+      default: '0.0',
+    },
+  }}
+/>
+
+<Callout type="info" title="Which sub-controls each wheel shows">
+  Every component shows `value`. `index` appears when the mode declares an indexed-rotation channel (and always for prisms); `spin` appears when it declares a continuous-spin channel (and always for colour, animation, and prism components); `shake` appears only on gobo and colour wheels. A simple gobo wheel with no rotation control shows just `value` (plus `shake`). See [Gobos, Animation, Prism & Frost](/docs/fixtures/gobos-prism) for how each component type behaves.
+</Callout>
+
+Wheel motion is integrated once per frame, not inside the renderer. The motor slews toward a selected slot at 8 slots/s, scrolling colour wheels free-run up to 10 slots/s, and prism or frost elements slide in over ~0.4 s rather than popping in.
+
+<Cards>
+  <Card icon={<Palette />} title="Colour" href="/docs/fixtures/color">
+    Dichroic wheels, the white point, CTO, and CMY flag rendering in full.
+  </Card>
+  <Card icon={<CircleDot />} title="Gobos, Animation, Prism & Frost" href="/docs/fixtures/gobos-prism">
+    What each wheel component does and how value, index, spin, and shake apply.
+  </Card>
+</Cards>
+
+## Default values summary
+
+Every control's default places the fixture at a neutral state: open white beam, dimmer up, wheels open, prisms out, no strobe.
+
+<TypeTable
+  type={{
+    dimmer: { description: 'Full brightness.', type: '0.0–1.0', default: '1.0' },
+    zoom: { description: 'Narrow (GDTF nominal).', type: '0.0–1.0', default: '0.3' },
+    focus: { description: 'In-focus (~3.8 m).', type: '0.0–1.0', default: '0.5' },
+    iris: { description: 'Fully open.', type: '0.0–1.0', default: '1.0' },
+    cto: { description: 'Source white, no warming.', type: '0.0–1.0', default: '0.0' },
+    green: { description: 'Neutral, no tint.', type: '-1.0–1.0', default: '0.0' },
+    'cmy[]': { description: 'Open, no flags.', type: '0.0–1.0', default: '[0, 0, 0]' },
+    shutter: { description: 'Fully open.', type: '0.0–1.0', default: '1.0' },
+    strobe: { description: 'No strobe.', type: '0.0–1.0', default: '0.0' },
+    ca: { description: 'Subtle dispersion.', type: '0.0–1.0', default: '0.25' },
+    'wheel value': { description: 'Open / removed.', type: '0.0–1.0', default: '0.0' },
+    'wheel index': { description: 'No rotation offset.', type: '0.0–1.0', default: '0.0' },
+    'wheel spin': { description: 'Stopped.', type: '0.0–1.0', default: '0.5' },
+    'wheel shake': { description: 'No shake.', type: '0.0–1.0', default: '0.0' },
+  }}
+/>
+
+## Gating on GDTF attributes
+
+Whether a control appears depends on the attributes the active GDTF mode declares. This table lists each control's gate.
+
+| Control | Gate attribute | Always available? |
+| --- | --- | --- |
+| `dimmer` | `Dimmer` (synthetic `1.0` for pixel fixtures) | Yes |
+| `green` | — | Yes (synthesized) |
+| `ca` | — | Yes (synthesized) |
+| `zoom` | `Zoom` | No |
+| `iris` | `Iris` | No |
+| `focus` | `Focus1` | No |
+| `shutter` | `Shutter1` | No |
+| `strobe` | `Shutter1` | No |
+| `cto` | `CTO` | No |
+| `cmy[]` | `ColorSub_C`, `ColorSub_M`, or `ColorSub_Y` | No |
+| Gobo wheel | `Gobo1`, `Gobo2`, … | Depends on mode |
+| Colour wheel | `Color1`, `Color2`, … | Depends on mode |
+| Prism | `Prism1`, `Prism2`, … | Depends on mode |
+| Animation | `AnimationWheel1`, `AnimationWheel2`, … | Depends on mode |
+| Frost | `Frost1`, `Frost2`, … | Depends on mode |
+
+<Callout type="warn">
+  If a control you expect is missing, the active DMX mode does not include its attribute. Switch modes on the [Patching](/docs/dmx/patching) screen, or check the profile in the [Profile Editor](/docs/library/profile-editor).
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Sparkles />} title="The Beam Engine" href="/docs/fixtures/beam-engine">
+    How the optical chain resolves controls into a rendered beam.
+  </Card>
+  <Card icon={<Palette />} title="Colour" href="/docs/fixtures/color">
+    The full colour pipeline: white point, CTO, CMY, and dichroic wheels.
+  </Card>
+  <Card icon={<CircleDot />} title="Gobos, Animation, Prism & Frost" href="/docs/fixtures/gobos-prism">
+    Per-wheel behaviour for every component type.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Patching Fixtures" href="/docs/dmx/patching">
+    Assign universes, addresses, and DMX modes so these controls light up.
+  </Card>
+</Cards>

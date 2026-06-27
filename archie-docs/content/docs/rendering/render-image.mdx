@@ -1,0 +1,163 @@
+---
+title: "Rendering a Still Image"
+description: "Accumulate a converged beauty shot from the viewport and export it."
+---
+
+import { Crop, SlidersHorizontal, FolderOutput, Play, Save, Palette, Gauge } from 'lucide-react';
+
+A still render freezes the camera and animation and accumulates sample passes until the volumetric haze and beams converge to a noise-free image. It shares the viewport's look — what you see in `Beauty` mode is what you get, only sharper.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Render tab mid-render: a whole-image beauty shot refining as samples accumulate (moving-head beams cutting through haze on a dark stage), with the progress bar and 'Sample 34/96 · MM:SS' readout along the top of the tab."
+/>
+
+## The Render Properties panel
+
+Render settings live in the Inspector, not a separate dialog. Select the **World** root node in the [Scene Outliner](/docs/scene/outliner) — the Inspector then shows the **Render Properties** panel with collapsible sections.
+
+<Cards>
+  <Card icon={<FolderOutput />} title="Output">Resolution, scale, format, file path, and auto-save.</Card>
+  <Card icon={<Gauge />} title="Sampling">Split into Viewport (preview) and Render (final) — quality presets, samples, steps.</Card>
+  <Card icon={<SlidersHorizontal />} title="Performance">Shadow-map cap, the optional froxel grid, and an overlays toggle — also split Viewport / Render.</Card>
+  <Card icon={<Palette />} title="Color Management">Exposure, bloom, beam intensity, gobo sharpness, chroma haze — shared with the viewport.</Card>
+</Cards>
+
+The panel also has a **World** section (HDRI brightness, ambient, rotation, background, and fog density). A fixed header above the collapsible sections shows the **Engine** (`Spectre`) and a **Backend** selector for the GPU backend, plus the prominent **Render** button (and a greyed **Animation** button), the **Display** dropdown, and the **Render to image file** checkbox.
+
+<Callout type="info" title="Render matches preview">
+The **Color Management** sliders are the same as those in [Preferences](/docs/interface/preferences) and the [Look](/docs/rendering/look) page. Any exposure, bloom, or beam tweak updates the live viewport instantly, so your framing preview always matches the final plate.
+</Callout>
+
+## Render a still
+
+<Steps>
+<Step>
+### Frame the shot
+
+Orbit, pan, and zoom the live viewport until the composition is right. Set the viewport to `Beauty` mode so the preview reflects the final look, and dial in `Exposure`, `Bloom`, and `Beam intensity` for the mood you want. A [camera bookmark](/docs/navigation/bookmarks) is handy if you want to return to this exact angle.
+</Step>
+
+<Step>
+### Select the World node
+
+In the Scene Outliner, click **World**. The Inspector switches to **Render Properties**.
+</Step>
+
+<Step>
+### Choose a quality preset
+
+Under **Sampling ▸ Render**, pick a **Quality** preset. Each preset sets the number of accumulation `Samples` and the volumetric raymarch `Steps`. Choose **Custom** to dial `Samples` (1–512) and `Steps` (8–256) independently.
+
+<TypeTable
+  type={{
+    Draft: { description: 'Quick turnaround; visible banding and noise.', type: '64 steps', default: '16 samples' },
+    Medium: { description: 'Good general quality (the default preset).', type: '96 steps', default: '48 samples' },
+    Final: { description: 'Publication quality; temporal accumulation converges over the full pass count.', type: '160 steps', default: '96 samples' },
+    Custom: { description: 'Enable independent Samples and Steps dials.', type: 'user', default: 'user' },
+  }}
+/>
+</Step>
+
+<Step>
+### Set the output
+
+Open the **Output** section and configure the file.
+
+<TypeTable
+  type={{
+    'Resolution X / Y': { description: 'Base render size in pixels, before scaling.', type: '16–8192 px', default: '1920 × 1080' },
+    Scale: { description: 'Supersample (>100%) or downsample (<100%); final size = base × scale ÷ 100.', type: '10–400 %', default: '100' },
+    Format: { description: 'Output file type. PNG is lossless 8-bit; JPEG is lossy with no alpha; OpenEXR is 32-bit float.', type: 'PNG / JPEG / OpenEXR', default: 'PNG' },
+    File: { description: 'Output file path. Leave empty to be prompted by a Save dialog.', type: 'path', default: '(empty)' },
+    'Render to image file': { description: 'Auto-save to the File path the moment the render completes — no manual save step.', type: 'checkbox', default: 'off' },
+  }}
+/>
+
+<Callout type="idea">
+Set `Scale` to `200%` to render a 1920×1080 frame at 4K and supersample it back down — a cheap way to kill aliasing on tight gobo edges.
+</Callout>
+</Step>
+
+<Step>
+### Render
+
+Click **Render** (or press `F12`). The **Render** tab is focused and shows the whole image from the first sample, refining as samples accumulate (an EEVEE-style progressive display, not a Cycles-style bucket reveal), with a progress bar and a `Sample i/N · MM:SS` readout along the top. The camera and animation are frozen for the job — a snapshot is taken at render start, so you can keep moving the live viewport without disturbing the accumulation.
+</Step>
+
+<Step>
+### Save the result
+
+When the pass count is reached, the render completes. Write it to disk with either button:
+
+- **Save to Disk** — writes to the remembered output path.
+- **Save Copy** — prompts for a new path without changing the remembered one.
+
+If you ticked **Render to image file**, the file is already written and no manual save is needed.
+</Step>
+</Steps>
+
+<Callout type="success" title="Save once, render many">
+Use **Save Copy** to keep a series of look variations side by side without overwriting your main output, then commit the keeper with **Save to Disk**.
+</Callout>
+
+## Output formats
+
+<Tabs items={['PNG', 'JPEG', 'OpenEXR']}>
+  <Tab value="PNG">Lossless 8-bit RGBA with alpha. The default and the safe choice for most deliverables.</Tab>
+  <Tab value="JPEG">Lossy 8-bit RGB, no alpha. Small files for quick sharing and proofs.</Tab>
+  <Tab value="OpenEXR">32-bit float RGBA for float-pipeline compositors. See the note below before relying on it.</Tab>
+</Tabs>
+
+<Callout type="warn" title="OpenEXR is post-tonemap LDR">
+The OpenEXR export is 32-bit float, but it is written **after** tonemapping and sRGB conversion — the values sit in the `[0, 1]` low-dynamic-range space, not raw linear HDR. It will not give a compositor access to the unclipped scene-referred radiance.
+</Callout>
+
+## Performance and shadows
+
+The **Performance** section is split into **Viewport (preview)** and **Render (final)** sub-sections, each with a hero-beam shadow-map cap (`Shadow maps`, 0–16) and a `Froxel` toggle. The render side adds an `Overlays` checkbox (include the origin grid and gizmos in the plate — off for a clean image). For how these levers trade quality against time, and for tuning the live preview, see [Performance & Quality Tuning](/docs/rendering/performance).
+
+<Callout type="warn">
+The froxel volumetric grid is **off by default**. Per-pixel raymarching produces cleaner, sharper beams; the froxel grid is an opt-in performance tier for very large rigs and can introduce blocky fog-circle artifacts in tight stage shots.
+</Callout>
+
+## Not yet functional
+
+Several controls are visible in Render Properties but are not yet implemented. They are greyed out or have no effect.
+
+<Callout type="warn" title="Stubs in Render Properties">
+- **Animation** — the greyed button next to **Render**; rendering an image sequence is not available, only single stills render.
+- **Motion Blur** — the section's **Enable** checkbox is greyed and has no effect.
+- **Caustics** — the section's **Enable** checkbox is greyed and has no effect.
+- **Display ▸ New Window** — only `Render Tab` and `Keep Interface` work; the separate-window display mode is greyed.
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="Why does my render look identical to the viewport?">
+    By design. The Render Properties ▸ Color Management section is shared with the live viewport, so exposure, bloom, and beam tweaks preview instantly and the final plate matches what you framed.
+  </Accordion>
+  <Accordion title="Why is the image grainy with Draft quality?">
+    Draft uses only 16 samples and 64 steps, so temporal accumulation has little time to converge and the haze shows banding and noise. Step up to Medium or Final for a clean plate.
+  </Accordion>
+  <Accordion title="Where does the file go if I leave File empty?">
+    A Save dialog prompts you for a location when you save. The remembered path is then used by Save to Disk on subsequent renders.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Palette />} title="Look & Colour Management" href="/docs/rendering/look">
+    Exposure, bloom, beam intensity, and chroma haze that drive the rendered look.
+  </Card>
+  <Card icon={<Gauge />} title="Performance & Quality Tuning" href="/docs/rendering/performance">
+    Steps, samples, shadow maps, and the froxel grid — what each costs.
+  </Card>
+  <Card icon={<Crop />} title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    How beams scatter through the fog box that fills your shot.
+  </Card>
+  <Card icon={<Play />} title="Rendering Overview" href="/docs/rendering">
+    The full rendering pipeline at a glance.
+  </Card>
+</Cards>

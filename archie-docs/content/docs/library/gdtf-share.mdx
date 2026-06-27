@@ -1,0 +1,201 @@
+---
+title: "GDTF Share"
+description: "Search the GDTF Share catalogue and download fixtures straight into your project Library."
+---
+
+import { LogIn, Search, Download, CloudDownload, RefreshCw, FolderSync, FileDown, SlidersHorizontal, BookOpen } from 'lucide-react';
+
+Glowstone connects directly to [gdtf-share.com](https://gdtf-share.com/), so you can search the catalogue and pull fixtures into your project Library without leaving the app.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Fixture Library window open over a project: a GDTF Share header with signed-in status and a user icon on the right, a toolbar with Refresh and the fixture count, a search box plus manufacturer dropdown and Downloaded/Updates toggles, and a scrollable list of catalogue rows each showing a status glyph, fixture name, manufacturer/revision/mode/size metadata, a star rating, and a Download / Add to project / Added action button."
+/>
+
+## Opening the window
+
+Choose **Fixture ▸ Online Library…** (also reachable from the **Online** button in the Library panel header) to open the **Fixture Library** window. This is a searchable, filterable view of the entire GDTF Share catalogue.
+
+<Callout type="info">
+The catalogue is cached on disk, so the full list appears instantly the next time you open the window — even before any network request completes.
+</Callout>
+
+## Signing in
+
+Downloading fixtures requires a free GDTF Share account. Browsing a cached list works without one, but the **Download** and **Update** actions need an active session.
+
+<Steps>
+<Step>
+### Open the sign-in card
+
+On first launch with no cached list, a large **Sign in to GDTF Share** card fills the window. If a cached list already exists but you are signed out, a compact banner offers the same fields inline.
+</Step>
+<Step>
+### Enter your credentials
+
+Fill in `User` (your username or email) and `Password` (your GDTF Share account password).
+</Step>
+<Step>
+### Tick `Remember me on this computer` (optional)
+
+When checked, your credentials are saved locally and pre-filled on the next launch. When unchecked, they are not stored.
+</Step>
+<Step>
+### Submit
+
+Click **Sign in** or press `Enter` in the password field. Once authenticated, a green **signed in** label with a user icon appears, along with a sign-out button.
+</Step>
+</Steps>
+
+<Callout type="warn" title="Account required to download">
+You can browse a cached catalogue while signed out, but the **Download** and **Update** buttons stay locked until you sign in. There is no anonymous download path.
+</Callout>
+
+<Callout type="idea">
+Leave `Remember me on this computer` checked on a trusted workstation. With saved credentials, Glowstone signs you in automatically the first time the Online Library window is opened in a session.
+</Callout>
+
+## Browsing and filtering
+
+Once signed in (or with a cached list available), the toolbar and filter bar narrow the catalogue down to what you need.
+
+<TypeTable
+  type={{
+    'Refresh': { description: 'Re-fetches the full fixture list from GDTF Share. Enabled only while signed in.', type: 'button', default: '—' },
+    'Fixture count': { description: 'Total number of entries in the current list, e.g. "2500 fixtures".', type: 'label', default: '—' },
+    'Search': { description: 'Free-text substring match over fixture name and manufacturer (case-insensitive).', type: 'text', default: 'empty' },
+    'Manufacturer': { description: 'Dropdown to limit the list to one maker, rebuilt from the catalogue. Choose "All makes" to clear.', type: 'dropdown', default: 'All makes' },
+    'Downloaded': { description: 'Toggle to show only fixtures already in your cache.', type: 'toggle', default: 'off' },
+    'Updates': { description: 'Toggle to show only fixtures with a newer revision than the one you have.', type: 'toggle', default: 'off' },
+  }}
+/>
+
+### Row status glyphs
+
+The glyph on the left of each row tells you, at a glance, the local state of that fixture revision.
+
+| Glyph | State | Meaning |
+| --- | --- | --- |
+| Cloud (grey) | Cloud | In the catalogue only — not downloaded. |
+| Cloud (orange) | Update | A newer revision is available than the one you hold. |
+| Cloud-check (green) | Cached | This exact revision is downloaded locally. |
+| Download (accent) | Downloading | A download for this row is in progress. |
+
+### Row metadata and rating
+
+Each row shows the fixture name in bold, with a smaller grey metadata line beneath: manufacturer, revision (e.g. `rev 3`), mode count (e.g. `4 modes`), and file size (e.g. `1.2 MB`). If a rating is present it appears on the right as a star and value, e.g. `★ 4.8`.
+
+<Callout type="info" title="Hover for detail">
+Hovering a row reveals a tooltip with the GDTF spec version (e.g. `GDTF spec 4.1`), uploader and creator names, added/updated dates, and a per-mode list with each mode's DMX footprint (e.g. `• Standard — 64 ch`).
+</Callout>
+
+### Action buttons
+
+The button on the right of each row reflects what action is available for that fixture.
+
+<TypeTable
+  type={{
+    'Download': { description: 'Not cached. Downloads the .gdtf and imports it. Requires sign-in.', type: 'action', default: '—' },
+    'Update': { description: 'A newer revision exists. Downloads and replaces your copy. Requires sign-in.', type: 'action', default: '—' },
+    'Add to project': { description: 'Already cached locally. Imports into this project Library with no download needed.', type: 'action', default: '—' },
+    'Added': { description: 'Already imported to this project Library. Disabled — place it from the Library panel.', type: 'action', default: 'disabled' },
+  }}
+/>
+
+## Downloading and importing
+
+Downloads run on a background worker, so the window stays responsive throughout.
+
+<Steps>
+<Step>
+### Find the fixture
+
+Use the search box, manufacturer dropdown and toggles to locate the fixture, then read the row's glyph and rating to confirm it is the revision you want.
+</Step>
+<Step>
+### Click `Download` (or `Update`)
+
+The row's button switches to **Downloading…** with a spinner. The file is fetched in the background to a shared cache and is reused across every project, so you never download the same revision twice.
+</Step>
+<Step>
+### Automatic import
+
+When the download completes, Glowstone imports the cached `.gdtf` into this project's Library and tags it as **GDTF Share** with a green provenance chip. Imports are de-duplicated by GDTF spec filename, so the same revision is never imported twice.
+</Step>
+<Step>
+### Place it
+
+The row's button becomes a disabled **Added**. The fixture now lives in your project Library — add it to the scene from the [Library panel](/docs/library).
+</Step>
+</Steps>
+
+<Callout type="info">
+If a fixture is already cached from a previous session or another project, its button reads **Add to project** instead of **Download** — importing it is instant and needs no network connection.
+</Callout>
+
+### Where files live
+
+Downloaded profiles and the cached list are stored outside any single project, so they are available to every show you open.
+
+<Files>
+  <Folder name="<data>/gdtf" defaultOpen>
+    <File name="{rid}.gdtf" />
+    <File name=".{rid}.part (in-progress download)" />
+  </Folder>
+  <Folder name="<cache>">
+    <File name="share-list.json (cached catalogue)" />
+  </Folder>
+  <Folder name="<config>">
+    <File name="share-credentials.json (if Remember me)" />
+  </Folder>
+</Files>
+
+<Callout type="warn" title="Offline behaviour">
+The cached catalogue loads instantly even with no network, and any fixture already in the cache can be added to a project offline. Fetching new fixtures, refreshing the list, or downloading uncached profiles all require a connection and a valid session.
+</Callout>
+
+## Provenance chips
+
+Every fixture in your Library is tagged with where it came from, shown as a coloured chip. GDTF Share downloads are green.
+
+| Source | Chip | Origin |
+| --- | --- | --- |
+| Built-in | Slate grey | Glowstone's pre-made fixtures (PAR Can, laser engines). |
+| Imported | Light blue | Loaded from disk via **File ▸ Import GDTF Fixture…** or drag-and-drop. |
+| GDTF Share | Green | Downloaded from the online GDTF Share catalogue. |
+| MVR | Amber | Brought in as part of an MVR scene import. |
+
+## Frequently asked
+
+<Accordions type="single">
+  <Accordion title="Do I need an account just to look?">
+    No. A cached catalogue is browsable while signed out, and anything already cached can be added to a project. You only need to sign in to download new or updated fixtures.
+  </Accordion>
+  <Accordion title="Why does a fixture say 'Add to project' instead of 'Download'?">
+    That revision is already in the shared on-disk cache from an earlier download. Adding it imports straight from the cache with no network request.
+  </Accordion>
+  <Accordion title="Will downloading the same fixture in two projects download it twice?">
+    No. Profiles are cached in a shared location and reused across every project. The first project downloads it; the rest import from the cache.
+  </Accordion>
+  <Accordion title="How do I change which DMX mode a downloaded fixture uses?">
+    Open the fixture in the Profile Editor and pick a mode on the DMX Modes tab. See <a href="/docs/library/dmx-modes">DMX Modes &amp; Channels</a>.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<FileDown />} title="Importing GDTF Fixtures" href="/docs/library/import-gdtf">
+    Import a `.gdtf` straight from disk via File ▸ Import GDTF Fixture….
+  </Card>
+  <Card icon={<BookOpen />} title="The Fixture Library" href="/docs/library">
+    How the project Library stores and shares fixture definitions.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="The Profile Editor" href="/docs/library/profile-editor">
+    Inspect identity, optics, channels and wheels of any fixture.
+  </Card>
+  <Card icon={<RefreshCw />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+    Switch a fixture's DMX mode and read its channel layout.
+  </Card>
+</Cards>

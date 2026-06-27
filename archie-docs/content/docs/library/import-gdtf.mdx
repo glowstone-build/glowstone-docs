@@ -1,0 +1,148 @@
+---
+title: "Importing GDTF Fixtures"
+description: "Import .gdtf profiles into Glowstone with their 3D models, wheels and DMX modes."
+---
+
+import { FileArchive, Boxes, SlidersHorizontal, Cloud, ListTree, Palette } from 'lucide-react';
+
+Glowstone imports `.gdtf` files directly — it parses the archive, builds the geometry, wheels and DMX modes, and drops a ready-to-patch fixture into your scene.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A moving head imported from GDTF, shown in the 3D Viewport with its real manufacturer model: base, pan yoke, tilt head and lens visible. The fixture is selected (highlighted outline) with the Inspector docked right showing its manufacturer, model name and thumbnail."
+/>
+
+## Import a GDTF fixture
+
+<Steps>
+<Step>
+### Open the import dialog
+
+Choose **File ▸ Import GDTF Fixture…**. A native file dialog opens, filtered to `.gdtf` files.
+</Step>
+<Step>
+### Select a `.gdtf` file
+
+Pick a file from disk and confirm. Glowstone parses the ZIP, reads `description.xml`, and extracts the modes, channels, wheels, geometry, and optics.
+</Step>
+<Step>
+### The fixture lands in the scene
+
+The parsed profile is added to the project [Library](/docs/library) and a new instance is placed in the scene at position `(0, 4, 0)`. The new fixture is selected and ready to configure in the Inspector.
+</Step>
+</Steps>
+
+<Callout type="idea" title="Drag and drop">
+You can also drag a `.gdtf` file straight onto the Glowstone window instead of using the menu. The result is identical: parsed, added to the Library, and placed in the scene.
+</Callout>
+
+Imported fixtures are tagged with a light-blue **Imported** provenance chip so you can tell them apart from built-in fixtures and those downloaded from [GDTF Share](/docs/library/gdtf-share).
+
+## What's inside a `.gdtf` archive
+
+A `.gdtf` file is a renamed ZIP. Glowstone reads its contents directly — you never unpack it by hand.
+
+<Files>
+  <Folder name="Robe Lighting@Robin Esprite.gdtf (ZIP)" defaultOpen>
+    <File name="description.xml" />
+    <Folder name="models">
+      <Folder name="gltf" defaultOpen>
+        <File name="base.glb" />
+        <File name="yoke.glb" />
+        <File name="head.glb" />
+      </Folder>
+    </Folder>
+    <Folder name="wheels">
+      <File name="gobo_1.png" />
+      <File name="gobo_2.png" />
+    </Folder>
+    <File name="thumbnail.png" />
+  </Folder>
+</Files>
+
+Models are read from `models/gltf_high/` when present, otherwise `models/gltf/`; wheel and thumbnail media are `.png`.
+
+## What gets extracted
+
+When a GDTF is parsed, Glowstone reads and retains the complete fixture definition.
+
+<Cards>
+  <Card icon={<FileArchive />} title="Identity">
+    Manufacturer, model, long and short names, description, thumbnail, and the original spec filename.
+  </Card>
+  <Card icon={<Boxes />} title="3D model hierarchy">
+    The geometry tree — base fixture → pan axis → tilt axis → beam — with its linked GLB models.
+  </Card>
+  <Card icon={<Palette />} title="Wheels">
+    Colour, gobo, prism, animation, and frost wheels, with per-slot gobo media or CIE-derived colour swatches.
+  </Card>
+  <Card icon={<ListTree />} title="DMX modes & channels">
+    Every DMX mode and its channels, attributes, and footprint. See <a href="/docs/library/dmx-modes">DMX Modes &amp; Channels</a>.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Beam optics">
+    Beam and field angle, beam radius, beam type, colour temperature, CRI, and luminous flux per emitter.
+  </Card>
+</Cards>
+
+### Beam optics read from GDTF
+
+These optical values come straight from the fixture's `description.xml` and are shown in the [Profile Editor](/docs/library/profile-editor).
+
+<TypeTable
+  type={{
+    'Beam angle': { description: 'Cone angle at 50% intensity.', type: 'degrees', default: 'from GDTF' },
+    'Field angle': { description: 'Cone angle at 10% intensity (the soft outer field).', type: 'degrees', default: 'from GDTF' },
+    'Beam radius': { description: 'Physical lens radius where the beam exits the fixture.', type: 'metres', default: 'from GDTF' },
+    'Beam type': { description: 'Optical profile of the emitter.', type: 'Spot / Wash / None / Rectangle', default: 'from GDTF' },
+    'Colour temp': { description: 'Correlated colour temperature of the source.', type: 'Kelvin', default: 'from GDTF' },
+    CRI: { description: 'Colour rendering index of the source.', type: '0–100', default: 'from GDTF' },
+    'Luminous flux': { description: 'Rated light output of the source.', type: 'lumens', default: 'from GDTF' },
+  }}
+/>
+
+<Callout type="info" title="Geometry hierarchy">
+The `Axis` nodes for pan and tilt rotate the head, while the `Beam` node carries the optics. Glowstone converts GDTF's +Z-up coordinates to the app's +Y-up space during import.
+</Callout>
+
+## Fixtures travel with your project
+
+Once imported, the original `.gdtf` archive bytes are bundled into the `.glow` project file. You do not need to ship the original `.gdtf` files alongside the project — on open, each fixture's profile is re-parsed from the bundled archive, so geometry, wheels, and thumbnails come back intact.
+
+<Callout type="success">
+Open the same `.glow` project on another machine and every imported fixture loads with its real model and wheels intact, no external files required. Legacy `.archie` projects still open too.
+</Callout>
+
+## FAQ
+
+<Accordions type="single">
+  <Accordion title="Where does an imported fixture appear?">
+    It is added to the project Library and immediately placed in the scene at `(0, 4, 0)`, selected and ready to edit.
+  </Accordion>
+  <Accordion title="Can I change the DMX mode after import?">
+    Yes. Open the fixture's profile and pick a mode in the DMX Modes tab. Switching modes reconfigures the available channels without removing the fixture. See <a href="/docs/library/dmx-modes">DMX Modes &amp; Channels</a>.
+  </Accordion>
+  <Accordion title="What if a slot has no gobo image?">
+    Colour wheel slots without media display a colour swatch derived from the GDTF CIE xyY colour data instead of an image.
+  </Accordion>
+  <Accordion title="Do I need the .gdtf file later?">
+    No. The archive is bundled into the `.glow` project, so the original `.gdtf` is only needed at import time.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<SlidersHorizontal />} title="The Profile Editor" href="/docs/library/profile-editor">
+    Inspect identity, physical, optics, modes, channels, wheels, and defaults for any fixture.
+  </Card>
+  <Card icon={<Cloud />} title="GDTF Share" href="/docs/library/gdtf-share">
+    Browse and download thousands of community fixtures straight into your Library.
+  </Card>
+  <Card icon={<ListTree />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+    Understand modes, channel footprints, and how attributes map to DMX slots.
+  </Card>
+  <Card icon={<Boxes />} title="The Fixture Library" href="/docs/library">
+    Manage built-in, imported, and downloaded fixture profiles per project.
+  </Card>
+</Cards>

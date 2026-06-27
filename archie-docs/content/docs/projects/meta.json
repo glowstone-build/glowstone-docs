@@ -1,0 +1,9 @@
+{
+  "title": "Projects & Interchange",
+  "icon": "FolderOpen",
+  "pages": [
+    "index",
+    "mvr",
+    "file-formats"
+  ]
+}

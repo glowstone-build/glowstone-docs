@@ -1,0 +1,211 @@
+---
+title: "Menu Bar"
+description: "Every menu and command in the Glowstone menu bar: File, Edit, View, Fixture, Render, Window and Help."
+---
+
+import { FileText, Pencil, Eye, Lightbulb, Image, AppWindow, CircleHelp, Keyboard, SlidersHorizontal } from 'lucide-react';
+
+The menu bar groups every command into seven menus — **File**, **Edit**, **View**, **Fixture**, **Render**, **Window** and **Help** — mirroring the operators that power the [command palette](/docs/interface/commands) and keyboard shortcuts, so labels, keys and undo history stay in sync.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="21 / 9"
+  caption="The Glowstone menu bar at the top of the window with the File menu open, showing New Project, Open Project…, Open Recent, Save, Save As…, Import GDTF Fixture…, Import MVR Scene…, Export MVR Scene… and Preferences…, each prefixed with a Phosphor glyph and separators between groups."
+/>
+
+<Callout type="info">
+On macOS the modifier shown as `Cmd` maps to `Ctrl` on Windows and Linux. Dimmed items are context-dependent and only become active when their precondition is met — for example, a fixture must be selected.
+</Callout>
+
+<InlineTOC items={toc} />
+
+## File
+
+Project lifecycle: create, open, save and exchange scenes.
+
+| Item | Shortcut | What it does |
+| --- | --- | --- |
+| New Project | `Cmd`/`Ctrl`+`N` | Opens the [welcome splash](/docs/getting-started/quick-start); its **New Project** button creates a blank scene. |
+| Open Project… | `Cmd`/`Ctrl`+`O` | File dialog to load a saved [`.glow` project](/docs/projects) (legacy `.archie` files still open). |
+| Open Recent | — | Submenu of up to the last ~12 projects (most recent first); hover an entry to see its full path. Only shown when there is recent history. |
+| Save | `Cmd`/`Ctrl`+`S` | Saves to the current file path, or prompts for a path if the project is unsaved. |
+| Save As… | `Cmd`/`Ctrl`+`Shift`+`S` | Saves the project under a new filename (the `.glow` extension is forced). |
+| Import GDTF Fixture… | — | File dialog to load a single [`.gdtf` fixture](/docs/library/import-gdtf). |
+| Import MVR Scene… | — | File dialog to import an [`.mvr` scene](/docs/projects/mvr) (fixtures plus stage/truss geometry). |
+| Export MVR Scene… | — | Saves the scene as `.mvr`. Greyed unless the scene has fixtures or geometry. |
+| Preferences… | — | Opens the [Preferences window](/docs/interface/preferences) (units, DMX config, display, render defaults). |
+
+<Callout type="info" title="Native format">
+Glowstone projects use the `.glow` extension (legacy `.archie` files still open). MVR import/export is a separate exchange path — see [MVR Scene Exchange](/docs/projects/mvr).
+</Callout>
+
+## Edit
+
+Undo history, the operator palette, and selection commands.
+
+| Item | Shortcut | What it does |
+| --- | --- | --- |
+| Undo *[edit name]* | — | Undoes the last edit, labelled with its name. Greyed when there is no undo history. |
+| Redo *[edit name]* | — | Redoes the last undone edit. Greyed when there is no redo history. |
+| Run Operator… | `F3` | Opens the [Operator Search palette](/docs/interface/commands) to run any registered operation by name. |
+| Adjust Last Operation | `F9` | Re-invokes the last operator; parameterised ops re-open their dialog so you can tweak and re-run. |
+| Duplicate / Array… | `D` | Arrays the [selected fixture](/docs/scene/duplicate-array) by offset and Y angle. Greyed if nothing is selected. |
+| Delete Selected | — | Removes selected fixtures, geometry, screens and pyro devices, then remaps patch, groups and cues. Greyed if nothing is selected. |
+| Select All | `A` | Selects all items of the [active type](/docs/scene/selection) (fixtures, geometry or screens). |
+| Invert Selection | `Cmd`/`Ctrl`+`I` | Swaps selected and deselected items within the active type. |
+| Deselect All | `Alt`+`A` | Clears the selection. |
+
+<Callout type="idea">
+Press `F9` straight after a `Duplicate / Array…` to re-open the dialog and fine-tune the offset or copy count without starting over.
+</Callout>
+
+## View
+
+Camera presets, framing, fullscreen, and viewport overlays.
+
+| Item | Shortcut | What it does |
+| --- | --- | --- |
+| Camera | — | Submenu of [preset views](/docs/navigation/views) (see below). |
+| Frame Selection | `F` | Zooms the camera to frame the selected fixtures. |
+| Frame All | `Shift`+`F` | Frames every fixture and piece of geometry in the scene. |
+| Toggle Fullscreen | `F11` | Enters or exits fullscreen window mode. |
+| Overlays | — | Submenu of toggleable HUD elements (see below). |
+
+### View ▸ Camera
+
+Seven preset views. **Perspective** is the free-orbit perspective camera; the other six snap to fixed orthographic axis orientations.
+
+| Preset | What it does |
+| --- | --- |
+| Perspective | The free-orbit perspective camera. |
+| Top | Plan view from directly above. |
+| Bottom | View from directly below. |
+| Front | Looks at the stage from the front. |
+| Back | Looks from behind the stage. |
+| Left | Side view from stage left. |
+| Right | Side view from stage right. |
+
+<Callout type="idea">
+To recall a specific framing later, save it as a numbered [camera bookmark](/docs/navigation/bookmarks) (nine slots) rather than relying on the presets — bookmarks persist with the project.
+</Callout>
+
+### View ▸ Overlays
+
+Toggle on-screen HUD elements. See [Display Modes & Overlays](/docs/navigation/overlays) for detail.
+
+| Overlay | What it does |
+| --- | --- |
+| Statistics | Render and frame-time stats overlay (also see the [Performance Overlay](/docs/navigation/performance-overlay)). |
+| Fixture labels | Shows or hides fixture names floating in the 3D viewport. |
+| Grid + axes | Shows or hides the origin grid and world X/Y/Z axes. |
+| Navigation gizmo | Shows or hides the orientation gizmo in the top-right corner. |
+| Transform hint line | Shows or hides the constraint line drawn during transforms. |
+| FPS overlay | Numeric frames-per-second counter (separate from Statistics). |
+
+## Fixture
+
+Fixture library and profile tools.
+
+| Item | Shortcut | What it does |
+| --- | --- | --- |
+| Online Library… | — | Opens the [Online Fixture Library](/docs/library/gdtf-share) window of cloud-hosted GDTF fixtures. |
+| Edit Profile… | — | Opens the [Profile Editor](/docs/library/profile-editor) for the selected fixture. Greyed unless the selected fixture is a GDTF. |
+
+## Render
+
+Start, focus and cancel high-quality still renders.
+
+| Item | Shortcut | What it does |
+| --- | --- | --- |
+| Render Image | `F12` | Starts a [high-quality still render](/docs/rendering/render-image) using temporal accumulation, and opens/focuses the Render tab. Greyed while a render is in progress. |
+| Render Animation | — | Disabled stub — see the note below. |
+| Cancel Render | — | Stops the current render job. Only shown while rendering. |
+| Open Render View | — | Focuses the Render tab. |
+
+<Callout type="warn" title="Render Animation is coming soon">
+**Render Animation** appears in the menu but is a disabled stub. Only still-image rendering (`F12`) currently produces output. See [Rendering a Still Image](/docs/rendering/render-image).
+</Callout>
+
+## Window
+
+Workspaces, camera bookmarks, profiler and log windows, panel visibility, and layout reset.
+
+| Item | Shortcut | What it does |
+| --- | --- | --- |
+| Workspace | — | Submenu of saved [workspace layouts](/docs/interface/workspaces) (see below). |
+| View Bookmarks | — | Submenu to save and recall [camera bookmarks](/docs/navigation/bookmarks) (see below). |
+| Performance | — | Checkbox to show or hide the [Performance profiler](/docs/navigation/performance-overlay) window. |
+| Report Log | — | Checkbox to show or hide the [message and warning log](/docs/interface/notifications). |
+| Welcome | — | Re-opens the welcome splash screen. |
+| Panels | — | Submenu of toggleable dock tabs (see below). |
+| Reset Layout | — | Restores the active workspace's saved dock layout, undoing any live panel dragging. |
+
+### Window ▸ Workspace
+
+Each saved layout is listed by name; the active one is checkmarked. User-created workspaces show a trash icon to delete them.
+
+<Accordions type="single">
+  <Accordion title="Save Current as Workspace…">
+    Saves the current dock layout, active tool and overlay emphasis as a new named workspace. See [Workspaces](/docs/interface/workspaces) for the full system.
+  </Accordion>
+</Accordions>
+
+### Window ▸ View Bookmarks
+
+Manages saved camera poses across nine numbered slots. Distinct from [Cues](/docs/cues), which store fixture looks rather than camera positions.
+
+| Item | What it does |
+| --- | --- |
+| Save Current View | Saves the current camera pose to the next free numbered slot. Greyed when all slots are full. |
+| *Numbered slots* | List existing bookmarks; click a slot to ease the camera to that pose. Each has a trash icon to delete it. |
+
+<Callout type="info">
+Camera bookmarks persist with the project (stored in `bookmarks.json`), so the slots you save stay available between sessions.
+</Callout>
+
+### Window ▸ Panels
+
+Toggles dock tabs on and off. Every tab except the Viewport (always present) can be hidden and restored here. See [Panels](/docs/interface/panels).
+
+| Tab | Opens |
+| --- | --- |
+| Scene | The [Scene Outliner](/docs/scene/outliner). |
+| Library | The [Fixture Library](/docs/library). |
+| Inspector | The property editor for the current selection. |
+| DMX | The [DMX Monitor](/docs/dmx/dmx-monitor) (512-channel grid). |
+| Fixtures | The fixture manager / [patching](/docs/dmx/patching) editor (the `Patch` panel). |
+| Cues | [Cues & Playback](/docs/cues). |
+| Connectivity | [Art-Net / sACN](/docs/dmx/connectivity) settings and status. |
+| Render | The still-render [progress and image](/docs/rendering/render-image) view. |
+
+## Help
+
+Reference and about.
+
+| Item | Shortcut | What it does |
+| --- | --- | --- |
+| Keyboard Shortcuts | — | Opens a window listing all [keybindings](/docs/reference/keyboard-shortcuts) and action names. |
+| About glowstone | — | Opens the About dialog with product name, version, a one-line description and the tech stack. |
+
+## See also
+
+<Cards>
+  <Card icon={<SlidersHorizontal />} title="Commands & Operator Search" href="/docs/interface/commands">
+    Run any menu command by name with the `F3` palette.
+  </Card>
+  <Card icon={<Keyboard />} title="Keyboard Shortcuts" href="/docs/reference/keyboard-shortcuts">
+    The full keybinding reference for every action.
+  </Card>
+  <Card icon={<AppWindow />} title="Workspaces" href="/docs/interface/workspaces">
+    Save and switch dock layouts from the Window menu.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Preferences & Theme" href="/docs/interface/preferences">
+    Configure units, DMX, display and render defaults.
+  </Card>
+  <Card icon={<Eye />} title="Display Modes & Overlays" href="/docs/navigation/overlays">
+    Everything behind the View ▸ Overlays submenu.
+  </Card>
+  <Card icon={<Image />} title="Rendering a Still Image" href="/docs/rendering/render-image">
+    What the Render menu's `F12` command produces.
+  </Card>
+</Cards>

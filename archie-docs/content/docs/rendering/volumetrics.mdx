@@ -1,0 +1,164 @@
+---
+title: "Volumetric Beams & Haze"
+description: "The raymarched single-scattering engine for volumetric beams in haze."
+---
+
+import { Wind, Sparkles, SlidersHorizontal, Sun, Gauge, Layers, Boxes } from 'lucide-react';
+
+Glowstone renders volumetric beams with a per-pixel raymarcher that integrates single-scattering through the [environment fog box](/docs/scene/environment), so beams glow, cross, and cast shadows mid-air.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The 3D viewport in Beauty mode showing a dense rig of moving heads aimed into a hazy stage: sharp crossing beams with visible gobo cross-sections, soft pools on the floor, and bloom on the brightest cones. Fog density set to light haze."
+/>
+
+## How it works
+
+For every screen pixel, the renderer marches a view ray through the fog box and accumulates scattered light from each beam. The fog box itself drives the look; the per-fixture beams supply the light.
+
+<Cards>
+  <Card icon={<Wind />} title="The fog box drives it" href="/docs/scene/environment">
+    Density, anisotropy, uniformity, cluster contrast and tint live on the active environment, not the renderer.
+  </Card>
+  <Card icon={<Sparkles />} title="Beams supply the light" href="/docs/fixtures/beam-engine">
+    Each fixture's angle, intensity, colour and gobo feed the scatter calculation.
+  </Card>
+</Cards>
+
+### The raymarch
+
+The default method is a per-pixel raymarch. It is the recommended path because it produces clean, sharp beams with no blocky fog-circle artifacts.
+
+| Stage | What happens |
+| --- | --- |
+| Density field | A tiling 3D value-noise (FBM) volume, baked on the CPU, sampled at three scrolling "wind" scales per step and pushed through a high-contrast cluster remap driven by `uniformity` / `cluster_contrast` |
+| Phase function | Exact Henyey–Greenstein using the environment `anisotropy` as `g`. The Schlick pow-free approximation was tried and rejected — it inverts the lobe near the slider's `±0.95` extremes |
+| Transmission | Beer–Lambert exponential: `step_tr = exp(−σ_t · dt)` |
+| Scatter accumulation | Energy-conserving analytic slice integral `(L·σ_s)·(1 − step_tr)/σ_t`, not a naive point sample |
+| Temporal jitter | Per-pixel, per-frame interleaved-gradient-noise (IGN, animated blue noise) ray-start offset, resolved by a reprojecting EMA pass that converges the jitter into a smooth beam |
+
+<Callout type="info" title="Why temporal jitter matters">
+Each frame jitters its sample points and blends with the reprojected history. The history weight ramps up as the camera and rig sit still (toward a per-uniformity cap, ~0.55 for clustered smoke up to ~0.92 for smooth fog) and drops to a low floor when anything moves so beams don't ghost. A still camera converges to a smooth result; this is also why a [still render](/docs/rendering/render-image) refines over its accumulation passes. Temporal accumulation runs only in Beauty mode.
+</Callout>
+
+### Hero-beam selection (LOD)
+
+The engine cannot give every beam a dedicated high-quality treatment, so it ranks fixtures automatically.
+
+<Steps>
+<Step>
+### Rank the rig
+Lit beams are ranked by cone narrowness alone — the smallest cone half-angle (`tan_half`) wins. At most one shadow map per fixture, so a multi-cell array can't hog the atlas.
+</Step>
+<Step>
+### Promote heroes
+The top `shadow_max` fixtures get a dedicated per-beam shadow map for crisp shafts and mid-air occlusion (capped at 8 by `shadow::MAX`).
+</Step>
+<Step>
+### Fall back for the rest
+Every other beam is still marched, but shares a single coarse occluder map instead of a dedicated one. In the optional hybrid froxel mode the wide/dim beams are instead carried by the froxel grid and only the heroes are raymarched.
+</Step>
+</Steps>
+
+<Callout type="idea">
+Want a specific light to read as a sharp hero shaft? Tighten its beam — ranking is by cone narrowness, so a narrower zoom promotes it above the washes. See [Pan, Tilt & Aiming](/docs/fixtures/movement) and the [Beam Parameter Reference](/docs/fixtures/parameters).
+</Callout>
+
+## The environment drives the look
+
+The volumetric appearance is controlled almost entirely by the active environment (fog box), not by the renderer. The live viewport uses the one unhidden environment, and a render inherits it. Full details live on the [Environments: Fog & Haze](/docs/scene/environment) page; the parameters that shape volumetrics are summarised here.
+
+<TypeTable
+  type={{
+    density: { description: 'Extinction scale (σ_t). Higher = thicker haze and more visible beams. The "Fog density" quick slider in Render Properties is 0.0–2.0; the full "Density" field on the environment runs 0.0–4.0.', type: '0.0–2.0 (quick) / 0.0–4.0 (full)', default: '0.03' },
+    anisotropy: { description: 'Henyey–Greenstein g (labelled "Anisotropy"). >0 forward-scatters (beams brighten viewed head-on), 0 = isotropic, <0 back-scatters. Real haze is ~0.7–0.85.', type: '−0.95 to +0.95', default: '0.25' },
+    uniformity: { description: 'Haze smoothness. 1.0 = even fog; lower values break into cloud clusters with clear gaps.', type: '0.0–1.0', default: '0.6' },
+    cluster_contrast: { description: 'Labelled "Cluster contrast". How much denser the clusters are vs the surrounding haze. Only matters when uniformity is below 1.0.', type: '0.0–1.0', default: '0.0' },
+    color: { description: 'Scattering tint (albedo) of the haze, labelled "Tint". Neutral grey-white for realistic theatrical fog.', type: 'linear RGB', default: '[0.7, 0.72, 0.78]' },
+  }}
+/>
+
+<Callout type="warn">
+The default anisotropy of `0.25` is looser (less forward-peaked) than real haze. Raise it toward `0.7`–`0.85` for beams that pop more strongly when you look into them.
+</Callout>
+
+## The froxel grid (optional)
+
+Glowstone also ships an optional froxel volumetric: a 160×90×64 frustum-aligned voxel grid. It is a performance tier for very large rigs with hundreds of dim, static washes, where you want per-light cost to decouple from fixture count. It is only created when the GPU adapter supports rgba16float storage textures.
+
+<Tabs items={['Per-pixel raymarch (default)', 'Froxel grid (opt-in)']}>
+  <Tab value="Per-pixel raymarch (default)">
+    Sharp, clean beams with crisp gobos. Cost scales with `steps` and pixel count. This is the default and the recommended path for stage shots.
+  </Tab>
+  <Tab value="Froxel grid (opt-in)">
+    A low-resolution 3D grid. Cost decouples from the number of lights, helping huge rigs, but the grid is visibly coarser.
+  </Tab>
+</Tabs>
+
+<Callout type="warn">
+The froxel grid is **off by default**. Source notes describe its artifacts directly: "blocky/duplicated 'fog circle' artifacts near the camera, flicker, and mushy gobos in the masses." Only enable it when per-pixel cost is genuinely the bottleneck. The toggle is `froxel_volumetric` (Render Properties ▸ Performance ▸ Froxel).
+</Callout>
+
+## Quality vs performance knobs
+
+These live in `RenderSettings` and are shared between the viewport preview and the final render, so tweaks preview instantly.
+
+<TypeTable
+  type={{
+    steps: { description: 'Volumetric raymarch step count per ray (UI label "Steps"; separate viewport and render values). Higher = cleaner beams, less aliasing/banding. Stay at ~64+ to avoid aliasing in gobo cross-sections.', type: '8–256 steps', default: '80' },
+    render_scale: { description: 'Live viewport internal resolution scale (bilinear upscale). The single biggest FPS lever; scales GPU work by scale². Does NOT affect final render resolution.', type: '0.25–1.0', default: '0.5 (viewport only)' },
+    beam_intensity: { description: 'Global scale on volumetric scatter accumulation for all beams (UI label "Beam intensity", shared in Render Properties ▸ Color Management). Visual only, no performance cost.', type: '0.0–2000.0', default: '650.0' },
+    shadow_max: { description: 'Maximum hero beams that get dedicated shadow maps; each costs ~2–3 ms. Capped at 8 in source.', type: '0–16', default: '8' },
+    froxel_volumetric: { description: 'Use the froxel grid instead of per-pixel raymarch. Off keeps beams sharp.', type: 'on/off', default: 'off' },
+  }}
+/>
+
+<Callout type="info" title="Levers in priority order">
+1. `render_scale` — biggest FPS impact (work scales with the square of the scale).
+2. `steps` — each extra step adds roughly constant cost per pixel.
+3. `shadow_max` — each hero shadow map is ~2–3 ms.
+4. `froxel_volumetric` — flip on only for huge static rigs.
+</Callout>
+
+See [Performance & Quality Tuning](/docs/rendering/performance) for dynamic resolution (`auto_resolution` / `fps_target`) and recommended presets per use case.
+
+## Frequently asked
+
+<Accordions type="single">
+  <Accordion title="My beams look noisy or banded. What do I change?">
+    Raise `steps` (try 96–160) and let the camera sit still so temporal accumulation can converge. For a final image, use a higher Quality preset which raises both steps and samples.
+  </Accordion>
+  <Accordion title="Why are some beams crisp and others soft?">
+    Hero-beam LOD. Narrow, bright, on-screen fixtures are promoted to dedicated shadow-mapped raymarches; wide washes fall back to a cheaper path.
+  </Accordion>
+  <Accordion title="My washes are tanking the frame rate on a big rig.">
+    Lower `render_scale` first, then consider enabling the froxel grid (`froxel_volumetric`) — accepting its coarser look in exchange for cost that decouples from fixture count.
+  </Accordion>
+  <Accordion title="I see no beams at all.">
+    Check that an environment exists and is unhidden, that its `density` is above zero, and that fixtures have intensity. Beams only scatter where there is haze.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Wind />} title="Environments: Fog & Haze" href="/docs/scene/environment">
+    Place and tune the fog box that drives every beam.
+  </Card>
+  <Card icon={<Layers />} title="Shadows" href="/docs/rendering/shadows">
+    How hero beams cast floor and mid-air shadows.
+  </Card>
+  <Card icon={<Gauge />} title="Performance & Quality Tuning" href="/docs/rendering/performance">
+    Steps, render scale, dynamic resolution and presets.
+  </Card>
+  <Card icon={<Sun />} title="Look & Colour Management" href="/docs/rendering/look">
+    Exposure, bloom, chroma haze and tonemapping.
+  </Card>
+  <Card icon={<Sparkles />} title="The Beam Engine" href="/docs/fixtures/beam-engine">
+    The optical chain behind each fixture's beam.
+  </Card>
+  <Card icon={<Boxes />} title="Rendering a Still Image" href="/docs/rendering/render-image">
+    Take the converged result to disk.
+  </Card>
+</Cards>

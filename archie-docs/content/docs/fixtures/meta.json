@@ -1,0 +1,13 @@
+{
+  "title": "Fixtures & Beams",
+  "icon": "Lightbulb",
+  "pages": [
+    "index",
+    "beam-engine",
+    "parameters",
+    "color",
+    "gobos-prism",
+    "movement",
+    "pyro"
+  ]
+}

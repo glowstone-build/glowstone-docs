@@ -1,0 +1,199 @@
+---
+title: "Duplicate & Array"
+description: "Parametric Duplicate/Array dialog and Shift+D grab-duplicate for fast rig building."
+---
+
+import { LayoutGrid, MousePointer2, Move3d, RotateCw, Repeat2 } from 'lucide-react';
+
+Glowstone gives you two ways to repeat a selection. The parametric **Duplicate / Array** dialog (`D`) arrays the active fixture by an exact per-copy offset and pan angle, for fast beam fans and rows. The Blender-style `Shift`+`D` grab-duplicate clones the whole selection and lets you drag the copies into place. Both assign fresh stable IDs to every copy.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="3D Viewport showing a single moving-light fixture arrayed into a pan fan: ten co-located copies whose beams fan out 36 degrees apart, all selected with the move gizmo at the median pivot."
+/>
+
+## Choosing a method
+
+<Cards>
+  <Card icon={<LayoutGrid />} title="Duplicate / Array dialog">
+    Press `D`. Enter exact per-copy offset, pan angle, and a count of copies. Arrays the active fixture. Best for beam fans and evenly-spaced rows.
+  </Card>
+  <Card icon={<MousePointer2 />} title="Shift+D grab-duplicate">
+    Press `Shift`+`D`. Clone the whole selection, then drag to place. Type a number for an evenly-spaced array along the drag.
+  </Card>
+</Cards>
+
+## Duplicate / Array dialog
+
+Press `D` in the viewport with a fixture selected to open the dialog. You can also reach it from the viewport context menu (**Duplicate / Array…**), the **Edit** menu (**Duplicate / Array…**), or the [operator search palette](/docs/interface/commands) (`F3` → "Duplicate / Array…"). The dialog arrays the **active (primary) fixture** only — it does not duplicate other selected fixtures, objects, screens, or pyro. For a multi-object clone, use `Shift`+`D`.
+
+<Callout type="info" title="Pan angle, not position">
+  `Y angle` increments each copy's **commanded pan** (the head's heading about world Y) — it does **not** orbit the copies' positions. With all offsets at zero, every copy sits at the same point with its beam fanned by `i × Y angle`. To spread copies in space, give an axis a per-copy offset.
+</Callout>
+
+### Parameters
+
+<TypeTable
+  type={{
+    'X offset': { description: 'Per-copy translation along world X. Copy i is offset by i × this value. Negative values reverse the direction.', type: 'metres', default: 'remembered' },
+    'Y offset': { description: 'Per-copy translation along world Y (height).', type: 'metres', default: 'remembered' },
+    'Z offset': { description: 'Per-copy translation along world Z.', type: 'metres', default: 'remembered' },
+    'Y angle': { description: 'Per-copy pan offset (degrees) about world Y. Copy i has its commanded pan offset by i × this value — fans the beams, not the positions.', type: 'degrees', default: 'remembered' },
+    'Number of duplicates': { description: 'How many NEW copies to create (the original is kept and is not counted). Copy i is offset by i × the per-copy values.', type: '1–500', default: 'remembered' },
+  }}
+/>
+
+<Callout type="info" title="Values are remembered">
+  The dialog reuses the X/Y/Z offset, Y angle, and count from the last duplicate, no matter which entry point you used. A fresh app launch starts at all zeros and a count of `1`.
+</Callout>
+
+### Steps
+
+<Steps>
+<Step>
+### Select a fixture
+Click the fixture you want to repeat in the viewport or the [Scene Outliner](/docs/scene/outliner). The dialog arrays the active fixture.
+</Step>
+<Step>
+### Open the dialog
+Press `D`. The dialog opens with the last-used values.
+</Step>
+<Step>
+### Set the per-copy offset and fan
+Enter the `X offset`, `Y offset`, and `Z offset` in metres, and a `Y angle` in degrees to fan the beams. Click and drag a field, or type a value directly.
+</Step>
+<Step>
+### Set the count
+Set `Number of duplicates` to how many extra copies you want (1–500). The original stays in place.
+</Step>
+<Step>
+### Confirm
+Click **Duplicate**. The array is created as one undoable operation; each copy is named `Base Name (i)` and gets a fresh ID.
+</Step>
+</Steps>
+
+### Worked example: a beam fan
+
+To fan one moving light's beam into ten directions, 36° apart:
+
+<Steps>
+<Step>
+### Set the fan angle
+Set `Y angle` to `36`. Each copy's commanded pan is offset by `36° × i`.
+</Step>
+<Step>
+### Set the count
+Set `Number of duplicates` to `9`. Nine copies plus the original give ten heads whose pans step `0°, 36°, … 324°`.
+</Step>
+<Step>
+### Leave the offsets at zero
+Keep `X offset`, `Y offset`, and `Z offset` at `0` so the copies stay co-located and only the beam directions fan out.
+</Step>
+<Step>
+### Duplicate
+Click **Duplicate**. Each copy keeps the base position but its pan is offset by `36° × i`.
+</Step>
+</Steps>
+
+<Callout type="idea">
+  For a straight row of fixtures instead of a beam fan, set `Y angle` to `0` and give one axis an offset, e.g. `X offset` = `1` with `Number of duplicates` = `4` for five fixtures (original plus four) spaced 1 m apart along X.
+</Callout>
+
+<ImagePlaceholder
+  label="UI panel"
+  ratio="4 / 3"
+  caption="The Duplicate dialog: a two-column grid of DragValue fields labelled X offset, Y offset, Z offset (m), Y angle (degrees), and Number of duplicates, with Duplicate and Cancel buttons."
+/>
+
+### Tweak and repeat with F9
+
+After a duplicate runs, press `F9` (**Adjust Last Operation**) to re-open the Duplicate dialog with the same settings. Adjust the parameters and confirm to repeat the operation with new values. See [Commands & Operator Search](/docs/interface/commands) for more on the adjust-last-operation flow.
+
+## Shift+D grab-duplicate
+
+`Shift`+`D` clones the selection and immediately enters move mode on the copies, so you can drag them into place. Type a number while dragging to turn the move into an evenly-spaced array along the drag direction.
+
+<Steps>
+<Step>
+### Select objects
+Select one or more objects — fixtures, geometry, screens, pyro, or the environment volume.
+</Step>
+<Step>
+### Press Shift+D
+The selection is cloned (one copy per selected object) and move mode starts on the copies. They follow the cursor.
+</Step>
+<Step>
+### Drag to position
+Move the mouse to place the clones. The clones slide along the drag vector.
+</Step>
+<Step>
+### (Optional) Type a count for an array
+Type digits to create an array — typing `3` makes 3 copies total, evenly spaced along the drag vector. The array updates live each frame as you move or change the number.
+</Step>
+<Step>
+### Confirm or cancel
+Press `Enter` to confirm. Press `Esc` to cancel the move; the base copies stay where they were cloned (at the source), and any live array extras are dropped.
+</Step>
+</Steps>
+
+<Callout type="info" title="Esc leaves the base copies">
+  Cancelling a grab with `Esc` does not remove the clones — the base copies are left at the source (the clone is its own undo step) while the live array extras are dropped. This matches Blender's `Shift`+`D` → `Esc`. Press `Cmd`/`Ctrl`+`Z` afterwards if you want to remove the base copies too.
+</Callout>
+
+<Callout type="idea">
+  The typed array count for grab-duplicate is clamped to 1–1000, so you can lay out long evenly-spaced runs in one gesture.
+</Callout>
+
+## Dialog vs. grab at a glance
+
+<Tabs items={['Duplicate / Array (D)', 'Grab-duplicate (Shift+D)']}>
+  <Tab value="Duplicate / Array (D)">
+    - Arrays the active fixture only (not multi-object).
+    - Opens a parameter dialog with remembered values.
+    - Per-copy `X`/`Y`/`Z` offset and a `Y angle` pan fan (beam directions, not positions).
+    - 1–500 new copies, created as a single undo step.
+    - Re-open and tweak with `F9`.
+  </Tab>
+  <Tab value="Grab-duplicate (Shift+D)">
+    - Clones the whole selection (any object types) and enters move mode.
+    - Place by dragging; type a number for an array along the drag.
+    - Array count clamped to 1–1000, spaced automatically along the drag vector.
+    - `Enter` confirms; `Esc` cancels the move (base copies remain at the source).
+    - Best for quick, freehand placement.
+  </Tab>
+</Tabs>
+
+## Frequently asked
+
+<Accordions type="single">
+  <Accordion title="Are the copies independent of the original?">
+    Yes. Each copy is a deep clone with a fresh stable ID and its own name (`Base Name (i)`). Editing one does not change the others.
+  </Accordion>
+  <Accordion title="Do duplicated fixtures keep their DMX patch?">
+    No. The DMX patch lives in a side patch table keyed by fixture, so new copies are created unpatched. Patch them with [Patching Fixtures](/docs/dmx/patching) once they are in place.
+  </Accordion>
+  <Accordion title="Can I undo a duplicate at once?">
+    The Duplicate / Array dialog is one undo step, so a single `Cmd`/`Ctrl`+`Z` removes the whole array. A grab-duplicate is two steps — the clone and then the move/array — so it can take two undos to fully reverse.
+  </Accordion>
+  <Accordion title="How do I arrange copies after creating them?">
+    There are no dedicated align or distribute tools. Use the transform tools, and switch the pivot to Individual Origins to spin or scale a scattered selection in place. See [Moving, Rotating & Scaling](/docs/scene/transforming).
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Move3d />} title="Moving, Rotating & Scaling" href="/docs/scene/transforming">
+    Position and aim fixtures with the gizmo, axis locks, and numeric entry.
+  </Card>
+  <Card icon={<Repeat2 />} title="Adding Fixtures & Objects" href="/docs/scene/adding-objects">
+    Use the Add menu (`Shift`+`A`) to place fixtures before duplicating them.
+  </Card>
+  <Card icon={<RotateCw />} title="Commands & Operator Search" href="/docs/interface/commands">
+    Run Duplicate from `F3` search and repeat it with `F9`.
+  </Card>
+  <Card icon={<LayoutGrid />} title="The Scene Outliner" href="/docs/scene/outliner">
+    Browse, select, and rename the fixtures you create.
+  </Card>
+</Cards>

@@ -1,0 +1,98 @@
+---
+title: "Camera Bookmarks"
+description: "Save and recall camera poses with eased transitions across 9 numbered slots."
+---
+
+import { Camera, Bookmark, FolderOpen, Save, Film } from 'lucide-react';
+
+Camera bookmarks store a complete camera pose for single-action recall. Glowstone gives you up to **9** numbered slots, each holding one saved view.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The 3D Viewport showing a multi-fixture rig from a 3/4 perspective angle, with the Window > View Bookmarks menu open and 'Save Current View' highlighted."
+/>
+
+## What a bookmark stores
+
+A bookmark captures the orbit camera's full state at the moment you save it. Recalling a slot restores every field together — including the projection mode — over a short eased transition.
+
+<TypeTable
+  type={{
+    target: { description: 'Focal point the camera orbits around and looks at (world space).', type: 'Vec3', default: 'captured' },
+    yaw: { description: 'Horizontal orbit angle.', type: 'radians', default: 'captured' },
+    pitch: { description: 'Vertical orbit angle.', type: 'radians', default: 'captured' },
+    distance: { description: 'Dolly distance from target to the eye.', type: 'meters', default: 'captured' },
+    fov_y: { description: 'Vertical field of view.', type: 'radians', default: 'captured' },
+    ortho: { description: 'Projection mode: perspective or orthographic.', type: 'boolean', default: 'captured' },
+  }}
+/>
+
+<Callout type="info" title="Eased recall">
+Recall is animated, not instant — the camera glides to the saved pose over roughly `0.25s` with a cubic ease-out. Yaw takes the shortest arc, and a persp/ortho difference cross-fades. If the saved pose is already essentially current, recall snaps instantly. If you grab the camera mid-transition (orbit, pan or zoom), the animation cancels and hands control straight back to you.
+</Callout>
+
+## Save the current view
+
+<Steps>
+<Step>
+### Frame your shot
+Orbit, pan and zoom the [viewport](/docs/navigation/views) until the camera shows the angle you want to keep.
+</Step>
+<Step>
+### Save it
+Open `Window` > `View Bookmarks` > `Save Current View`. The current pose is written to the next free slot.
+</Step>
+<Step>
+### Note the slot
+The new bookmark is auto-named `View N`, where `N` is its slot number (for example `View 1`). It is saved to disk immediately.
+</Step>
+</Steps>
+
+<Callout type="info">
+Slots fill from the lowest unused number first. With all 9 slots occupied, `Save Current View` is disabled — delete a bookmark to free a slot before saving again.
+</Callout>
+
+## Recall a view
+
+<Tabs items={['From the menu', 'By keymap command']}>
+  <Tab value="From the menu">
+Open `Window` > `View Bookmarks`. Each saved view is listed as `N.  View N`; click it to ease the camera to that pose. An empty set shows `No saved views`.
+  </Tab>
+  <Tab value="By keymap command">
+Each slot has a `Recall view bookmark N` command (and there is a `Save view bookmark` command for the active save). These are runnable from the operator search (`F3`) and bindable in your [keymap](/docs/interface/preferences) — but **no key is bound by default**. Slot numbers are stable, so a command bound to slot 3 always recalls slot 3.
+  </Tab>
+</Tabs>
+
+## Delete a bookmark
+
+In the `View Bookmarks` menu, click the trash icon next to a saved view to remove it. Removing a bookmark frees its slot for reuse. Deleting one slot does **not** renumber the others — slot 3 stays slot 3 even after you delete slot 2 — and the next save reuses the lowest freed number.
+
+## Persistence
+
+Camera bookmarks are stored per user in `bookmarks.json`, alongside your keymap. They persist between sessions and across projects — they are not tied to any single `.glow` project file. The set is read once at startup, and every save or delete is written back to disk right away. A fresh install starts with no bookmarks.
+
+<Callout type="warn" title="Bookmarks are not Cues">
+Camera bookmarks store **only the camera** — where you are looking from. They do not capture fixture intensity, colour, position or any other look. To save and recall the state of your **rig**, use [Cues](/docs/cues), which crossfade fixture looks over a fade time. Cues live in the `.glow` project file; camera bookmarks live in `bookmarks.json`.
+</Callout>
+
+<Callout type="warn">
+Bookmark rename and reorder are not yet available in the UI. New bookmarks keep their auto-assigned `View N` name.
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Camera />} title="Views, Gizmo & Pie Menus" href="/docs/navigation/views">
+    Orbit, pan, zoom and the preset axis views.
+  </Card>
+  <Card icon={<Film />} title="Cues & Playback" href="/docs/cues">
+    Save and recall fixture looks with crossfades.
+  </Card>
+  <Card icon={<FolderOpen />} title="Projects & the .glow Format" href="/docs/projects">
+    What lives in the project file versus per-user config.
+  </Card>
+  <Card icon={<Save />} title="Preferences & Theme" href="/docs/interface/preferences">
+    Customise the keymap and bind recall commands.
+  </Card>
+</Cards>

@@ -1,0 +1,114 @@
+---
+title: "Media Servers (CITP/MSEX)"
+description: "Receive live video from Resolume, grandMA and other CITP media servers."
+---
+
+import { Server, Wifi, Video, Layers, ListVideo, MonitorPlay } from 'lucide-react';
+
+Glowstone receives live video from CITP media servers onto your [LED screens](/docs/media). It implements the MSEX streaming subset, so a layer running in Resolume or grandMA appears on a wall in the viewport while you light around it.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A 4x2 LED wall in the 3D viewport showing a live Resolume Arena layer (motion graphics), with the Inspector docked right: Content section expanded, Source set to CITP, the Source field reading 'Resolume Arena | 1' and the discovered server 'Resolume Arena' offered as a button under 'Servers:'."
+/>
+
+## What it connects to
+
+Glowstone speaks CITP/MSEX v1.0 through v1.2 and discovers any compliant media server on the local network. (On connect it advertises support for v1.0, v1.1 and v1.2 in its Client Information message.)
+
+<Cards>
+  <Card icon={<Video />} title="Resolume">Arena and Avenue, exposing their composition layers as streamable sources.</Card>
+  <Card icon={<Server />} title="grandMA">grandMA consoles with the CITP module enabled.</Card>
+  <Card icon={<MonitorPlay />} title="Capture">Capture, and any other server implementing CITP/MSEX v1.0–v1.2.</Card>
+</Cards>
+
+## How discovery works
+
+A background thread listens for media-server announcements on the LAN, so discovered servers appear in the Inspector automatically — no IP address to type in. Only peers that announce themselves as a media server are listed.
+
+<TypeTable
+  type={{
+    Port: { description: 'UDP port for CITP multicast announcements.', type: 'UDP', default: '4809' },
+    'Multicast group': { description: 'Current CITP multicast group (used since 2014).', type: 'IPv4', default: '239.224.0.180' },
+    'Legacy group': { description: 'Older CITP multicast group, also joined for compatibility.', type: 'IPv4', default: '224.0.0.180' },
+  }}
+/>
+
+A server stays in the list while it keeps announcing. One that goes silent for about ten seconds drops off; stale entries are pruned entirely after thirty.
+
+<Callout type="warn" title="Requires LAN / multicast reachability">
+CITP relies on multicast on `239.224.0.180` (or the legacy `224.0.0.180`) over UDP `4809`. The media server must be on the same LAN segment and reachable by multicast. Routed networks, most VPNs, and Wi-Fi setups that block multicast will prevent discovery.
+</Callout>
+
+## Add a server stream to a screen
+
+<Steps>
+<Step>
+### Select the screen
+In the [Scene Outliner](/docs/scene/outliner), click the LED screen you want to drive. Its properties load in the Inspector.
+</Step>
+<Step>
+### Set Source to CITP
+In the Inspector, open the **Content** section and set **Source** to **CITP**.
+</Step>
+<Step>
+### Pick a discovered server
+Discovered servers are listed as buttons under **Servers:**. Click one — for example `Resolume Arena` — and it is written into the **Source** field. With no layer suffix, layer 0 is used.
+</Step>
+<Step>
+### Choose a layer (optional)
+The Source field is free text in the form `server | layer`. Append ` | <layer>` to target a specific layer — for instance edit it to `Resolume Arena | 1` to receive layer 1 instead of layer 0.
+</Step>
+</Steps>
+
+Glowstone then opens a connection to the server, requests the stream, and the live frames appear on the wall in the viewport.
+
+<Callout type="info" title="Source identifier format">
+The CITP source is written as `server | layer`, matching the hint shown in the Inspector. The server name comes from discovery; the layer is the number after the pipe. Omit the suffix to default to layer 0.
+</Callout>
+
+## Stream format
+
+Once a source is selected, Glowstone requests frames and keeps the connection alive on its own.
+
+<TypeTable
+  type={{
+    'Image format': { description: 'Frames are requested as 24-bit RGB. Channel order is version-aware: BGR on MSEX v1.0, RGB on v1.1 and later.', type: 'RGB8', default: 'RGB8' },
+    'Frame rate': { description: 'Requested frame rate. Servers deliver on a best-effort basis.', type: 'fps', default: '30' },
+    Delivery: { description: 'Frames are best-effort. If the server stalls or the network drops, the last received frame persists until a new one arrives.', type: 'best-effort', default: '—' },
+    Reconnect: { description: 'On disconnect the stream is re-established automatically. The request is also re-sent periodically so it never times out.', type: 'automatic', default: 'on' },
+  }}
+/>
+
+<Callout type="idea">
+Multiple walls can each pull a different layer from the same server. Point one screen at `Resolume Arena | 1` and another at `Resolume Arena | 2` to preview a multi-layer look across your set.
+</Callout>
+
+## Frequently asked
+
+<Accordions type="single">
+  <Accordion title="My server doesn't appear under Servers:">
+    The most common cause is multicast not reaching Glowstone. Confirm the server and your machine are on the same LAN segment, that the server is announcing CITP, and that no firewall or VPN is blocking UDP `4809` on `239.224.0.180`.
+  </Accordion>
+  <Accordion title="What's the difference between CITP and NDI here?">
+    Both deliver live video to a screen. CITP/MSEX pulls layers from media servers like Resolume and grandMA via multicast discovery; [NDI](/docs/media/ndi) receives video from any NDI source on the LAN. Use whichever your source supports.
+  </Accordion>
+  <Accordion title="Can I send DMX out of Glowstone to a media server?">
+    No. Glowstone is input-only for DMX — it receives live Art-Net / sACN from a console and never transmits. CITP video is likewise received, not sent.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<ListVideo />} title="Screen Content Sources" href="/docs/media/content-sources">
+    Every source a screen can display: test patterns, solid colour, images, NDI, CITP and pixel-map DMX.
+  </Card>
+  <Card icon={<Wifi />} title="NDI Video" href="/docs/media/ndi">
+    Receive live video from NDI-enabled sources on the network.
+  </Card>
+  <Card icon={<Layers />} title="LED Screens" href="/docs/media">
+    Build and configure parametric LED wall surfaces.
+  </Card>
+</Cards>

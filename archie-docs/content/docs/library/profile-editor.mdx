@@ -1,0 +1,217 @@
+---
+title: "The Profile Editor"
+description: "Inspect a fixture's GDTF profile and edit the few per-instance settings Glowstone exposes."
+---
+
+import { Fingerprint, Lightbulb, Aperture, ListTree, Table2, Disc3, SlidersHorizontal, BookOpen, Settings2 } from 'lucide-react';
+
+The Fixture Profile editor exposes the full GDTF definition behind a placed fixture, alongside the few settings you can change per instance. Its title bar reads **Fixture Profile —** followed by the model name.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Fixture Profile editor open over the viewport, showing a moving-head profile with the tab strip (Identity, Physical, Optics, DMX Modes, Channels, Wheels, Defaults) along the top and the Identity tab active, displaying read-only manufacturer/model fields and editable Instance name and Fixture ID fields. A left column lists the fixture's emitters."
+/>
+
+## Opening the editor
+
+<Steps>
+<Step>
+### Select the fixture
+Click the fixture in the 3D viewport or the [Scene Outliner](/docs/scene/outliner).
+</Step>
+<Step>
+### Open the profile
+With a GDTF fixture selected, choose **Fixture ▸ Edit Profile…**, or click the **Profile…** button in the fixture's [Inspector](/docs/interface/panels) header.
+</Step>
+</Steps>
+
+<Callout type="info" title="Read-only by design">
+Almost everything in the editor comes straight from the GDTF file and is read-only. Only a fixture's **instance name**, **Fixture ID** (MVR fixtures only), **DMX mode** and **Move speed** are editable per placement — the GDTF profile itself is never modified.
+</Callout>
+
+The editor is organised into seven tabs.
+
+<Cards>
+  <Card icon={<Fingerprint />} title="Identity">Names and provenance.</Card>
+  <Card icon={<Lightbulb />} title="Physical">Lamp and overall beam data.</Card>
+  <Card icon={<Aperture />} title="Optics">Per-emitter beam optics and movement.</Card>
+  <Card icon={<Settings2 />} title="DMX Modes">Available DMX modes — switch here.</Card>
+  <Card icon={<Table2 />} title="Channels">The resolved channel map.</Card>
+  <Card icon={<Disc3 />} title="Wheels">Gobo and colour slot previews.</Card>
+  <Card icon={<SlidersHorizontal />} title="Defaults">Per-channel default values.</Card>
+</Cards>
+
+## Identity
+
+The Identity tab shows who made the fixture and how this placement is labelled. The descriptive fields are read-only; the instance-specific fields can be edited. A fixture's GDTF **Description**, when present, is shown in a separate section below the grid.
+
+<TypeTable
+  type={{
+    Manufacturer: { description: 'Fixture manufacturer.', type: 'read-only' },
+    Model: { description: 'Product model name, e.g. Robin Esprite.', type: 'read-only' },
+    'Long name': { description: 'Full descriptive name.', type: 'read-only' },
+    'Short name': { description: 'Abbreviated name variant.', type: 'read-only' },
+    'GDTF file': { description: 'Original .gdtf spec filename. Hidden when not known.', type: 'read-only' },
+    'Instance name': { description: 'Human-readable label for this placed fixture, e.g. Follow Spot 1.', type: 'editable' },
+    'Fixture ID': { description: 'The MVR FixtureID for this placement. Shown only for fixtures imported from an MVR.', type: 'editable' },
+  }}
+/>
+
+<Callout type="idea">
+Set a clear **Instance name** for every fixture. It is the label you will see in the [Scene Outliner](/docs/scene/outliner), in [patching](/docs/dmx/patching) and on the [DMX Monitor](/docs/dmx/dmx-monitor).
+</Callout>
+
+## Physical
+
+The Physical tab lists the light source and overall beam characteristics read from the GDTF.
+
+<TypeTable
+  type={{
+    Lamp: { description: 'Source technology, e.g. LED / Halogen / Discharge / Tungsten.', type: 'read-only' },
+    Power: { description: 'Power draw.', type: 'watts', default: 'e.g. 300 W' },
+    'Luminous flux': { description: 'Rated light output.', type: 'lumens', default: 'e.g. 10000 lm' },
+    'Colour temp': { description: 'Correlated colour temperature.', type: 'kelvin', default: 'e.g. 6500 K' },
+    CRI: { description: 'Colour rendering index.', type: '0–100', default: 'e.g. 90' },
+    'Beam radius': { description: 'Physical lens radius where the beam exits. Shown in metres or feet per your length-unit preference.', type: 'length', default: 'e.g. 0.080 m' },
+    Models: { description: 'Count of 3D model files included in the GDTF.', type: 'count' },
+  }}
+/>
+
+## Optics
+
+The Optics tab shows the optical chain for the currently selected emitter. Most values come from the GDTF; the movement values below are modelled by Glowstone.
+
+<TypeTable
+  type={{
+    'Beam type': { description: 'Beam shape category, e.g. Spot / Wash / None / Rectangle.', type: 'read-only' },
+    'Beam angle': { description: 'Cone angle at 50% intensity.', type: 'degrees', default: 'e.g. 15.0°' },
+    'Field angle': { description: 'Cone angle at 10% intensity (soft outer field).', type: 'degrees' },
+    'Beam radius': { description: 'Physical exit radius.', type: 'metres' },
+    'Luminous flux': { description: 'Rated light output for this emitter.', type: 'lumens' },
+    'Colour temp': { description: 'Source colour temperature.', type: 'kelvin' },
+  }}
+/>
+
+### Modelled movement
+
+Below the optical chain a section marked **MODELED — NOT IN GDTF** carries the synthesized movement values, each with a *modeled* badge. The GDTF carries no real degrees-per-second figure, so Glowstone derives one so moving fixtures feel realistic.
+
+<TypeTable
+  type={{
+    'Move speed': { description: 'Motor-speed control for pan/tilt. Editable per instance: 0 = fastest (tracking), 1 = slowest.', type: 'slider 0–1', default: 'editable' },
+    'pan / tilt': { description: 'Resulting maximum pan / tilt slew rates, derived from Move speed and the fixture class.', type: '°/s (read-only)' },
+  }}
+/>
+
+### Emitter selector
+
+A column on the left, headed **EMITTERS**, lists the emitters (light sources) in the current mode.
+
+- For multi-emitter fixtures, each emitter is listed by index and name. Click one to see its individual beam optics.
+- Single-source fixtures show **(single source)**.
+
+<Callout type="info">
+The number of emitters depends on the selected DMX mode. Switching modes on the [DMX Modes](#dmx-modes) tab can change which emitters appear here.
+</Callout>
+
+## DMX modes
+
+The DMX Modes tab lists every DMX mode the fixture type supports. Each row shows the mode name, its channel count (footprint) and its emitter count.
+
+<TypeTable
+  type={{
+    'Mode name': { description: 'The mode label.', type: 'e.g. Standard, Extended' },
+    'Channel count': { description: 'Number of DMX slots the mode occupies (footprint).', type: 'e.g. 16 ch' },
+    'Emitter count': { description: 'Number of light sources active in this mode.', type: 'e.g. 4 emitters' },
+  }}
+/>
+
+**Click a mode to switch the fixture to it.** This is a per-instance setting: it reconfigures which channels are available and updates the geometry, emitter and wheel assignments. The fixture stays placed in the scene — only its control layout changes.
+
+<Callout type="warn">
+Changing the mode changes the channel footprint. If the fixture is already patched, review its address afterwards so it does not overlap a neighbour. See [Patching Fixtures](/docs/dmx/patching).
+</Callout>
+
+For a deeper look at how modes and channels relate, see [DMX Modes & Channels](/docs/library/dmx-modes).
+
+## Channels
+
+The Channels tab is a table of every DMX channel in the current mode, with the mode name and footprint shown above it. Rows are **resolved** — for multi-emitter or instanced geometries, each instance gets its own DMX address.
+
+| Column | Meaning |
+| --- | --- |
+| `Addr` | DMX slot number within the fixture footprint (1-based). Shows `—` for a virtual channel with no footprint. |
+| `Geometry` | The geometric component the channel controls — the reference-instance name when instanced, e.g. `Pan`, `Tilt`, `Lens2`. |
+| `Attribute` | The control attribute name, e.g. `Pan`, `Tilt`, `Dimmer`, `Color1`. |
+| `Function` | The primary channel-function name, e.g. `Pan`, `Focus`, `Dimmer`. |
+
+<Callout type="info">
+A single logical channel may occupy more than one slot. 16-bit attributes such as `Pan` and `Tilt` use a coarse and a fine slot, so the channel count can exceed the number of distinct attributes.
+</Callout>
+
+To map attributes to live beam behaviour, see the [Beam Parameter Reference](/docs/fixtures/parameters).
+
+## Wheels
+
+The Wheels tab previews every optical wheel defined in the GDTF — colour, gobo, prism, animation and frost — with a thumbnail for each slot. Fixtures with no wheels show **No wheels.**
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Wheels tab of the Profile editor for a moving head, showing two wheels stacked vertically: a Gobo1 wheel with a row of PNG gobo image thumbnails (Open, plus patterned gobos), and a Colour1 wheel rendered as a row of solid colour swatches (Open/white, red, blue, CTO amber). Each wheel header shows its name and slot count, e.g. 'Gobo1 · 8 slots'. The cursor hovers a gobo slot showing its name tooltip."
+/>
+
+Each wheel header shows its **name** (e.g. `Colour1`, `Gobo1`, `Prism1`) and **slot count** (e.g. `8 slots`). For every slot:
+
+- If slot media is available (a gobo image or animation frame), the PNG thumbnail is shown.
+- Otherwise a colour swatch is drawn from the GDTF CIE xyY colour data, converted to RGB.
+- Hover a slot to see its name (e.g. `Open`, `Red`, `CTO`).
+
+For how these wheels drive the rendered beam, see [Gobos, Animation, Prism & Frost](/docs/fixtures/gobos-prism).
+
+## Defaults
+
+The Defaults tab shows the DMX default value for each channel in the current mode, taken from the GDTF `InitialFunction`. These are the values the fixture holds before any console data arrives.
+
+<TypeTable
+  type={{
+    Attribute: { description: 'The channel attribute.', type: 'read-only' },
+    'Default value': { description: 'The power-on default, normalized to a 0–1 range (shown to 3 decimals).', type: '0–1 (read-only)' },
+  }}
+/>
+
+<Callout type="info">
+Glowstone only visualises DMX from a console — it never outputs DMX. These defaults define each fixture's starting look until live values arrive over [Art-Net or sACN](/docs/dmx/connectivity).
+</Callout>
+
+## Frequently asked
+
+<Accordions type="single">
+  <Accordion title="Can I edit a fixture's beam angle or colour temperature?">
+    The Optics values shown come from the GDTF and are read-only. The editable per-instance settings are the instance name, Fixture ID (MVR fixtures only), DMX mode and the modelled Move speed.
+  </Accordion>
+  <Accordion title="Why does the channel count change when I switch modes?">
+    Each DMX mode is a distinct control configuration with its own channel footprint and emitter set. Switching modes reconfigures the channel map, so the totals on the Channels and Defaults tabs change to match.
+  </Accordion>
+  <Accordion title="A wheel slot shows a flat colour instead of a gobo. Why?">
+    The GDTF for that slot carries no media image, so Glowstone draws a swatch from the slot's CIE colour data instead. Slots with embedded PNG media show the image.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<ListTree />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+    How modes, channels and footprints fit together.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Beam Parameter Reference" href="/docs/fixtures/parameters">
+    Every beam parameter the channels drive.
+  </Card>
+  <Card icon={<BookOpen />} title="Importing GDTF Fixtures" href="/docs/library/import-gdtf">
+    Bring fixture profiles into your project.
+  </Card>
+  <Card icon={<Disc3 />} title="Gobos, Animation, Prism & Frost" href="/docs/fixtures/gobos-prism">
+    How wheel slots render in the beam.
+  </Card>
+</Cards>

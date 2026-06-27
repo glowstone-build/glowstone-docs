@@ -1,0 +1,140 @@
+---
+title: "Workspaces"
+description: "Saved layout presets — switch between built-in workspaces or save your own."
+---
+
+import { LayoutDashboard, Plug, Crosshair, Eye, RotateCcw, Save } from 'lucide-react';
+
+A workspace is a saved arrangement preset: dock layout, default tool, and which overlays are emphasised. Activating one applies that starting context — it never locks anything.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="21 / 9"
+  caption="The workspace tab strip across the top of the Glowstone window, showing the four built-in tabs Design / Patch / Focus / Visualise with Design active, and the + button at the right end of the strip."
+/>
+
+## What a workspace stores
+
+Each workspace captures three things:
+
+- **Dock layout** — which panels dock where, as a serialized split tree.
+- **Default tool** — the tool armed on activation (`Select`, `Move`, `Rotate`, `Scale`, `Aim`, `Measure`, or `Add`).
+- **Overlay emphasis** — which of the four overlays start ON: `Labels`, `Stats`, `Grid`, `Gizmos`.
+
+<Callout type="info" title="A starting context, not a lock">
+Activating a workspace applies the layout, sets the tool, and emphasises the saved overlays — but everything stays fully editable afterward. Drag panels, switch tools, and toggle overlays freely without leaving the workspace.
+</Callout>
+
+## Built-in workspaces
+
+Four presets ship with every install. They are regenerated automatically if `workspaces.json` is missing.
+
+| Workspace | Default tool | Overlays on | Use case |
+| --- | --- | --- | --- |
+| **Design** | `Move` | Labels, Grid, Gizmos | General layout editing with a balanced overview — Scene left, Inspector right, data strip along the bottom. |
+| **Patch** | `Select` | Labels, Grid, Gizmos | Systems-tech workflow focused on fixture addressing — a tall bottom strip where the Patch sheet dominates. |
+| **Focus** | `Aim` | Labels, Gizmos (Grid off) | Aiming and focusing sessions — a wide, clean viewport with thin sidebars and no bottom strip. |
+| **Visualise** | `Select` | Grid only | Previsualization / render-artist view — minimal chrome and a clean look, with no bottom strip. |
+
+<Callout type="idea">
+Use `Focus` while pointing heads at the cursor, then switch to `Visualise` to judge the render-clean look. Because workspaces are non-destructive, you can flip between them mid-session without losing your panel sizes within each one.
+</Callout>
+
+## Switching workspaces
+
+There are three ways to activate a workspace:
+
+<Tabs items={['Tab strip', 'Menu', 'Command']}>
+  <Tab value="Tab strip">Click a workspace tab in the strip across the top of the window.</Tab>
+  <Tab value="Menu">Go to **Window › Workspace › [name]**.</Tab>
+  <Tab value="Command">Run the registered `window.workspace_1` through `window.workspace_9` commands from the [command palette](/docs/interface/commands) or a keymap binding.</Tab>
+</Tabs>
+
+## Saving a custom workspace
+
+Any live arrangement can be captured as a new workspace.
+
+<Steps>
+<Step>
+### Arrange your panels
+Drag splits to resize, and drag tabs between panes to group them. See [Workspace & Docking](/docs/interface) for how the dock tree works.
+</Step>
+<Step>
+### Pick a tool
+Select the tool you want armed on activation from the T-panel tool rail.
+</Step>
+<Step>
+### Set your overlays
+Toggle the overlays you want emphasised from the **View › Overlays** submenu (Statistics, Fixture labels, Grid + axes, Navigation gizmo). The viewport header also has a quick **Grid** toggle.
+</Step>
+<Step>
+### Save it
+Click the **+** button in the workspace tab strip, or go to **Window › Workspace › Save Current as Workspace…**.
+</Step>
+<Step>
+### Name it
+Enter a name and save. Reuse an existing name to overwrite that workspace. The live dock layout, active tool, and overlay flags are captured and persisted.
+</Step>
+</Steps>
+
+The new workspace appears in the tab strip and in the **Window › Workspace** menu.
+
+## Deleting a workspace
+
+User workspaces (marked `builtin: false`) can be deleted; the four built-ins cannot. Remove a user workspace from the **Window › Workspace** menu.
+
+<Callout type="warn">
+Deleting a workspace is immediate and removes it from `workspaces.json`. Built-in workspaces are protected, so a delete option only appears for ones you created.
+</Callout>
+
+## Storage and reset
+
+All workspaces — built-in and user — are stored in `<config>/workspaces.json`. The file is loaded once at startup and rewritten on each save or delete.
+
+<Files>
+  <Folder name="<config>" defaultOpen>
+    <File name="workspaces.json" />
+    <File name="keymap.json" />
+    <File name="bookmarks.json" />
+  </Folder>
+</Files>
+
+### Reset Layout
+
+If live dragging has thrown a layout off, use **Window › Reset Layout** to re-apply the active workspace's saved dock geometry.
+
+<Callout type="info" title="Reset Layout only restores geometry">
+Reset Layout reverts manual splits and resizes back to the saved arrangement. It does **not** change the active tool or overlay flags — only the panel geometry.
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="Do tab positions within a panel persist?">
+    No. Tab positions inside a pane are session-only and revert to the saved workspace when the app closes. Save the arrangement as a workspace to keep it.
+  </Accordion>
+  <Accordion title="What's the difference between a workspace and a camera bookmark?">
+    A workspace stores panel layout, tool, and overlays. A [camera bookmark](/docs/navigation/bookmarks) stores a viewpoint in one of 9 numbered slots. They are unrelated systems saved in separate files.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<LayoutDashboard />} title="Workspace & Docking" href="/docs/interface">
+    How the dockable panel tree and edge-snapping work.
+  </Card>
+  <Card icon={<Plug />} title="Panels" href="/docs/interface/panels">
+    Every dockable panel and what it shows.
+  </Card>
+  <Card icon={<RotateCcw />} title="Menu Bar" href="/docs/interface/menus">
+    The Window menu, Reset Layout, and panel toggles.
+  </Card>
+  <Card icon={<Crosshair />} title="Commands & Operator Search" href="/docs/interface/commands">
+    Run workspace commands from the palette.
+  </Card>
+  <Card icon={<Save />} title="Preferences & Theme" href="/docs/interface/preferences">
+    What else Glowstone saves between sessions.
+  </Card>
+  <Card icon={<Eye />} title="Display Modes & Overlays" href="/docs/navigation/overlays">
+    The overlays a workspace can emphasise.
+  </Card>
+</Cards>

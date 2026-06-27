@@ -1,0 +1,159 @@
+---
+title: "Selecting Objects"
+description: "Single, multi, range and quick selection, plus named selection groups."
+---
+
+import { MousePointerClick, BoxSelect, SquareDashedMousePointer, ListTree, Move, ScanSearch } from 'lucide-react';
+
+Selection drives everything you do next — moving, patching, colouring, duplicating. Click to pick a single object, hold a modifier to build a multi-selection, or use the Quick-Select palette to grab whole families of fixtures at once.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The 3D Viewport with three moving-head fixtures selected (highlighted outlines), the first showing a brighter 'primary' highlight. The Inspector on the right shows a bulk-edit panel applying to all three selected fixtures; the Scene Outliner on the left shows the same three rows highlighted."
+/>
+
+## How selection works
+
+Glowstone tracks selection by kind. At any moment one *active kind* is selected — **Fixtures**, **Objects** (static geometry), **Screens** (LED walls), or **Pyro** ([devices](/docs/fixtures/pyro)) — and you can multi-select within that kind. The **World** and an **Environment** are single-only selections.
+
+<Callout type="info" title="One kind at a time">
+The four multi-select kinds are mutually exclusive. Selecting a fixture clears any object, screen or pyro selection, and vice versa. You cannot have fixtures and screens selected together. When nothing is selected, the active kind defaults to **Fixtures**.
+</Callout>
+
+### The primary selection
+
+The first object in the active kind is the **primary** selection. It drives single-edit UI and acts as the reference for the Quick-Select palette (for example, "same type" and "same maker" match the primary fixture's profile and manufacturer). When you build a multi-selection, the primary row is highlighted more strongly — a brighter outline plus an accent bar down its left edge.
+
+## Click and modifiers
+
+Every click maps to a clear rule. The rules apply whether you click in the 3D Viewport or on a row in the [Scene Outliner](/docs/scene/outliner), with one difference noted below.
+
+| Click | Result |
+| --- | --- |
+| `Click` | Replace — the selection becomes the object you hit. Clicking empty space clears everything. |
+| `Cmd`/`Ctrl`+`Click` | Toggle — flip membership of the single hit. Clicking an off-kind object switches to that kind. |
+| `Shift`+`Click` (viewport) | Add — union the hit into the current selection (within the active kind). |
+| `Shift`+`Click` (outliner, fixtures) | Extend a range from the anchor to the clicked fixture (see below). |
+| `Click`+`Drag` | Box-select — drag a marquee to select everything inside it (Replace). |
+| `Shift`+`Drag` | Box-select — add the covered objects to the selection (within the active kind). |
+| `Cmd`/`Ctrl`+`Drag` | Subtract — drag a marquee to remove hits from the selection (within the active kind). |
+
+<Callout type="info" title="Cmd vs Ctrl">
+On macOS use `Cmd`; on Windows and Linux use `Ctrl`. The two are interchangeable throughout Glowstone.
+</Callout>
+
+### Replace, add, toggle, subtract
+
+<Steps>
+
+<Step>
+### Replace
+A plain `Click` discards the old selection and selects only what you hit. Click empty space to deselect everything.
+</Step>
+
+<Step>
+### Add to the selection
+In the viewport, hold `Shift` and click to union more objects into the selection (or `Shift`+drag a marquee to add many). Add stays within the active kind — `Shift`+clicking a screen while fixtures are selected has no effect on the fixtures. (In the outliner, `Shift`+click on a fixture extends a range instead — see below.)
+</Step>
+
+<Step>
+### Toggle a single object
+Hold `Cmd`/`Ctrl` and click to flip one object in or out of the selection. Toggling an object of a *different* kind switches the active kind to that object.
+</Step>
+
+<Step>
+### Box-select and subtract
+Drag a marquee to select everything it covers. Hold `Cmd`/`Ctrl` while dragging to remove the covered objects from the current selection instead.
+</Step>
+
+</Steps>
+
+### Range selection (outliner, fixtures)
+
+In the [Scene Outliner](/docs/scene/outliner), range selection extends an inclusive run of fixtures, useful for grabbing a contiguous block in a long rig.
+
+- A plain click or a toggle click sets the **anchor**.
+- `Shift`+click a second fixture to select every fixture between the anchor and the click, inclusive.
+- The range runs over the **visible, sorted order** — whatever search filter and sort order are currently applied in the [Scene Outliner](/docs/scene/outliner). Reordering or filtering changes which fixtures fall inside the range.
+- The anchor drops if its fixture is deleted.
+
+<Callout type="idea">
+Sort the outliner by patch address, click the first fixture, then `Shift`+click the last — you have selected a whole consecutive patch block in two clicks.
+</Callout>
+
+## Select all, invert and deselect
+
+These commands act on the active kind. They are part of the [global keymap](/docs/reference/keyboard-shortcuts).
+
+| Shortcut | Command | Result |
+| --- | --- | --- |
+| `A` | Select all | Select every object of the active kind |
+| `Cmd`/`Ctrl`+`I` | Invert selection | Flip membership within the active kind |
+| `Alt`+`A` | Deselect all | Clear the selection |
+| `Esc` | Deselect all | Clear the selection |
+
+<Callout type="warn" title="Viewport focus masks S">
+When the 3D Viewport is focused, `S` is captured by the Scale transform, so `S` opens the Quick-Select palette only when the viewport is *not* focused. (`Shift`+`A` opens the viewport's Add menu.) The selection shortcuts above stay live in the viewport — plain `A` still selects all. See [Commands & Operator Search](/docs/interface/commands).
+</Callout>
+
+## The Quick-Select palette
+
+Press `S` (with the viewport not focused) to open the Quick-Select palette — a fast batch-selection menu that operates on the **active kind**. With fixtures active it grabs families of fixtures based on the primary; with objects, screens or pyro active it still offers All / Invert / None. When nothing is selected the palette defaults to fixtures. Each row shows a count of how many items it would select, plus its key badge.
+
+<ImagePlaceholder
+  label="UI panel"
+  ratio="4 / 3"
+  caption="The Quick-Select floating palette titled 'Select' with an Esc hint, listing five rows: 'All fixtures' (A), 'All of this type' (T), 'All by this maker' (M), 'Invert selection' (I), and 'Select none' (N). Each row shows a count on the right and a key badge. The T and M rows appear greyed/disabled when the active kind is not fixtures, or when no GDTF primary selection exists."
+/>
+
+| Key | Option | Selects |
+| --- | --- | --- |
+| `A` | `All <kind>` | Every item of the active kind |
+| `T` | All of this type | Every fixture sharing the primary's profile |
+| `M` | All by this maker | Every fixture sharing the primary's GDTF manufacturer |
+| `I` | Invert selection | Flips membership within the active kind |
+| `N` | Select none | Clears the selection |
+
+- The `A` row's label follows the active kind — **All fixtures**, **All objects**, **All screens** or **All pyro**.
+- **All of this type** (`T`) and **All by this maker** (`M`) are **fixture-only**. With objects, screens or pyro active they render disabled (the rows stay in the layout so the key mapping is stable).
+- **All of this type** (`T`) is enabled only when the active kind is fixtures and the primary has a profile.
+- **All by this maker** (`M`) is enabled only when the primary is a GDTF-backed fixture with a manufacturer. Built-in profiles (PAR Can, lasers) have no maker.
+- **All**, **Invert** and **Select none** are always available.
+- `Esc` dismisses the palette without changing the selection.
+
+<Accordions type="single">
+<Accordion title="Select every fixture from one manufacturer">
+Select one fixture of that brand (for example an ETC Source Four), press `S`, then press `M`. Every ETC fixture in the scene is now selected. Press `Esc` or click away to close the palette.
+</Accordion>
+<Accordion title="Why are T and M greyed out?">
+Both are fixture-only and depend on the primary selection. `T` needs a fixture primary with a profile; `M` needs a GDTF-backed primary that carries a manufacturer name. With nothing selected, with a non-fixture kind active, or with a built-in profile that has no maker, these rows are disabled.
+</Accordion>
+</Accordions>
+
+The same actions are also reachable from the [operator search](/docs/interface/commands). For the full list of selection commands and their IDs, see the [Command Reference](/docs/reference/commands).
+
+## Named selection groups
+
+Glowstone stores named selection groups — console-style saved collections of **fixtures**. Groups are part of the document: they are saved with the project ([`.glow`](/docs/projects)) and captured in undo snapshots alongside the scene, DMX patch and cues, so building or changing a group is undoable. Their fixture references are remapped when you delete or reorder fixtures, so a stored group stays valid as you edit the rig.
+
+<Callout type="info" title="Fixtures only">
+Selection groups hold fixtures only — not objects, screens or pyro devices.
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<ListTree />} title="The Scene Outliner" href="/docs/scene/outliner">
+    Click, range-select, rename and filter objects in the tree view.
+  </Card>
+  <Card icon={<Move />} title="Moving, Rotating & Scaling" href="/docs/scene/transforming">
+    Transform whatever you have selected with G, R and S.
+  </Card>
+  <Card icon={<ScanSearch />} title="Commands & Operator Search" href="/docs/interface/commands">
+    The Quick-Select palette, F3 search and the command system.
+  </Card>
+  <Card icon={<SquareDashedMousePointer />} title="Keyboard Shortcuts" href="/docs/reference/keyboard-shortcuts">
+    Every selection and navigation shortcut in one place.
+  </Card>
+</Cards>

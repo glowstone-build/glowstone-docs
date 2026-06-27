@@ -1,0 +1,11 @@
+{
+  "title": "LED Screens & Media",
+  "icon": "MonitorPlay",
+  "pages": [
+    "index",
+    "content-sources",
+    "media-servers",
+    "ndi",
+    "pixel-mapping"
+  ]
+}

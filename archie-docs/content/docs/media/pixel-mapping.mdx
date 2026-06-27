@@ -1,0 +1,157 @@
+---
+title: "Pixel-Map DMX"
+description: "Drive a low-resolution RGB cell grid on an LED wall directly from incoming DMX."
+---
+
+import { Grid3x3, Cable, Sparkles, Network, Image as ImageIcon } from 'lucide-react';
+
+Pixel-Map DMX is an LED-screen content source that fills the wall with a low-resolution grid of RGB cells, each driven by three DMX channels read from Art-Net or sACN. It is colour-per-cell control, not a video codec — useful for low-res effects and chasers when you have no media server.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A 3D viewport showing a single LED wall running a Pixel-Map DMX source: a 16x9 grid of RGB cells mid-chase (a diagonal sweep of saturated colours), with the LED screen Inspector open on the right showing the Content source set to Pixel-map DMX and the Grid (cols/rows) and Patch (univ/addr) rows."
+/>
+
+<Callout type="info">
+Pixel-Map DMX is one of several [screen content sources](/docs/media/content-sources). Glowstone is **input-only** for DMX: it reads the levels your console sends and visualizes them on the wall. It never outputs or transmits DMX.
+</Callout>
+
+## How it works
+
+The wall is divided into a `cols` x `rows` grid. Each cell consumes three consecutive DMX channels — red, green, blue — starting at the patched universe and address. Glowstone reads those 8-bit values from the live DMX input and colours each cell accordingly, in cell order (row-major, top-down). Absent or stale channels read `0`, so an unpatched grid shows black.
+
+1. The app reads Art-Net / sACN from the DMX input.
+2. It extracts 8-bit RGB values at `universe`:`start address` and onwards, three channels per cell.
+3. It builds a small `cols` x `rows` RGBA texture, each cell coloured by its RGB triplet.
+4. The renderer maps that grid across the wall's surface, **stretched to fill** the whole face. Pixel pitch does not change the mapping — the grid always fills `0..1` UV edge-to-edge with no aspect-ratio preservation.
+
+<Callout type="warn">
+This is not real video. There's no media decode and the cabinet pixel pitch has no effect on which cell lands where — the grid is stretched edge-to-edge across the whole wall regardless of the panel's native resolution. The content texture is sampled with bilinear filtering, so a coarse grid reads as smooth colour blends between cells rather than hard-edged blocks.
+</Callout>
+
+## Configuration
+
+Set the grid and patch in the LED screen Inspector once the source is **Pixel-map DMX**. The fields live in two rows — **Grid** (cols / rows) and **Patch** (univ / addr) — with a derived `cells · channels` readout below them.
+
+<TypeTable
+  type={{
+    'Grid: cols': { description: 'Cells across the wall (horizontal).', type: '1–64', default: '16' },
+    'Grid: rows': { description: 'Cells down the wall (vertical).', type: '1–64', default: '9' },
+    'Patch: univ': { description: 'DMX universe the grid starts reading from.', type: '0–63999', default: '1' },
+    'Patch: addr': { description: 'First DMX channel of the first cell. The grid runs from here onward, walking into following universes if it overruns 512.', type: '1–512', default: '1' },
+  }}
+/>
+
+<Callout type="info">
+The Inspector caps `cols` and `rows` at `64` each. (A loaded `.glow`/MVR file can carry larger values; those are hard-clamped to `256` when the grid is built.)
+</Callout>
+
+### Channel maths
+
+Each cell uses three channels (RGB), so total channel count is `cols` x `rows` x `3`. The cells fill from the start address in cell order.
+
+<Callout type="idea" title="Worked example">
+The default `16` x `9` grid is `144` cells, so `16 × 9 × 3 = 432` channels — that fits inside a single universe (channels `1`–`432` when starting at address `1`). You only spill into a second universe once the grid needs more than `512` channels: that's more than `170` cells, e.g. a `16` x `12` grid (`192` cells = `576` channels) runs channels `1`–`512` in the first universe and continues at the start of the next.
+</Callout>
+
+## Set it up
+
+<Steps>
+
+<Step>
+### Select or add an LED screen
+
+In the [Outliner](/docs/scene/outliner), select an existing LED wall, or add one from the **Add** library browser. See [LED Screens](/docs/media) for placement and panel setup.
+</Step>
+
+<Step>
+### Choose the Pixel-map DMX source
+
+In the Inspector **Content** section, set **Source** to **Pixel-map DMX**. Switching sources drops any frame from the previous source.
+</Step>
+
+<Step>
+### Set the grid size
+
+In the **Grid** row, enter `cols` and `rows` (each `1`–`64`). Because the grid is bilinearly stretched across the wall, match the `cols`:`rows` aspect to the wall if you want roughly square cells.
+</Step>
+
+<Step>
+### Patch the grid
+
+In the **Patch** row, set `univ` and `addr`. These define where the first cell's red channel lives. The grid consumes `cols × rows × 3` channels from there.
+</Step>
+
+<Step>
+### Drive it from your console
+
+Send DMX from your console to that universe and address over [Art-Net or sACN](/docs/dmx/connectivity). As the console changes the RGB levels, the cells light in real time on the wall.
+</Step>
+
+</Steps>
+
+<ImagePlaceholder
+  label="UI panel"
+  ratio="4 / 3"
+  caption="Close-up of the LED screen Inspector Content section with Source set to Pixel-map DMX, the Grid row showing cols 16 / rows 9, the Patch row showing univ 1 / addr 1, and the derived '16×9 cells · 432 ch (RGB)' readout below."
+/>
+
+## Patching considerations
+
+Treat the grid like a contiguous block of DMX channels when patching your console and verifying levels.
+
+<Tabs items={['Art-Net', 'sACN']}>
+  <Tab value="Art-Net">
+  Make sure your console transmits Art-Net to the same network Glowstone is listening on, on the universe you set in the grid config. See [Connectivity](/docs/dmx/connectivity).
+  </Tab>
+  <Tab value="sACN">
+  Send sACN (E1.31) on the matching universe. Glowstone reads whichever protocol carries the patched universe. See [Connectivity](/docs/dmx/connectivity).
+  </Tab>
+</Tabs>
+
+<Callout type="success">
+Use the [DMX Monitor](/docs/dmx/dmx-monitor) to confirm the levels are arriving on the patched universe before troubleshooting the wall — if the channels move there, the cells will follow.
+</Callout>
+
+## FAQ
+
+<Accordions type="single">
+
+<Accordion title="What if the grid needs more than one universe?">
+The grid is read from the start address onward and continues into following universes once it overruns channel `512`. That only happens above `170` cells (`512 ÷ 3`); the default `16` x `9` grid (`432` channels) fits in one universe. When a grid does spill over, patch your console so the continuation universe carries the rest of the cells in order.
+</Accordion>
+
+<Accordion title="Why does my low-res content look stretched or the wrong aspect?">
+Pixel-Map DMX always stretches the cell grid to fill the wall's physical face; the cabinet pixel pitch is ignored. Match your `cols`:`rows` aspect ratio to the wall's aspect if you want square cells.
+</Accordion>
+
+<Accordion title="Can I run video this way?">
+No. This source is colour-per-cell control only. For live video, use a [media server (CITP/MSEX)](/docs/media/media-servers) or [NDI](/docs/media/ndi). For stills, use the Image source on the [content sources](/docs/media/content-sources) page.
+</Accordion>
+
+<Accordion title="Does Glowstone output the DMX for these cells?">
+No. Glowstone only reads incoming DMX. Your console or programmer generates the RGB levels; Glowstone visualizes them.
+</Accordion>
+
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<ImageIcon />} title="Screen Content Sources" href="/docs/media/content-sources">
+    The full set of sources a wall can display, and how to switch between them.
+  </Card>
+  <Card icon={<Cable />} title="Patching Fixtures" href="/docs/dmx/patching">
+    Assign universes and addresses across your show.
+  </Card>
+  <Card icon={<Network />} title="Connectivity: Art-Net & sACN" href="/docs/dmx/connectivity">
+    Get DMX flowing into Glowstone over the network.
+  </Card>
+  <Card icon={<Grid3x3 />} title="The DMX Monitor" href="/docs/dmx/dmx-monitor">
+    Verify the RGB levels arriving on the patched universe.
+  </Card>
+  <Card icon={<Sparkles />} title="Media Servers (CITP/MSEX)" href="/docs/media/media-servers">
+    Drive a wall with real live video instead of a DMX cell grid.
+  </Card>
+</Cards>

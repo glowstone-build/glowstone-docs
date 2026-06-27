@@ -1,0 +1,175 @@
+---
+title: "Colour"
+description: "Mix beam colour with CMY, CTO, colour wheels, colour temperature and ±green."
+---
+
+import { Thermometer, Blend, CircleDot, Palette, SlidersHorizontal, Shapes } from 'lucide-react';
+
+Glowstone mixes colour in **linear light**. Every fixture starts from a white source point, then warm filters, subtractive CMY flags, dichroic colour wheels and a ±green correction stack on top of it. Which of these you get depends on the fixture's GDTF mode.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A single moving-head spot in a hazy 3D Viewport with a partially inserted CMY mix, showing a visible colour gradient sliding across the beam (cooler on one side, warmer on the other). The Inspector's COLOR MIXING section on the right exposes the colour controls: CTO (warm), Cyan, Magenta, Yellow, and (under Advanced) Tint ±green."
+/>
+
+## The colour chain
+
+Colour resolves in source-to-output order, folding into a single linear-RGB `tint` (plus any spatial wheel splits) that the GPU renderer consumes each frame.
+
+<Cards>
+  <Card icon={<Thermometer />} title="Source white point">
+    The lamp's correlated colour temperature (CCT), from the GDTF beam definition. Defaults to `6500` K when the profile omits one.
+  </Card>
+  <Card icon={<Thermometer />} title="CTO warm filter">
+    A passive warming filter. Full insertion targets ~`2800` K.
+  </Card>
+  <Card icon={<Blend />} title="Subtractive CMY">
+    Three dichroic flags (cyan/magenta/yellow) slide into the beam to subtract colour.
+  </Card>
+  <Card icon={<CircleDot />} title="Colour wheels">
+    Dichroic slot wheels. Parked = uniform tint; moving = a spatial split across the beam.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="±Green tint">
+    A correction-axis nudge orthogonal to colour temperature.
+  </Card>
+</Cards>
+
+## Source white point
+
+Every fixture begins from a white point taken from its GDTF beam `ColorTemperature`, falling back to `6500` K when the profile omits one. Stage lamps typically sit in the `2800`–`8000` K range.
+
+Glowstone converts that temperature to linear RGB using a Krystek Planckian-locus fit that is accurate from `1000`–`15000` K, and normalises it to unit luminance so brightness stays constant as the hue shifts. Everything downstream (CTO, CMY, wheels, green) multiplies onto this base.
+
+## CTO warm filter
+
+`cto` applies a colour-temperature-orange warming filter. It is a passive, per-channel transmittance filter: it never adds energy, it only subtracts the cooler channels to push the beam warm.
+
+- `0.0` — off, the source white point is used unchanged.
+- `1.0` — full warm, targeting ~`2800` K. The filter is computed as the transmittance carrying the fixture's own white point to that target, so the brightest channel passes fully and the cooler channels are cut.
+
+<Callout type="info">
+CTO is gated on the `CTO` GDTF attribute. If a fixture's mode does not declare it, the control is unavailable.
+</Callout>
+
+## Subtractive CMY mixing
+
+CMY mixing uses three independent dichroic flags — cyan, magenta and yellow — that physically slide into the beam. Each flag runs `0.0` (open, removed) to `1.0` (fully inserted), stored as the three entries of `cmy[]`.
+
+A flag held partway is **not a flat tint**. Glowstone renders CMY per-fragment as sliding graduated dichroic flags, so a partially inserted flag produces a genuine colour gradient across the beam — denser where the flag covers more of the aperture, clearer where it has not yet reached. Stacked flags sum their optical densities, so the transmittances multiply, exactly as real subtractive mixing behaves.
+
+<ImagePlaceholder
+  label="Close-up"
+  ratio="4 / 3"
+  caption="Close-up of a wide beam in haze with the cyan CMY flag inserted to roughly 60%: a smooth left-to-right colour gradient runs across the cone, deep cyan on the inserted side fading to clear white on the open side. No flat uniform tint."
+/>
+
+### Mix speed
+
+`color_mix_speed` sets how fast the CMY flags slew toward their targets, modelling the fixture's colour-mix motor (GDTF `ColorMixMSpeed`). It is driven from the patched DMX channel rather than a dedicated inspector slider.
+
+- `0.0` — fastest, full travel in ~`0.25` s.
+- `1.0` — slowest, full travel in ~`25.5` s.
+
+A slow mix speed turns a colour change into a visible wipe as the flags crawl across the aperture.
+
+## Colour wheels
+
+A colour wheel carries fixed dichroic slots. Glowstone renders them in two distinct states depending on whether the wheel is moving:
+
+<Tabs items={['Parked', 'Moving']}>
+  <Tab value="Parked">
+    A settled wheel sits on one slot and is spatially uniform. Its dichroic transmittance is folded into the beam `tint`, colouring the whole cone evenly. Saturated slots cut more light (a deep blue passes ~9%, an amber ~60%, a pale slot ~100%).
+  </Tab>
+  <Tab value="Moving">
+    A travelling wheel splits the beam spatially: the shader samples adjacent slots per-fragment, so you see two colours across the cone with the physical holder gap (~`0.02` of the wheel) sweeping between them. The split disappears the moment the wheel parks.
+  </Tab>
+</Tabs>
+
+Colour wheels are driven by the per-component wheel controls (`value` to pick a slot, `spin` to scroll continuously). See [the Beam Engine](/docs/fixtures/beam-engine) for how wheel motion is integrated.
+
+<Callout type="info" title="Multiple colour wheels">
+Glowstone supports more than one colour wheel per fixture. Each wheel declared by the GDTF mode resolves independently — one can be parked and folded to tint while another travels and splits.
+</Callout>
+
+## ±Green tint
+
+`green` is a ±green CC nudge on the axis orthogonal to colour temperature. It shifts hue only, raising green while compensating red and blue in the opposite direction, then renormalising so luminance is preserved.
+
+- `-1.0` — full minus-green (magenta).
+- `0.0` — neutral.
+- `+1.0` — full plus-green.
+
+<Callout type="info">
+Green tint is **always available** — it is synthesised by Glowstone rather than gated on a GDTF attribute, so you can correct any fixture.
+</Callout>
+
+## Colour controls
+
+All values are normalised console-style faders. Defaults are the neutral, open-white state.
+
+<TypeTable
+  type={{
+    cto: {
+      description: 'Colour-temperature-orange warm filter. 0 = off (source white), 1 = full warm (~2800 K target). Computed as a transmittance from the fixture white point. Gated on the CTO GDTF attribute.',
+      type: '0.0–1.0',
+      default: '0.0',
+    },
+    green: {
+      description: 'Plus/minus-green CC tint, orthogonal to CCT. -1 = magenta, 0 = neutral, +1 = green. Always available (synthesised).',
+      type: '-1.0–1.0',
+      default: '0.0',
+    },
+    'cmy[3]': {
+      description: 'Cyan / magenta / yellow subtractive flag insertion (index 0/1/2). Each 0 = open (removed), 1 = fully inserted. Rendered per-fragment as sliding graduated flags. All three appear together when the mode declares any of ColorSub_C / ColorSub_M / ColorSub_Y.',
+      type: '[0.0–1.0] ×3',
+      default: '[0, 0, 0]',
+    },
+    color_mix_speed: {
+      description: 'CMY flag motor speed (GDTF ColorMixMSpeed). 0 = fastest (~0.25 s full travel), 1 = slowest (~25.5 s).',
+      type: '0.0–1.0',
+      default: '0.0',
+    },
+  }}
+/>
+
+<Callout type="warn" title="Availability depends on the GDTF">
+Only `green` is guaranteed. `cto` appears when the mode declares the `CTO` attribute; the three `cmy` flags appear together when the mode declares any of `ColorSub_C` / `ColorSub_M` / `ColorSub_Y`; colour wheels exist only when the mode declares colour components. A fixture with no colour mixing in its profile will not expose these controls.
+</Callout>
+
+## Creative combinations
+
+<Callout type="idea">
+Stack the tools that real fixtures cannot: pull a colour wheel to a saturated slot, then add `cto` for a richer, warmer version of the slot colour. Or set a slow `color_mix_speed` and trigger a CMY change live so the colour visibly wipes across the beam in haze. A small `green` nudge on a cluster of fixtures evens out mismatched white points between different fixture types.
+</Callout>
+
+## Frequently asked
+
+<Accordions type="single">
+  <Accordion title="Why is my CMY mix a gradient instead of a solid colour?">
+    That is correct behaviour. CMY flags are rendered per-fragment as sliding graduated dichroic flags, so a partially inserted flag is a real gradient across the beam. Push the flag fully to `1.0` for an even, saturated cone.
+  </Accordion>
+  <Accordion title="Why does my colour wheel show two colours at once?">
+    The wheel is moving. Travelling colour wheels split the beam spatially and reveal the holder gap between slots. Once the wheel parks on a slot, the colour folds to a uniform tint.
+  </Accordion>
+  <Accordion title="My fixture has no CTO or CMY sliders. Why?">
+    Those controls are gated on GDTF attributes. If the profile's active mode does not declare `CTO`, the CTO slider is hidden; if it declares none of the `ColorSub_*` attributes, all three CMY sliders are hidden. The `green` tint (labelled **Tint ±green**) is the only colour control that is always present.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<SlidersHorizontal />} title="Beam parameter reference" href="/docs/fixtures/parameters">
+    The full table of beam optics controls, ranges and defaults.
+  </Card>
+  <Card icon={<Shapes />} title="Gobos, animation, prism & frost" href="/docs/fixtures/gobos-prism">
+    The other optical components in the wheel chain.
+  </Card>
+  <Card icon={<Palette />} title="The Beam Engine" href="/docs/fixtures/beam-engine">
+    How controls resolve into the rendered beam each frame.
+  </Card>
+  <Card icon={<CircleDot />} title="DMX modes & channels" href="/docs/library/dmx-modes">
+    Which colour attributes a fixture's mode exposes.
+  </Card>
+</Cards>

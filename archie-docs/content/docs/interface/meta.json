@@ -1,0 +1,13 @@
+{
+  "title": "Interface",
+  "icon": "LayoutDashboard",
+  "pages": [
+    "index",
+    "panels",
+    "menus",
+    "workspaces",
+    "commands",
+    "preferences",
+    "notifications"
+  ]
+}

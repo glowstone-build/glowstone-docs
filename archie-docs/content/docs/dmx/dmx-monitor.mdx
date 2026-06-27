@@ -1,0 +1,125 @@
+---
+title: "The DMX Monitor"
+description: "Live per-channel levels for one universe, overlaid with the patched fixture owning each address."
+---
+
+import { Grid3x3, MousePointerClick, Radio, AlertTriangle, Network, Workflow } from 'lucide-react';
+
+The **DMX Monitor** is a real-time, read-only view of one universe at a time: a grid of all 512 channels showing live levels from your console, overlaid with which fixture owns each address. Glowstone visualises incoming DMX and never transmits it.
+
+<Callout type="info">Open it from the **DMX** tab at the bottom of the workspace. The grid always shows exactly one universe; use the navigation controls to switch between universes referenced by your patch or by live sources.</Callout>
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The DMX Monitor docked at the bottom of the workspace showing universe 1: a 16-column by 32-row grid of 512 channel cells, several cells lit with fill bars and percentage labels, a few cells carrying coloured identity stripes on their left edge, the summary strip above reading active and patched counts, and the live indicator showing a green bullet with '1 src'. The 3D viewport above shows moving-head beams responding to the same values."
+/>
+
+## The 512-channel grid
+
+The grid lays out a full universe as **16 columns by 32 rows = 512 cells**, channel 1 in the top-left, reading left-to-right then top-to-bottom. Labels are 1-based.
+
+Each cell packs several pieces of information at once:
+
+<TypeTable
+  type={{
+    'Channel number': { description: 'The 1-based address, shown small and muted in the top-left corner.', type: 'label', default: '1–512' },
+    'Level %': { description: 'The current value as a percentage of full, shown bottom-right when above zero. (The raw 0–255 value appears in the hover tooltip.)', type: 'value', default: '0–100%' },
+    'Fill bar': { description: 'A coloured bar rising from the bottom of the cell. Its height is proportional to the level as a fraction of 255.', type: 'bar', default: '—' },
+    'Identity stripe': { description: 'A 2.5px vertical bar on the left edge, drawn in a stable per-fixture identity colour. Present only on patched cells.', type: 'stripe', default: '—' },
+    'Conflict highlight': { description: 'A red border drawn when two or more enabled fixtures overlap on this channel.', type: 'red border', default: '—' },
+    'Selection ring': { description: 'An accent border drawn when the fixture patched to this cell is selected (a conflict border takes precedence).', type: 'accent border', default: '—' },
+  }}
+/>
+
+<Callout type="idea">Each fixture gets its own stable identity colour (auto-assigned by index), so a block of channels stripes in one hue lets you scan a universe and tell at a glance which contiguous addresses belong to which fixture — even before any level comes up.</Callout>
+
+## The summary strip
+
+Above the grid, a summary strip totals the universe:
+
+- **active** — the count of channels currently above zero. This is what your console is actually driving right now; the number is accented when non-zero.
+- **patched / 512** — the count of grid cells occupied by enabled patch entries, out of 512.
+
+A universe can have many patched channels but few active ones (a dark rig), or the reverse (incoming data on unpatched addresses).
+
+## Universe navigation
+
+The grid shows one universe. Move between them with the controls at the top of the panel:
+
+<Steps>
+<Step>
+### Step with Prev / Next
+Use the **Prev** and **Next** buttons to step through the universes that exist in your show.
+</Step>
+<Step>
+### Jump with the dropdown
+Open the **Universe** dropdown (`Universe N`) to jump directly to any universe referenced by the patch or present in a live snapshot.
+</Step>
+<Step>
+### Read the live indicator
+The live indicator tells you whether data is arriving on the currently displayed universe.
+</Step>
+</Steps>
+
+### The live indicator
+
+<Tabs items={['Live', 'Idle']}>
+  <Tab value="Live">
+    A **green bullet** with **"N src"** means the universe is live: `N` sources are currently contributing to it after the merge. If two consoles feed the same universe, you will see `2 src`.
+  </Tab>
+  <Tab value="Idle">
+    A **muted bullet** with **"idle"** means no recent packets. A universe is considered idle once it has gone 2.5 seconds without an update, so it goes idle shortly after its console stops sending.
+  </Tab>
+</Tabs>
+
+<Callout type="warn">If the displayed universe reads `idle` while you expect data, confirm the console is sending and that the universe number matches. See [Connecting a Console](/docs/dmx/consoles) and [Connectivity](/docs/dmx/connectivity) for source diagnostics.</Callout>
+
+When the patch contains any overlapping enabled entries, a **conflict warning** appears in the header with a count (for example `2 conflicts`). The count is for the whole patch, not just the displayed universe; the overlapping cells in the displayed universe are also outlined in red in the grid.
+
+## Interaction
+
+The grid is interactive in two ways.
+
+<Cards>
+  <Card icon={<MousePointerClick />} title="Click a cell">
+    Selects the fixture patched to that channel (replacing the current selection), updating both the 3D viewport and the Inspector. A fast way to find a fixture from its address. Clicking an unpatched cell does nothing.
+  </Card>
+  <Card icon={<Grid3x3 />} title="Hover a cell">
+    Shows a tooltip identifying the channel and the fixture that owns it.
+  </Card>
+</Cards>
+
+The hover tooltip reads:
+
+```
+Ch NNN · Fixture Name · Attribute Name
+LLL  (PPP%)
+```
+
+That is the 1-based channel, the fixture name, the GDTF attribute mapped to that channel, the raw level (`0`–`255`), and the percentage. An unpatched cell reads `Ch NNN · unpatched` on the first line.
+
+<Callout type="success">Use the tooltip to answer "what is at this address?" without leaving the monitor — it names both the fixture and the exact attribute the channel drives, and is the only place the raw 0–255 value is shown.</Callout>
+
+## Reading conflicts
+
+A **conflict** is two or more enabled patch entries occupying overlapping channels in the same universe. The monitor surfaces them two ways: a red border on the affected cells in the displayed universe, and the conflict count in the header (totalled across the patch).
+
+<Callout type="warn">Conflicts are advisory only — Glowstone never auto-resolves them. Re-patch the overlapping fixtures to clear the highlight. Use the Fixtures panel's **Conflicts** filter to list them; see [Patching Fixtures](/docs/dmx/patching).</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Workflow />} title="Patching Fixtures" href="/docs/dmx/patching">
+    Assign universes and addresses, auto-patch, and resolve conflicts.
+  </Card>
+  <Card icon={<Network />} title="Connectivity: Art-Net & sACN" href="/docs/dmx/connectivity">
+    Configure protocols, bind interface, and inspect live sources.
+  </Card>
+  <Card icon={<Radio />} title="Connecting a Console" href="/docs/dmx/consoles">
+    Set up grandMA3, MagicQ, and other consoles to feed Glowstone.
+  </Card>
+  <Card icon={<AlertTriangle />} title="DMX Overview" href="/docs/dmx">
+    How live DMX input drives the scene, end to end.
+  </Card>
+</Cards>

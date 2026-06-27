@@ -1,0 +1,148 @@
+---
+title: "Supported File Formats"
+description: "Every format Glowstone reads and writes, and where each is used."
+---
+
+import { FolderOpen, Boxes, Lightbulb, Image, FileDown, FileUp } from 'lucide-react';
+
+Glowstone reads and writes one native project format, one scene-interchange format, plus the fixture, geometry, and image formats those archives bundle. This page lists each one and where it is used.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The File menu open, showing New Project, Open Project…, Open Recent, Save, Save As…, Import GDTF Fixture…, Import MVR Scene…, Export MVR Scene…, and Preferences… entries."
+/>
+
+## At a glance
+
+| Format | Type | Read | Write | Notes |
+| --- | --- | --- | --- | --- |
+| `.glow` | Project | Yes | Yes | Native binary project. Bundles everything inline; exact round-trip. Legacy `.archie` files still open. |
+| `.mvr` | Scene | Yes | Yes | ZIP scene-interchange archive. Round-trips with grandMA3, Vectorworks, Capture, Depence. |
+| `.gdtf` | Fixture definition | Yes | No | Read-only. Imported into the library and bundled into `.glow`/`.mvr`. |
+| `.glb` / `.3ds` | Geometry | Yes (via MVR) | Yes (via MVR) | Stage/truss/prop meshes. Carried inside MVR archives, never as loose files. |
+| PNG / JPEG | Textures | Yes | Yes | Fixture wheels and MVR/screen content. Carried verbatim in archives. |
+| PNG / JPEG / OpenEXR | Render output | — | Yes | Saved still-image output. |
+| HDR | HDRI environment | Yes | — | Sky/ambient environment map, bundled inline into `.glow`. |
+
+<Callout type="info">
+`.gdtf` files and `.glb`/`.3ds` geometry are never loaded or kept as loose files in a project. They are bundled inside the `.glow` project (and re-emitted into `.mvr` on export), so a saved show is fully self-contained.
+</Callout>
+
+## Project and scene formats
+
+<Cards>
+  <Card icon={<FolderOpen />} title=".glow — native project" href="/docs/projects">
+    The complete show snapshot: scene, fixtures, geometry, GDTF definitions, camera, render settings, DMX patch and config, selection groups, cues, pyro devices, and preferences, all bundled inline.
+  </Card>
+  <Card icon={<Boxes />} title=".mvr — scene exchange" href="/docs/projects/mvr">
+    A ZIP archive for round-tripping rigs with other design tools. Carries scene XML plus embedded GDTF, geometry, and textures.
+  </Card>
+</Cards>
+
+### `.glow` — the native project
+
+A single binary file that captures the entire show. Use it for everyday work: it is what `File ▸ Save` (`Cmd`/`Ctrl`+`S`) and `File ▸ Open Project…` read and write. Because all referenced assets ride along inside the file, a `.glow` project opens with no external dependencies.
+
+The body is a `bincode` dump of the same serde types the app runs on, so it captures the exact in-memory state rather than a lossy interchange (that is MVR's job). Pyro devices and per-fixture sequence numbers live in a self-describing JSON trailer appended after the binary core, so they can evolve without forcing a format-version bump.
+
+<Files>
+  <Folder name="show.glow" defaultOpen>
+    <File name="Magic header — GLOW\0" />
+    <File name="Format version (current: 9)" />
+    <Folder name="Serialized core (bincode)" defaultOpen>
+      <File name="Scene, fixtures, LED screens, world" />
+      <File name="Bundled .gdtf archives (deduplicated)" />
+      <File name="Bundled .glb / .3ds geometry" />
+      <File name="Textures + HDRI environment" />
+      <File name="Camera, render settings, DMX patch + config" />
+      <File name="Selection groups, cues, preferences" />
+    </Folder>
+    <Folder name="JSON trailer (self-describing)" defaultOpen>
+      <File name="Pyro devices" />
+      <File name="Per-fixture sequence numbers" />
+    </Folder>
+  </Folder>
+</Files>
+
+<Callout type="info" title="Crash-safe saves">
+Saves are atomic: Glowstone writes a temporary sibling file first, then renames it onto the target. A crash mid-save cannot corrupt your project.
+</Callout>
+
+<Callout type="warn">
+Older core layouts (versions before `8`) are rejected with a clear "predates this build's readable formats" error rather than opened incorrectly. A file newer than this build supports is likewise rejected with an "update the app" message. The current format version is `9`. Legacy `.archie` files (the previous extension and magic, with a v8 core) still open — their format is migrated up in memory.
+</Callout>
+
+### `.mvr` — scene exchange
+
+A ZIP archive of a scene description plus its referenced resources. Use it to bring a rig in from, or send one out to, another tool. See [MVR Scene Exchange](/docs/projects/mvr) for the full import/export workflow and round-trip details.
+
+<Files>
+  <Folder name="show.mvr (ZIP)" defaultOpen>
+    <File name="GeneralSceneDescription.xml" />
+    <Folder name="fixtures">
+      <File name="Robe_Megapointe.gdtf" />
+    </Folder>
+    <Folder name="geometry">
+      <File name="truss.glb" />
+      <File name="deck.3ds" />
+    </Folder>
+    <Folder name="textures">
+      <File name="logo.png" />
+    </Folder>
+  </Folder>
+</Files>
+
+## Bundled resource formats
+
+These formats are read and written only as part of a `.glow` or `.mvr` archive. You do not manage them as loose files in an open project.
+
+### `.gdtf` — fixture definitions (read-only)
+
+Glowstone reads GDTF but never writes it. Import one with `File ▸ Import GDTF Fixture…`; the definition is added to the library and a fixture instance is placed in the scene. On save, the original `.gdtf` archive bytes are bundled into the project (one copy per unique fixture type) and re-parsed on open. See [Importing GDTF Fixtures](/docs/library/import-gdtf).
+
+### `.glb` / `.3ds` — geometry
+
+Mesh formats for static stage objects: trusses, decks, set pieces, and props. Glowstone imports and exports these only through MVR archives. Each model keeps a per-model transform matrix from import (used for unit conversion), so geometry comes in at the correct scale and round-trips faithfully.
+
+### PNG / JPEG — textures
+
+Used for fixture gobo and colour wheels and for MVR screen content. Inside MVR archives they are carried verbatim so they re-bundle unchanged on export.
+
+<Callout type="warn">
+LED screen image content is bundled inline (its decoded bytes ride along, like the HDRI) in the native `.glow` project, so it survives save and reopen. On **MVR** round-trip, however, only the image file name is carried — the bytes are not — so a re-imported screen shows no image until you re-pick it. Live sources (NDI, CITP, pixel-map DMX) round-trip by source identifier only. See [Screen Content Sources](/docs/media/content-sources).
+</Callout>
+
+## Image formats for rendering
+
+<Cards>
+  <Card icon={<Image />} title="HDR — environment input" href="/docs/scene/world">
+    An HDRI map drives sky lighting and ambient light. Its bytes are bundled inline into the project.
+  </Card>
+  <Card icon={<FileDown />} title="PNG / JPEG / OpenEXR — render output" href="/docs/rendering/render-image">
+    Choose PNG (lossless 8-bit RGBA), JPEG (small, no alpha), or OpenEXR (32-bit float container).
+  </Card>
+</Cards>
+
+When you render a still image, the output format is part of the render settings: `PNG`, `JPEG`, or `OpenEXR`. Note that the EXR readback is the post-tonemap LDR plate written into a float container — convenient for a float-pipeline compositor, but not raw linear HDR for highlight recovery. See [Rendering a Still Image](/docs/rendering/render-image).
+
+<Callout type="idea">
+Working with another tool? Bring its rig in as MVR, do your previsualization in Glowstone, then export MVR back. The native `.glow` format is best for your own iterative work because it bundles every asset for an exact, dependency-free reopen.
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<FolderOpen />} title="Projects & the .glow Format" href="/docs/projects">
+    Save, open, recent files, and crash recovery.
+  </Card>
+  <Card icon={<Boxes />} title="MVR Scene Exchange" href="/docs/projects/mvr">
+    Import and export scenes with other design tools.
+  </Card>
+  <Card icon={<FileUp />} title="Importing GDTF Fixtures" href="/docs/library/import-gdtf">
+    Add fixture definitions to the library.
+  </Card>
+  <Card icon={<Lightbulb />} title="Rendering a Still Image" href="/docs/rendering/render-image">
+    Render to PNG, JPEG, or OpenEXR.
+  </Card>
+</Cards>

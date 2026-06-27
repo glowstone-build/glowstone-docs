@@ -1,0 +1,105 @@
+---
+title: "Notifications & Report Log"
+description: "Toasts, the persistent report log, and the status-bar message and hint slots."
+---
+
+import { Bell, ScrollText, MessageSquare, SlidersHorizontal, Keyboard } from 'lucide-react';
+
+Glowstone reports what it just did through three layers: transient **toasts** in the top-right corner, a persistent **Report Log** you can scroll back through, and a **status bar** that carries tool messages and passive hints. Together they cover saves, opens, imports, DMX connections, undo/redo, and any warning or error the app raises.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The viewport top-right showing two stacked toasts — a green Success toast reading a save confirmation on top and an accent-tinted Info toast below it — with the Report Log window open in front, listing newest-first rows each with a monospace #N ordinal, a severity icon/tag, and a wrapped message, plus the 'N entries' label and Clear button in its header."
+/>
+
+## Toasts
+
+Toasts are one-line notifications that fade in at the **top-right** of the viewport and auto-expire. They stack newest-on-top, and at most **5** are drawn at once — extra live toasts simply sit further down the stack and aren't painted until room frees up. Each toast is a dark rounded chip with a severity-tinted stroke and leading icon; longer detail is not truncated into the toast but written to the [Report Log](#report-log).
+
+Icons are Phosphor glyphs, not emoji.
+
+A toast fades out over its last `0.6s` as its time-to-live runs out.
+
+### Severity levels
+
+There are four severities. Each has its own icon, time-to-live (TTL), log tag, and accent colour.
+
+<TypeTable
+  type={{
+    Info: { description: 'General feedback (the user-chosen accent colour). Logged as INFO.', type: 'info glyph', default: '3.0s' },
+    Success: { description: 'An action completed (green). Logged as OK.', type: 'check glyph', default: '3.5s' },
+    Warn: { description: 'Something needs attention but is not fatal (amber). Logged as WARN.', type: 'warning glyph', default: '5.0s' },
+    Error: { description: 'An action failed (red). Logged as ERROR.', type: 'warning-circle glyph', default: '7.0s' },
+  }}
+/>
+
+<Callout type="info" title="Reading the table">The `type` column names the Phosphor icon and the `default` column shows the TTL — how long the toast stays before it begins fading. More urgent severities linger longer so an error stays readable for `7s`.</Callout>
+
+The colours map to the shared semantic palette: green `ok`, amber `warn`, red `conflict`, and the user-chosen accent for info. See [Preferences & Theme](/docs/interface/preferences) to change the accent colour.
+
+## Report Log
+
+The **Report Log** is a persistent, scrollable history of every notification, listed **newest-first**. Use it when a toast has already faded and you want to re-read what happened.
+
+Each row shows:
+
+- A monospace `#N` ordinal that counts up monotonically and survives buffer drops, so gaps reveal trimmed history.
+- The severity icon plus a five-character monospace tag (`INFO`, `OK`, `WARN`, `ERROR`), tinted by severity.
+- The full message text, which wraps rather than truncating.
+
+### Opening and clearing
+
+<Steps>
+<Step>
+### Open the log
+
+Choose **Window > Report Log**, or click the log icon in the status bar.
+</Step>
+<Step>
+### Review the history
+
+Rows are newest-first. The header shows an `N entries` count on the left.
+</Step>
+<Step>
+### Clear when needed
+
+Click **Clear** to empty the history. It is disabled when the log is already empty.
+</Step>
+</Steps>
+
+<Callout type="info" title="Clearing is non-destructive to live toasts">Clearing the log empties the stored history but lets any toasts currently on screen age out normally.</Callout>
+
+<Callout type="warn">The log keeps only the last **200** entries. It is a ring buffer — once full, the oldest entry is dropped to make room. The `#N` ordinal keeps incrementing, so a jump in numbers tells you older entries were trimmed.</Callout>
+
+## Status bar messages and hints
+
+The status bar at the bottom of the window carries a second, lighter notification channel for tool-driven feedback. It has two independent slots.
+
+<Tabs items={['Message stack', 'Hint slot']}>
+  <Tab value="Message stack">
+A tool can push a transient message onto a stack and receives an opaque handle in return. The **top of the stack** is what shows in the status bar, so the most recent active message wins. When the tool is done it releases its handle and the message disappears. This is how modal operations surface their current state.
+  </Tab>
+  <Tab value="Hint slot">
+A passive grey hint such as `Drag to orbit`. It is not owned by a handle and is freely overwritten every frame, so it always reflects what the current context offers. Use it as a glanceable prompt rather than a record of events.
+  </Tab>
+</Tabs>
+
+<Callout type="idea">If you missed a message that flashed past in the status bar, open the Report Log — anything logged as a notification is preserved there, even after the status bar has moved on.</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<SlidersHorizontal />} title="Preferences & Theme" href="/docs/interface/preferences">
+    Change the accent colour that tints Info toasts, and switch between dark and light themes.
+  </Card>
+  <Card icon={<MessageSquare />} title="Menu Bar" href="/docs/interface/menus">
+    Find Window &gt; Report Log and the rest of the menu commands.
+  </Card>
+  <Card icon={<ScrollText />} title="Performance Overlay" href="/docs/navigation/performance-overlay">
+    The flight-sim-style HUD with live FPS and GPU timings.
+  </Card>
+  <Card icon={<Keyboard />} title="Commands & Operator Search" href="/docs/interface/commands">
+    Many logged actions are triggered from the command palette.
+  </Card>
+</Cards>

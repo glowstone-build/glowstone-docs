@@ -1,0 +1,146 @@
+---
+title: "NDI Video"
+description: "Stream live NDI sources from the LAN onto a Glowstone LED screen."
+---
+
+import { Radio, Wrench, Network, MonitorPlay, Layers, FileVideo } from 'lucide-react';
+
+A Glowstone LED screen can receive any NDI source on the local network and display it on the wall in real time.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="An LED screen selected in the Scene, with the Inspector Content section's Source dropdown set to NDI: the 'Discovered:' row listing a source such as 'STUDIO (Output 1)@192.168.1.50:5960', the Source text field below it, and the live camera feed showing on the wall in the 3D viewport."
+/>
+
+<Callout type="warn" title="NDI is an optional build feature">
+NDI receive is an **optional compile-time feature** and is **OFF by default**. The default build (`cargo build`) ships a graceful no-op stub: Glowstone runs normally but reports NDI as unavailable, and no sources are received. To actually receive NDI you must build Glowstone with the `ndi` feature and install the NDI runtime. See [Enabling NDI](#enabling-ndi) below.
+</Callout>
+
+## Enabling NDI
+
+Enabling NDI requires building Glowstone from source with the feature flag, plus the proprietary NDI runtime. The NDI SDK is not bundled in the repository.
+
+<Steps>
+<Step>
+### Install the NDI 6 SDK
+Download the **NDI 6 SDK** from Vizrt and follow its installation instructions. The `ndi` feature links the SDK via the `grafton-ndi` crate, which generates bindings from the SDK headers at build time, so the SDK headers must be present where the build can find them.
+</Step>
+<Step>
+### Build with the `ndi` feature
+Compile Glowstone with the feature enabled. This links the user-installed NDI 6 SDK:
+
+```bash
+cargo build --features ndi
+```
+</Step>
+<Step>
+### Install the NDI runtime
+Install the **NDI runtime** (a separate download from the SDK). It is required at runtime to actually receive frames. If the runtime is absent, Glowstone logs a warning and continues with a no-op client — it will not crash.
+</Step>
+</Steps>
+
+<Callout type="info">
+Both builds expose the same internal client API, so the rest of the app behaves identically. Only the source picker reports whether NDI is actually available.
+</Callout>
+
+## Selecting an NDI source
+
+Once Glowstone is built with NDI and the runtime is installed, sources auto-discover on the LAN and appear in the LED screen's content picker.
+
+<Steps>
+<Step>
+### Select the LED screen
+In the [Scene Outliner](/docs/scene/outliner), select the LED screen you want to drive. Its properties open in the Inspector.
+</Step>
+<Step>
+### Open the Content source
+In the Inspector, expand the **Content** section and set the **Source** dropdown to **NDI**.
+</Step>
+<Step>
+### Pick a discovered source
+The **Discovered:** row lists every NDI source the finder has seen, as small buttons. Click one to drop its full name into the **Source** text field. Discovered names use NDI's `NAME@url` form, for example `STUDIO (Output 1)@192.168.1.50:5960`.
+</Step>
+<Step>
+### Or enter a source by name
+You can also type a name directly into the **Source** field. Glowstone matches on the `NAME` part (before the last `@`) of each discovered source, so the `NAME` alone — e.g. `STUDIO (Output 1)` — also resolves.
+</Step>
+</Steps>
+
+When a source is selected, Glowstone spawns a per-source receiver thread, resolves the source, and streams frames straight onto the wall.
+
+<ImagePlaceholder
+  label="Close-up"
+  ratio="4 / 3"
+  caption="Close-up of the Inspector Content > NDI controls: the Source dropdown set to NDI, the 'Discovered:' row with one or two NDI source-name buttons, and the Source text field containing 'STUDIO (Output 1)@192.168.1.50:5960'."
+/>
+
+## When NDI is unavailable
+
+If Glowstone was not built with `--features ndi`, or the NDI runtime is not installed, the source picker shows a hint instead of a discovered list:
+
+> NDI runtime not available (build with `--features ndi` + install the NDI runtime).
+
+When NDI is available, the picker shows discovered sources plus the hint:
+
+> NDI source name (e.g. "HOST (Output 1)"). Pick a discovered source above.
+
+<Callout type="idea">
+Seeing the "not available" hint on a build you expect to support NDI usually means the runtime is missing, not the feature flag. The flag is set at compile time; the runtime is a separate install.
+</Callout>
+
+## How receiving works
+
+Discovery and streaming run on background threads and recover automatically from network interruptions.
+
+### Discovery
+
+An NDI Finder thread scans the LAN for NDI-enabled devices and refreshes the discovered source list roughly once per second. The picker shows a flat list of all sources it has seen.
+
+### Frame streaming
+
+When you select a source, the receiver thread opens a finder and waits up to two seconds for discovery to populate, then matches by name and begins streaming.
+
+<TypeTable
+  type={{
+    'Color format': { description: 'Frames are received as RGBA so the bytes upload directly to the GPU texture for the wall.', type: 'RGBA8', default: 'RGBA' },
+    'Discovery refresh': { description: 'How often the NDI Finder updates the discovered source list.', type: 'interval', default: '~1 s' },
+    'Frame poll timeout': { description: 'How long the receiver waits for each video frame before retrying.', type: 'timeout', default: '1 s' },
+    'Stall detection': { description: 'Once more than 5 consecutive frame captures time out, Glowstone assumes the source vanished and re-resolves it by name.', type: 'count', default: '>5' },
+    'Row padding': { description: 'Line stride is read per frame; any row padding is removed so the buffer is tightly packed.', type: 'auto', default: '—' },
+  }}
+/>
+
+### Resilience
+
+<Accordions type="single">
+  <Accordion title="What happens if the network drops?">
+    The receiver retries forever. After more than 5 consecutive frame-capture timeouts it assumes the source vanished, tears down the receiver and re-resolves the source by name, picking the stream back up automatically when the source returns.
+  </Accordion>
+  <Accordion title="What if the source's address changes?">
+    Glowstone matches sources by the `NAME` part before the last `@`, so a source that moves to a new IP or port is re-matched and reconnected without you re-selecting it.
+  </Accordion>
+  <Accordion title="When does the receiver thread stop?">
+    A receiver thread starts lazily the first time a screen selects an NDI source, and is stopped when no active screen references it (`retain` flags the unused streams to stop). Selecting another NDI source spawns a thread for it. Each receiver thread keeps one persistent finder running so discovery accumulates across re-resolve attempts.
+  </Accordion>
+  <Accordion title="What if the runtime is missing at runtime?">
+    The client becomes a no-op: it logs a warning and provides no frames, but the app keeps running normally.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<MonitorPlay />} title="Screen Content Sources" href="/docs/media/content-sources">
+    Every content source an LED screen can display, including NDI, CITP, images and test patterns.
+  </Card>
+  <Card icon={<Network />} title="Media Servers (CITP/MSEX)" href="/docs/media/media-servers">
+    Receive live layers from Resolume, grandMA, Capture and other CITP servers.
+  </Card>
+  <Card icon={<Layers />} title="LED Screens" href="/docs/media">
+    Build and configure parametric LED wall surfaces.
+  </Card>
+  <Card icon={<Radio />} title="Pixel-Map DMX" href="/docs/media/pixel-mapping">
+    Drive a low-resolution RGB cell grid on the wall from DMX input.
+  </Card>
+</Cards>

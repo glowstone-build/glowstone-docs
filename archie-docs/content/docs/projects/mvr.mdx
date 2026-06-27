@@ -1,0 +1,199 @@
+---
+title: "MVR Scene Exchange"
+description: "Round-trip whole scenes with grandMA3, Vectorworks, Capture and Depence."
+---
+
+import { FileArchive, Boxes, MonitorPlay, ArrowLeftRight, FolderInput, Share2, FileText, FileCog } from 'lucide-react';
+
+Glowstone reads and writes MVR — fixtures, geometry, patch and screens — and preserves enough identity for a faithful round-trip back to the tool that created the file.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The 3D Viewport just after File ▸ Import MVR Scene… completes on a festival rig: overhead truss with dozens of moving heads hung in real orientation, LED upstage wall, decks and set pieces. Camera has auto-framed the whole rig."
+/>
+
+## What an MVR file is
+
+An `.mvr` is a ZIP bundling one scene-description XML plus every resource it references, so the file is self-contained.
+
+<Files>
+  <Folder name="scene.mvr (ZIP)" defaultOpen>
+    <File name="GeneralSceneDescription.xml" icon={<FileText />} />
+    <Folder name="fixtures" defaultOpen>
+      <File name="Robe_MegaPointe.gdtf" />
+      <File name="Martin_MAC_Aura.gdtf" />
+    </Folder>
+    <Folder name="geometry">
+      <File name="truss.glb" />
+      <File name="deck.3ds" />
+    </Folder>
+    <Folder name="textures">
+      <File name="logo.png" />
+    </Folder>
+  </Folder>
+</Files>
+
+| Entry | Role |
+| --- | --- |
+| `GeneralSceneDescription.xml` | Required. The scene graph: layers, fixtures, static geometry, LED screens, transforms, and layer/class/position metadata. |
+| `.gdtf` files | Embedded fixture definitions, referenced from each `<Fixture>` by its `<GDTFSpec>`. |
+| `.glb` / `.3ds` files | 3D models for trusses, decks, set pieces and props. Authored `+Y`-up, vertices in metres. |
+| Textures (PNG/JPEG) | Referenced by GDTF wheels or by MVR source elements. |
+
+<Callout type="info">
+Glowstone reads every ZIP entry verbatim and keeps the bytes. On export it re-bundles unchanged resources byte-for-byte, so files that pass through untouched stay intact.
+</Callout>
+
+## Importing a scene
+
+Importing replaces the current scene with the contents of the MVR file, then auto-frames the camera on the new rig.
+
+<Steps>
+<Step>
+### Open the import dialog
+Choose **File ▸ Import MVR Scene…**. A native file picker opens, filtered to `.mvr`.
+</Step>
+<Step>
+### Pick the `.mvr` file
+Select the archive. Glowstone opens the ZIP, parses `GeneralSceneDescription.xml`, and resolves each referenced resource.
+</Step>
+<Step>
+### Review the imported scene
+The camera frames the whole rig. A dropped-in `.mvr` notifies `Imported MVR · N fixtures`; the menu importer reframes silently. Raise intensities to light the rig (see the note below).
+</Step>
+</Steps>
+
+### What import brings in
+
+<Cards>
+  <Card icon={<Boxes />} title="Fixtures">
+    Each `<Fixture>` is placed in its real hang orientation. Its embedded GDTF is resolved and shared across identical types; DMX patch, FixtureID, unit number and DMX mode are preserved.
+  </Card>
+  <Card icon={<FileArchive />} title="Static geometry">
+    Trusses, decks, set pieces and props come in as static objects that occlude beams. Per-model unit-conversion matrices are kept so models are sized correctly.
+  </Card>
+  <Card icon={<MonitorPlay />} title="LED screens">
+    `<VideoScreen>` elements become LED walls. Glowstone attributes rebuild the exact cabinet grid; foreign files fall back to sensible defaults.
+  </Card>
+</Cards>
+
+<Callout type="warn">
+Imported rigs arrive **blacked out**. Glowstone visualizes incoming DMX from a console — it never outputs DMX — so a fresh import has no light until you connect a console or raise intensity in the Inspector. See [Connecting a Console](/docs/dmx/consoles).
+</Callout>
+
+<Callout type="idea">
+GDTF specs are matched leniently: exact name first, then case-insensitive or basename, then a substring fallback. An abbreviated or prefix-dropped spec name still resolves to the right fixture file in the archive.
+</Callout>
+
+#### When a fixture can't resolve
+
+<Accordions type="single">
+  <Accordion title="A fixture imported as 'Unresolved' — what happened?">
+    If a fixture's GDTF fails to parse, Glowstone logs a warning and creates the fixture without a GDTF; its category becomes `Unresolved`. The placement is still correct — only the optical definition is missing. Re-import a clean GDTF for that type via the [Library](/docs/library/import-gdtf).
+  </Accordion>
+  <Accordion title="Why are several fixtures sharing one definition?">
+    Every fixture with the same `<GDTFSpec>` shares a single parsed definition. This is intentional: it avoids re-parsing and redundant GPU uploads for a rig of identical heads.
+  </Accordion>
+</Accordions>
+
+## Exporting a scene
+
+Export regenerates `GeneralSceneDescription.xml` and re-bundles the resources, preserving the identity needed to land back in the source tool.
+
+<Callout type="info">
+**File ▸ Export MVR Scene…** is enabled only when the scene contains at least one fixture or geometry object. It is greyed out for an empty scene.
+</Callout>
+
+<Steps>
+<Step>
+### Open the export dialog
+Choose **File ▸ Export MVR Scene…**. A save dialog opens with the default name `scene.mvr`.
+</Step>
+<Step>
+### Choose a location
+Glowstone rebuilds the XML, groups fixtures and objects by their original layer UUID, and re-emits classes and positions from the imported header.
+</Step>
+<Step>
+### Write the archive
+Resources are gathered (starting from the originally imported set), then ZIPped with deflate compression in deterministic alphabetical order. A notification confirms `Exported MVR scene`.
+</Step>
+</Steps>
+
+### What round-trips faithfully
+
+Glowstone stores MVR identity on every imported element so the exported file matches the original where nothing changed.
+
+<TypeTable
+  type={{
+    'Fixture UUID & IDs': { description: 'uuid, fixture_id, unit_number, fixture_type_id and custom_id are re-emitted unchanged (synthesized only for app-created fixtures).', type: 'identity' },
+    'DMX patch': { description: 'Per-break (break_id, absolute address) pairs are restored exactly.', type: 'addresses' },
+    'DMX mode': { description: 'The GDTF mode name is preserved — critical for matching the patch in the target tool.', type: 'mode name' },
+    'Placement matrix': { description: 'Exported without live pan/tilt, so the matrix reflects the rigged orientation, not a current look.', type: 'Mat4' },
+    'Colour': { description: 'Unchanged colours re-emit the original CIE xyY string verbatim; edited colours are recomputed from linear RGB.', type: 'CIE xyY' },
+    'Custom commands': { description: 'Raw <CustomCommand> strings (encoder defaults, blade/zoom presets) are kept verbatim.', type: 'string[]' },
+    'Layers / classes / positions': { description: 'Original layer hierarchy, class UUIDs and position labels are rebuilt from the stored header.', type: 'metadata' },
+    'Geometry matrices': { description: 'Per-model unit-conversion matrices re-emit on each <Geometry3D>, keeping models correctly sized.', type: 'Mat4' },
+  }}
+/>
+
+<Callout type="success">
+Glowstone adds **`glowstone`-namespaced attributes** to `<VideoScreen>` elements (cabinet size, pixel pitch, panel grid, nits, gamma, curvature, pixel shape and content source). These give full LED-screen fidelity on a Glowstone-to-Glowstone round-trip while remaining invisible to other tools, which read only the standard MVR fields.
+</Callout>
+
+## Coordinate handling
+
+MVR and Glowstone use different conventions, so transforms are converted on the way in and back out.
+
+| Aspect | MVR | Glowstone world |
+| --- | --- | --- |
+| Up axis | `+Z` (right-handed) | `+Y` (right-handed) |
+| Translation units | Millimetres (in `<Matrix>`) | Metres |
+
+On import, the basis change `+Z`-up → `+Y`-up is applied and translations are scaled `mm` → `m`. On export the same change is inverted and translations scale `m` → `mm`, recovering the original matrices. This is handled automatically — you do not configure it.
+
+<Callout type="warn">
+Each `<Geometry3D>` may carry its own unit-conversion matrix (for example `0.0254` for inch-authored models). Glowstone reads and re-emits it. A foreign tool that ignores this can render those models dozens of times oversized.
+</Callout>
+
+## Interoperability
+
+MVR exported from Glowstone imports into the major design and console tools, and Glowstone reads MVR from each of them.
+
+| Tool | Import into Glowstone | Export from Glowstone |
+| --- | --- | --- |
+| grandMA3 | Full layer / fixture / geometry / LED screen support | Standard MVR importer: patch + geometry |
+| Vectorworks | Geometry + basic fixtures | Lighting design + geometry overlay |
+| Capture | Scene export | Real-time preview, scene sync |
+| Depence | Scene export | Full previsualization + lighting control |
+
+<Callout type="info">
+Any MVR 1.5-compliant tool can exchange scenes with Glowstone. The source software and version are recorded in the MVR header and preserved on round-trip.
+</Callout>
+
+## Limitations
+
+<Callout type="warn">
+Some MVR features are not yet fully supported:
+
+- **Symbol / Symdef instancing** (block references) is not yet supported. These are logged as warnings and skipped on import.
+- **LED screen image content loses its bytes** on round-trip. The file name is preserved, but re-import requires re-picking the image.
+- **Custom commands** preserve as raw strings but may not be editable in the UI if the originating tool used special syntax.
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<FileCog />} title="Projects & the .glow Format" href="/docs/projects">
+    How Glowstone saves a complete show, including the MVR metadata kept for export.
+  </Card>
+  <Card icon={<FolderInput />} title="Supported File Formats" href="/docs/projects/file-formats">
+    Every format Glowstone reads and writes, and which ones round-trip.
+  </Card>
+  <Card icon={<Share2 />} title="Importing GDTF Fixtures" href="/docs/library/import-gdtf">
+    Bring a single fixture definition into the library.
+  </Card>
+  <Card icon={<ArrowLeftRight />} title="LED Screens" href="/docs/media">
+    Build and configure the video walls that MVR carries as `<VideoScreen>` elements.
+  </Card>
+</Cards>

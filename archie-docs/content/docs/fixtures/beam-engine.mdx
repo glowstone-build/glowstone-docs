@@ -1,0 +1,153 @@
+---
+title: "The Beam Engine"
+description: "How Glowstone models a moving head as a physical optical chain from source to lens."
+---
+
+import { Lightbulb, SlidersHorizontal, Palette, Aperture, Wand2, Sun } from 'lucide-react';
+
+Glowstone treats every fixture as a physical light path, not a flat coloured cone. Light starts at the lamp and passes through each optical element in turn — shutter, wheels, prism, frost, focus and zoom — before it leaves the lens. The same resolved beam state drives both the volumetric shaft and the floor pool, so the two always agree.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A single moving-head spot in the 3D Viewport projecting a gobo onto the floor with a multi-facet prism engaged, fanning the beam into several copies through haze. The volumetric shaft and the floor pool show the same gobo, colour and prism fan, demonstrating that shaft and pool agree."
+/>
+
+## The optical chain
+
+Glowstone walks the light through the elements below, in order. Each stage transforms the beam before handing it to the next. The chain is dynamic: the GDTF mode declares which elements exist, and only those are simulated and exposed as controls.
+
+```text
+LED / halogen engine
+  └─ shutter / dimmer
+       └─ animation wheel
+            └─ gobo wheel(s)
+                 └─ colour  (wheel / CMY / CTO)
+                      └─ prism
+                           └─ frost
+                                └─ focus
+                                     └─ zoom lens  →  out
+```
+
+<Callout type="info" title="One source of truth">
+Controls resolve into a single `BeamOptics` structure that the GPU consumes every frame. Because the volumetric beam shaft and the floor pool both read that same structure, they can never disagree — change the colour and both update together.
+</Callout>
+
+## Walking the chain
+
+<Steps>
+<Step>
+### Engine (source)
+The lamp sets the white point. Glowstone reads the GDTF beam colour temperature (typically 2800–8000 K for stage lamps; the source default is 6500 K when the GDTF omits it) and converts it to linear RGB. This is the colour the beam starts with before any filtering.
+</Step>
+<Step>
+### Shutter / dimmer
+The `dimmer` is the master intensity multiplier (0 = blackout, 1 = full). The `shutter` opens and closes the gate, and can run as a square-wave strobe when driven into its strobe sub-range. Glowstone can also draw a mechanical blade (`Blade` or `Sawtooth`) projected onto the beam.
+</Step>
+<Step>
+### Animation wheel
+A glass animation wheel slides into the shaft and scrolls, adding flowing texture (water, fire, clouds). At most one animation wheel is active per fixture; its `spin` control sets the scroll speed.
+</Step>
+<Step>
+### Gobo wheel(s)
+The gobo disc is always physically in the shaft — the open slot is just a clear hole. Selecting a slot rotates the disc into place, and the gobo image rotates independently of the wheel via index and spin.
+</Step>
+<Step>
+### Colour (wheel / CMY / CTO)
+Colour comes from three mechanisms that can coexist: dichroic **colour wheels** (parked slots fold into a uniform tint, moving slots split across the beam), subtractive **CMY** flags (rendered as sliding graduated flags), and the **CTO** warm filter (toward 2800 K). A synthesized plus/minus-green axis is always available.
+</Step>
+<Step>
+### Prism
+A facet prism slides into the shaft and splits the beam into multiple copies, fanning them off the beam axis. Each facet is a deflected copy of everything upstream — including the gobo and colour — so the pattern repeats across the fan.
+</Step>
+<Step>
+### Frost
+A diffusion filter slides in continuously. Frost softens the gobo edge and spreads the beam wider, trading a crisp spot for a soft wash.
+</Step>
+<Step>
+### Focus
+Focus sets the distance at which the gobo is sharp; everything nearer or farther blurs. The default model maps focus across roughly 2–40 m, or uses the GDTF `Focus1Distance` when present.
+</Step>
+<Step>
+### Zoom lens (out)
+The zoom lens sets the final cone angle, from the GDTF minimum (narrow) to maximum (wide). This is the last stage before the light leaves the fixture.
+</Step>
+</Steps>
+
+## Key physics
+
+<Cards>
+  <Card icon={<Sun />} title="Candela conservation">
+    Narrowing the zoom concentrates the same flux into a smaller cone, so tight beams get brighter and wide beams softer. Brightness is anchored at 40,000 lm at 25°.
+  </Card>
+  <Card icon={<Aperture />} title="The front-lens look">
+    The lens has a real edge order (soft for wash, hard for spot) and the beam is rendered with that falloff, giving each fixture type its characteristic face.
+  </Card>
+  <Card icon={<Wand2 />} title="Chromatic aberration">
+    A subtle warm/cool fringe at the beam edge mimics lens dispersion. It is faint by default, stronger when you crank the `ca` control or push focus to an extreme.
+  </Card>
+  <Card icon={<Palette />} title="Prism beam-axis expansion">
+    Each prism facet is a beam copy deflected off-axis (largest deflection ≈ 15°). Energy falls off sub-linearly across copies (~1/√n) so the fan stays punchy.
+  </Card>
+</Cards>
+
+<Callout type="idea">
+Because a prism copies the *whole* upstream beam, engaging a gobo and a prism together fans the gobo pattern into a repeated constellation. Spin the gobo while the prism is in for a rotating fan.
+</Callout>
+
+## Controls are gated on the GDTF mode
+
+You only get a control if the active GDTF mode actually has that attribute. A wash with no gobo wheel shows no gobo controls; a fixture without a prism channel shows no prism. A few controls are synthesized and therefore always available.
+
+<TypeTable
+  type={{
+    Zoom: { description: 'Gated on the "Zoom" attribute.', type: 'GDTF', default: 'mode-dependent' },
+    Focus: { description: 'Gated on "Focus1".', type: 'GDTF', default: 'mode-dependent' },
+    Iris: { description: 'Gated on "Iris".', type: 'GDTF', default: 'mode-dependent' },
+    Shutter: { description: 'Shutter and strobe gated on "Shutter1".', type: 'GDTF', default: 'mode-dependent' },
+    CTO: { description: 'Gated on "CTO".', type: 'GDTF', default: 'mode-dependent' },
+    CMY: { description: 'Gated on "ColorSub_C/M/Y".', type: 'GDTF', default: 'mode-dependent' },
+    'Gobo / Colour / Prism / Animation / Frost wheels': { description: 'One control set per component declared by the mode.', type: 'GDTF', default: 'mode-dependent' },
+    'Green tint': { description: 'Synthesized — always available.', type: 'Synth', default: 'neutral' },
+    'Chromatic aberration': { description: 'Synthesized — always available.', type: 'Synth', default: 'subtle' },
+    Dimmer: { description: 'Always available (synthetic 1.0 for pixel fixtures without a Dimmer channel).', type: 'Synth', default: 'full' },
+  }}
+/>
+
+<Callout type="warn">
+If a control is missing from a fixture, check its GDTF mode rather than expecting Glowstone to add it. See [DMX Modes & Channels](/docs/library/dmx-modes) to inspect what a mode exposes.
+</Callout>
+
+## How a frame is built
+
+<Accordions type="single">
+  <Accordion title="What happens between my input and the rendered beam?">
+    Each frame Glowstone integrates wheel motion (slewing wheels toward their target slots, scrolling spinning wheels, rotating gobo images, sliding prism and frost in or out), then `resolve()` walks the optical chain to fold settled colours into the tint, mark moving wheels as spatial, build the prism facet list and fold in frost. The result is the `BeamOptics` structure the GPU renders.
+  </Accordion>
+  <Accordion title="Why do moving wheels look different from parked wheels?">
+    A parked colour wheel is spatially uniform, so its colour folds into a single tint for free. A moving wheel splits across the beam — the shader samples adjacent slots and the holder gap, so you briefly see two slots and the gap between them while it travels.
+  </Accordion>
+  <Accordion title="Why does the prism keep a faint main beam while it slides in?">
+    Mid-insertion, Glowstone keeps a straight passthrough copy (weight 1−t) alongside the scaled facet copies (weight t). This "bleed" keeps the main beam visible while the prism physically slides into the shaft, matching real fixtures. Once fully in, only the facets remain.
+  </Accordion>
+  <Accordion title="Why does the gobo edge fringe when I rack focus?">
+    Pushing focus toward either extreme adds defocus blur, which amplifies chromatic aberration at the edge — the same astigmatism-like dispersion a real lens shows. At in-focus (mid travel) there is no added defocus or fringing from this source.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<SlidersHorizontal />} title="Beam Parameter Reference" href="/docs/fixtures/parameters">
+    The full list of beam controls, ranges and defaults.
+  </Card>
+  <Card icon={<Palette />} title="Colour" href="/docs/fixtures/color">
+    Colour wheels, CMY mixing, CTO and the green axis.
+  </Card>
+  <Card icon={<Lightbulb />} title="Gobos, Animation, Prism & Frost" href="/docs/fixtures/gobos-prism">
+    The pattern and texture stages of the chain.
+  </Card>
+  <Card title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    How the shaft is rendered in the air.
+  </Card>
+</Cards>

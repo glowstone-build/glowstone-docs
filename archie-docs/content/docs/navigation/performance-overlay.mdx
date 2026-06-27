@@ -1,0 +1,160 @@
+---
+title: "Performance Overlay"
+description: "FPS, GPU pass timings, draw counts and inline quality levers in one viewport HUD."
+---
+
+import { Gauge, SlidersHorizontal, Activity, Cpu } from 'lucide-react';
+
+A flight-sim-style HUD pinned to the top-right of the viewport. It reports how fast Glowstone is rendering, what it is drawing, where the GPU is spending time, and gives you inline levers to trade quality for speed without leaving the view.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Performance overlay HUD docked top-right over the 3D viewport: large green FPS counter with frame-ms and render resolution in the header, a Rendering counts block (fixtures / beams (lit) / shadow maps / geom draws), a GPU Passes bar chart with per-pass millisecond bars in green/amber/red, and the inline quality levers (auto fps, fps target, render scale, shadow maps, raymarch steps, bloom, froxel) below. A moving-head rig with several lit beams in haze fills the viewport behind it."
+/>
+
+## Showing and hiding the overlay
+
+The HUD is a draggable, collapsible window with its own close button.
+
+<Steps>
+<Step>
+### Toggle it on
+Open it from `Window` > `Performance`. It appears at its default position — `252px` from the right edge and `44px` from the top.
+</Step>
+<Step>
+### Move or collapse it
+Drag the title bar to reposition it, or collapse it by the title bar to keep it out of the way during a session.
+</Step>
+<Step>
+### Hide it
+Click the `[x]` close button on the title bar to dismiss the HUD.
+</Step>
+</Steps>
+
+<Callout type="info" title="Two FPS readouts">
+A lightweight **FPS overlay** can also be shown directly in the viewport (Preferences > Viewport, on by default). That is just the frame-rate counter. The Performance overlay documented here is the full HUD with counts, GPU timings and quality levers.
+</Callout>
+
+## Header
+
+The header is the at-a-glance status line.
+
+- **FPS** — a large monospace counter (`26px`), colour-coded so you can read it from across the room.
+- **frame-ms** — the time the last frame took, in milliseconds.
+- **render resolution** — the internal render size as `WIDTH`x`HEIGHT`px. This is the size Glowstone actually renders before upscaling, so it drops when render scale or dynamic resolution is active.
+
+### FPS colour tiers
+
+| FPS | Colour | Meaning |
+| --- | --- | --- |
+| `55`+ | Green | Smooth — running well |
+| `30`–`55` | Amber | Acceptable but worth tuning |
+| `<30` | Red | Too slow — pull a quality lever |
+
+## Rendering counts
+
+A quick tally of what is being drawn this frame. Use these to understand *why* a frame is expensive.
+
+<TypeTable
+  type={{
+    fixtures: { description: 'Number of fixture objects in the scene.', type: 'count' },
+    'beams (lit)': { description: 'Number of active beam volumes currently scattering in haze. Lit beams are the dominant volumetric cost.', type: 'count' },
+    'shadow maps': { description: 'How many hero (per-beam) shadow maps are being rendered this frame. Each costs roughly 2–3 ms.', type: 'count' },
+    'geom draws': { description: 'Draw-call count for scene geometry (meshes, set pieces, fixtures bodies).', type: 'count' },
+  }}
+/>
+
+<Callout type="idea">
+If `beams (lit)` and `shadow maps` are high while `geom draws` is low, your bottleneck is volumetrics — lower **raymarch steps** or **shadow maps** first. If `geom draws` dominates, the scene geometry is the cost.
+</Callout>
+
+## GPU passes
+
+A per-pass timing breakdown of the render pipeline, drawn as a horizontal bar chart under the `GPU PASSES (ms)` heading. There are ten bars, each a pass-group with its time in milliseconds: `Shadows`, `Depth pre`, `Forward`, `SSAO`, `Froxel`, `Volumetric`, `Vol temporal`, `Composite`, `Bloom`, `Tonemap`. The chart's full-scale track is sized to the busiest pass (at least `2ms`), so the longest bar shows you the current bottleneck immediately. Passes that took no time read `—`.
+
+### Pass colour tiers
+
+| Pass time | Colour | Meaning |
+| --- | --- | --- |
+| `<1.5ms` | Green | Cheap |
+| `1.5`–`4.0ms` | Amber | Moderate |
+| `≥4.0ms` | Red | Expensive — likely your bottleneck |
+
+<Callout type="warn" title="Timing may be unavailable">
+Per-pass GPU timing depends on the graphics adapter. If your GPU does not expose timestamp queries, the section shows **"per-pass GPU timing unavailable on this adapter"** instead of the bar chart. The header FPS, frame-ms and counts still work.
+</Callout>
+
+## Quality and performance levers
+
+The HUD embeds the most impactful render settings so you can react to a slow frame without opening Preferences or Render Properties. These mirror the same settings documented in [Performance & Quality Tuning](/docs/rendering/performance).
+
+<TypeTable
+  type={{
+    'auto fps': { description: 'Enable dynamic resolution — automatically lowers render scale to hold the target frame rate, then raises it again when there is headroom.', type: 'checkbox' },
+    'fps target': { description: 'Target frame rate the dynamic scaler aims for. Enabled only when auto fps is on.', type: '20–240 fps' },
+    'render scale': { description: 'Render below native resolution and upscale, shown as a percentage. The single biggest FPS lever at high DPI. Disabled while auto fps controls it. The live viewport defaults to half-resolution.', type: '0.25–1.0', default: '0.5' },
+    'shadow maps': { description: 'Number of hero (per-beam) shadow maps. Each is roughly 2–3 ms at Retina resolution; 0 disables per-beam shadows.', type: '0–8' },
+    'raymarch steps': { description: 'Volumetric beam quality. Fewer steps render faster but show more banding; more steps are smoother and sharper.', type: '24–176' },
+    bloom: { description: 'Bloom glow strength on bright areas.', type: '0.0–1.5' },
+    'froxel fog (mass beams)': { description: 'Use the compute fog grid for wide washes. Faster on huge rigs but coarser beams.', type: 'checkbox' },
+  }}
+/>
+
+<Callout type="warn" title="Froxel is off by default">
+The **froxel fog** grid trades sharpness for speed and can introduce blocky "fog circle" artifacts and mushier gobos near the camera. Per-pixel raymarch (froxel off) is the default because it produces cleaner, sharper beams. Only enable froxel on very large rigs with many dim washes where per-light cost must be capped.
+</Callout>
+
+<Callout type="info" title="render scale vs. auto fps">
+`render scale` and `auto fps` are mutually exclusive controls of the same value: when **auto fps** is on, the scaler owns render scale, so the manual slider is disabled. Turn auto fps off to dial render scale by hand.
+</Callout>
+
+## Reading the HUD to find a bottleneck
+
+<Steps>
+<Step>
+### Start with the header
+If FPS is amber or red, note the frame-ms — that is your total budget per frame to bring down.
+</Step>
+<Step>
+### Find the heaviest pass
+Look at the GPU passes chart and find the longest (reddest) bar. That pass is where time is going.
+</Step>
+<Step>
+### Correlate with the counts
+A heavy volumetric pass usually pairs with a high `beams (lit)` or `shadow maps` count. A heavy forward pass pairs with high `geom draws`.
+</Step>
+<Step>
+### Pull the matching lever
+Drop **render scale** (or enable **auto fps**) for the broadest win, **raymarch steps** for volumetric cost, or **shadow maps** to cut 2–3 ms per hero beam. Watch the bars shrink and FPS climb in real time.
+</Step>
+</Steps>
+
+<Accordions type="single">
+  <Accordion title="What counts as a 'hero' beam?">
+    Glowstone ranks the lit beams by cone narrowness — a tighter cone is a sharper, more visibly-shadowed beam. The narrowest ones (capped by the `shadow maps` lever, up to 8) get dedicated per-beam shadow maps; wider washes fall back to a shared occluder volume. The `shadow maps` count is how many heroes are being shadowed this frame.
+  </Accordion>
+  <Accordion title="Why does the render resolution look smaller than my window?">
+    Because **render scale** (or dynamic resolution via **auto fps**) is rendering below native and upscaling. The header's render resolution shows the actual internal size — at `0.5` scale on a Retina display it will read roughly half your window's pixel dimensions in each axis.
+  </Accordion>
+  <Accordion title="The GPU Passes section is empty — is something broken?">
+    No. It means your graphics adapter does not report per-pass timestamps, so Glowstone shows "per-pass GPU timing unavailable on this adapter". FPS, frame-ms and the draw counts are unaffected.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<SlidersHorizontal />} title="Performance & Quality Tuning" href="/docs/rendering/performance">
+    The full guide to every quality lever and recommended settings per use case.
+  </Card>
+  <Card icon={<Activity />} title="Display Modes & Overlays" href="/docs/navigation/overlays">
+    Other viewport overlays, shading modes and on-screen readouts.
+  </Card>
+  <Card icon={<Gauge />} title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    How raymarch steps and froxel fog shape the beams you see.
+  </Card>
+  <Card icon={<Cpu />} title="Preferences & Theme" href="/docs/interface/preferences">
+    The in-app FPS overlay toggle and other rendering preferences.
+  </Card>
+</Cards>
