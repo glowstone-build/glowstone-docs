@@ -1,0 +1,11 @@
+{
+  "title": "Fixture Library (GDTF)",
+  "icon": "Library",
+  "pages": [
+    "index",
+    "import-gdtf",
+    "profile-editor",
+    "gdtf-share",
+    "dmx-modes"
+  ]
+}

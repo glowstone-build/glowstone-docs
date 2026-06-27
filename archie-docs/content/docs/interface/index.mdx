@@ -1,0 +1,171 @@
+---
+title: "Workspace & Docking"
+description: "Arrange, resize, hide and restore panels in the dockable workspace."
+---
+
+import { LayoutPanelLeft, PanelsTopLeft, SlidersHorizontal, RotateCcw, Settings2 } from 'lucide-react';
+
+Glowstone arranges everything around a single dockable workspace: a tree of split panes with the 3D Viewport at the centre. Drag borders to resize, drag tabs to regroup, toggle panels on and off.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A rearranged Glowstone workspace: Scene panel docked left, Inspector docked right, 3D Viewport in the centre showing a lit rig, and a bottom data strip with the Fixtures (Patch), DMX and Cues tabs grouped together. Viewport header bar visible along the top of the centre pane."
+/>
+
+## How docking works
+
+The workspace is a **tree-split** layout, not a floating-window manager. Every panel is a pane in a recursively split tree, and the **Viewport** is the always-present anchor that the other panels dock around.
+
+- **Resize:** drag the border between two panels to change their split ratio.
+- **Regroup:** drag a panel's tab onto another pane to move it there, or reorder tabs within a pane by dragging.
+- **The Viewport never closes.** Every other panel can be hidden; the Viewport is the fixed focal point.
+
+<Callout type="info" title="No floating panels">
+Panels always dock. You cannot tear a panel off into its own OS window — the layout is a single split tree inside the main Glowstone window.
+</Callout>
+
+## Panels and their canonical edges
+
+When you reopen a hidden panel, it returns to its **canonical edge** as a full-height or full-width pane, rather than wherever it last sat. This keeps the layout predictable — toggling the Inspector, for example, always brings it back as the right sidebar instead of merging it into the Viewport tab strip.
+
+<TypeTable
+  type={{
+    'Scene, Library': { description: 'Reopen on the left edge.', type: 'Left', default: '17% width' },
+    'Inspector': { description: 'Reopens on the right edge, leaving the rest for the centre.', type: 'Right', default: '~20% width' },
+    'Patch, DMX, Cues, Connectivity': { description: 'Reopen on the bottom edge as a data strip.', type: 'Bottom', default: '30% height' },
+    'Viewport, Render': { description: 'No canonical edge — reopen as tabs in the focused leaf (usually the Viewport tab strip).', type: 'Focused leaf', default: '—' },
+  }}
+/>
+
+For what each panel does, see [Panels](/docs/interface/panels).
+
+## Showing and hiding panels
+
+Toggle any panel from the **Window › Panels** checkbox list. The Viewport is excluded — it is always open.
+
+| Panel | Where it docks |
+| --- | --- |
+| Scene | Left |
+| Library | Left |
+| Inspector | Right |
+| DMX | Bottom |
+| Fixtures (Patch) | Bottom |
+| Cues | Bottom |
+| Connectivity | Bottom |
+| Render | Focused leaf |
+
+Two panels also have keyboard toggles in the Viewport context:
+
+| Shortcut | Action |
+| --- | --- |
+| `N` | Toggle the Inspector (re-opens on the right edge) |
+| `T` | Toggle the T-panel tool rail (left of the Viewport) |
+
+<Callout type="idea">
+Press `N` to reclaim the full width of the Viewport for a clean preview, then press it again to bring the Inspector back exactly where it was.
+</Callout>
+
+## Resetting the layout
+
+If live dragging has left the workspace messy, choose **Window › Reset Layout**. This re-applies the active workspace's saved dock geometry — it reverts your manual splits and resizes, but leaves the active tool and overlay state untouched.
+
+<Callout type="info">
+Reset Layout restores the *current* workspace's saved arrangement, not a global default. To switch to a different saved arrangement, use a [Workspace](/docs/interface/workspaces).
+</Callout>
+
+## What persists
+
+The dock arrangement persists within a session as live UI state, and across sessions only when you save it as a [Workspace](/docs/interface/workspaces). A few panel details are deliberately session-only.
+
+| Persists | Session-only |
+| --- | --- |
+| Dock layout saved as a workspace (`workspaces.json`) | Scene outliner expanded/collapsed nodes |
+| Inspector category open/closed state (`inspector.json`) | Scene filter and search text |
+| Library Recents + Favourites (`library.json`) | Tab positions within panels (revert to the saved workspace on close) |
+| Keymap overrides (`keymap.json`) | |
+| Camera bookmarks, 9 slots (`bookmarks.json`) | |
+
+<Callout type="warn">
+General preferences are applied live but may not all persist between sessions yet. The keymap and camera bookmarks listed above *do* persist. See [Preferences & Theme](/docs/interface/preferences).
+</Callout>
+
+## The Viewport header bar
+
+Only the Viewport tab draws a header bar. Every other panel uses its dock tab as its sole label. The header holds the controls you reach for most while working in 3D.
+
+<TypeTable
+  type={{
+    'Display Mode': { description: 'Segmented buttons that switch the Viewport shading in real time.', type: 'Beauty / Unlit / Wireframe', default: 'Beauty' },
+    'Exposure': { description: 'Viewport exposure multiplier for brightness control. Does not change the scene, only the preview. Labelled "Exp" in the header.', type: '0.05–8.0', default: '1.0' },
+    'Grid': { description: 'Toggle the origin grid and world axes.', type: 'Checkbox', default: 'On' },
+    'Beam': { description: 'Toggle beam gizmo wireframes (volumetric cone visualisation).', type: 'Checkbox', default: 'Off' },
+    'Step': { description: 'Per-type snap increments for Move (m), Rotate (°) and Scale (×). Enabled only when Snap is on.', type: 'Menu', default: '—' },
+    'Snap mode': { description: 'What Move snapping targets. Enabled only when Snap is on.', type: 'Grid / Vertex / Surface', default: 'Grid' },
+    'Snap': { description: 'Turn grid/increment snapping on or off. Holding Ctrl mid-drag inverts it.', type: 'Checkbox', default: 'Off' },
+    'Pivot Point': { description: 'Sets the pivot used by rotate and scale.', type: 'Median Point / Active Element / Individual Origins / 3D Cursor', default: 'Median Point' },
+    'Transform Orientation': { description: 'Which axes the transform gizmo and keyboard locks follow.', type: 'Global / Local / View', default: 'Global' },
+    'T-panel': { description: 'Show or hide the left tool rail (also the T key).', type: 'Toggle', default: '—' },
+    'Fullscreen': { description: 'Toggle OS window fullscreen (also F11).', type: 'Toggle', default: 'Off' },
+  }}
+/>
+
+<ImagePlaceholder
+  label="Close-up"
+  ratio="21 / 9"
+  caption="Close-up of the 26px Viewport header bar, left to right: Display Mode segmented buttons (Beauty/Unlit/Wireframe), Exposure (Exp) drag value, Grid checkbox, Beam checkbox, Step menu, Snap mode dropdown, Snap toggle, Pivot Point dropdown, Transform Orientation dropdown, T-panel toggle, and Fullscreen button far right."
+/>
+
+<Callout type="info">
+Exposure here only affects the live preview brightness. For final image tone mapping and colour, see [Look & Colour Management](/docs/rendering/look).
+</Callout>
+
+## Common tasks
+
+<Steps>
+<Step>
+### Resize a panel
+Drag the border between two panels until the split ratio looks right.
+</Step>
+<Step>
+### Regroup tabs
+Drag a panel's tab onto another pane to move it, or reorder tabs within a pane.
+</Step>
+<Step>
+### Hide a panel
+Uncheck it in **Window › Panels**, or press `N` (Inspector) / `T` (tool rail).
+</Step>
+<Step>
+### Restore the layout
+Choose **Window › Reset Layout** to snap back to the active workspace's saved arrangement.
+</Step>
+</Steps>
+
+<Accordions type="single">
+  <Accordion title="Why did my reopened panel ignore where it was before?">
+    Toggled panels reopen at their canonical edge — Scene/Library on the left, Inspector on the right, data panels at the bottom. This is intentional, so a quick toggle never merges a panel into the wrong pane. Save a [Workspace](/docs/interface/workspaces) to lock in a custom arrangement.
+  </Accordion>
+  <Accordion title="Can I float a panel in its own window?">
+    No. Glowstone uses a single tree-split dock inside one window. Panels always dock; there is no floating mode.
+  </Accordion>
+  <Accordion title="My tab order keeps resetting — why?">
+    Tab positions within a panel are session-only. They revert to the saved workspace when you close it. Save a workspace to make an arrangement stick across sessions.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<PanelsTopLeft />} title="Panels" href="/docs/interface/panels">
+    What each dockable panel does, from Scene to Render.
+  </Card>
+  <Card icon={<LayoutPanelLeft />} title="Workspaces" href="/docs/interface/workspaces">
+    Save and switch arrangement presets, tools and overlays.
+  </Card>
+  <Card icon={<Settings2 />} title="Preferences & Theme" href="/docs/interface/preferences">
+    Live preferences, theme and what persists between sessions.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Views, Gizmo & Pie Menus" href="/docs/navigation/views">
+    Pivot, orientation, snapping and the Viewport pie menus.
+  </Card>
+</Cards>

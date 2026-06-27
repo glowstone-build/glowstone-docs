@@ -1,0 +1,199 @@
+---
+title: "Performance & Quality Tuning"
+description: "Quality-vs-frame-rate levers and how to read the Performance overlay."
+---
+
+import { Gauge, Layers, SunMedium, Activity, SlidersHorizontal, MonitorCog } from 'lucide-react';
+
+Glowstone shares one volumetric pipeline between the live viewport and the offline render, so the same handful of settings decide both how the preview feels and how a still looks. Below: the levers in priority order, starting points for common situations, and how to read the Performance overlay to find what is slowing you down.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Performance overlay (HUD) docked top-right of the 3D viewport: large green FPS counter with frame-ms and render resolution underneath, a Rendering section (fixtures / beams (lit) / shadow maps / geom draws), a GPU Passes bar chart, and the inline Quality levers (auto fps, fps target, render scale, shadow maps, raymarch steps, bloom, froxel fog) with a busy beam-heavy stage behind it."
+/>
+
+## The levers, in priority order
+
+Tune from the top. The first two cost the most and give the most back; the lower ones are fine adjustments. `render_scale` is by far the biggest lever, especially on high-DPI displays.
+
+<Cards>
+  <Card icon={<SlidersHorizontal />} title="render_scale" href="/docs/navigation/performance-overlay">
+    Internal viewport resolution (0.25–1.0). GPU work scales with scale², so 0.5 is roughly a quarter of the pixel cost. Does not change final render resolution.
+  </Card>
+  <Card icon={<Layers />} title="Volumetric steps" href="/docs/rendering/volumetrics">
+    Raymarch samples per beam ray (8–256). Each step adds roughly constant per-pixel cost; lower means faster but noisier, with banding risk below ~64.
+  </Card>
+  <Card icon={<SunMedium />} title="shadow_max" href="/docs/rendering/shadows">
+    Maximum hero beams that get dedicated shadow maps (0–8). Each costs ~2–3 ms at Retina resolution; 0 disables per-beam shadows.
+  </Card>
+  <Card icon={<Gauge />} title="Froxel toggle" href="/docs/rendering/volumetrics">
+    Off by default. Per-pixel raymarch is the default and looks cleaner; the froxel grid only pays off on huge rigs with many dim washes.
+  </Card>
+</Cards>
+
+### Reference
+
+<TypeTable
+  type={{
+    render_scale: {
+      description: 'Live viewport internal render resolution, bilinear-upscaled to the window. The single biggest FPS lever, especially on Retina/high-DPI screens. Does not affect final render resolution.',
+      type: '0.25–1.0',
+      default: '0.5 (viewport)',
+    },
+    'Volumetric steps': {
+      description: 'Raymarch step count per beam ray. Higher is sharper and less noisy; lower is faster. Keep at ~64+ to avoid aliasing in gobo cross-sections.',
+      type: '8–256',
+      default: '80',
+    },
+    shadow_max: {
+      description: 'Maximum hero (sharp moving-head) beams to render dedicated shadow maps for. Each is ~2–3 ms; hard-capped at 8 in the engine.',
+      type: '0–8',
+      default: '8',
+    },
+    froxel_volumetric: {
+      description: 'Use the coarse 160×90×64 froxel grid for wide, dim washes instead of per-pixel raymarch. Off by default because raymarch produces cleaner, sharper beams.',
+      type: 'on / off',
+      default: 'off',
+    },
+    beam_intensity: {
+      description: 'Global scale on volumetric beam brightness. Visual only — it does not affect frame rate, so use it freely to dial the look.',
+      type: '0–2000',
+      default: '650',
+    },
+    auto_resolution: {
+      description: 'Dynamic resolution: auto-adjusts render_scale each frame to hold fps_target. Drops scale fast under load, raises it slowly.',
+      type: 'on / off',
+      default: 'off',
+    },
+    fps_target: {
+      description: 'Frame rate the dynamic scaler aims for when auto_resolution is on.',
+      type: '20–240 fps',
+      default: '60',
+    },
+  }}
+/>
+
+<Callout type="warn" title="Froxel grid is off for a reason">
+  The froxel grid produces blocky, duplicated "fog circle" artifacts near the camera, flicker, and mushy gobos in dense masses. Leave it off for tight stage shots; only enable it on very large rigs with hundreds of static washes where per-light cost must decouple from fixture count. See [Volumetric Beams & Haze](/docs/rendering/volumetrics).
+</Callout>
+
+<Callout type="idea">
+  `beam_intensity` is free. If beams look dim after you lower steps or render scale, raise beam intensity instead of paying for more samples — it costs nothing in frame rate.
+</Callout>
+
+## Recommended starting points
+
+These are good baselines for the four situations you hit most. Treat them as a starting place, then trim using the overlay.
+
+| Use case | Steps | Samples | shadow_max | render_scale | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Live preview (smooth 60 FPS) | `80` | n/a | `4`–`8` | `0.5` | Turn on dynamic resolution to ride out spikes |
+| Still render (quality) | `160` | `96` | `8` | `1.0` | The "Final" preset; temporal EMA converges over ~96 frames |
+| Draft render | `64` | `16` | `4` | `1.0` | Fast turnaround; expect visible banding and noise |
+| Export for projection | `160`+ | `96`+ | `8` | `1.0` | Haze smoothness matters; more samples reduce flicker |
+
+<Callout type="info">
+  `render_scale` only applies to the live viewport. The offline render always runs at full resolution (`render_scale` = `1.0`), so a heavy preview never means a soft final image. Samples (progressive accumulation passes) apply only to the render, not the live preview.
+</Callout>
+
+The render quality presets map directly to the Steps/Samples columns above. Pick one under **World ▸ Render Properties ▸ Sampling ▸ Quality**:
+
+<TypeTable
+  type={{
+    Draft: { description: 'Quick turnaround for framing and rough looks.', type: 'preset', default: '16 samples · 64 steps' },
+    Medium: { description: 'The default balance.', type: 'preset', default: '48 samples · 96 steps' },
+    Final: { description: 'Publication quality; let it converge.', type: 'preset', default: '96 samples · 160 steps' },
+    Custom: { description: 'Enable the independent Samples and Steps dials.', type: 'preset', default: '—' },
+  }}
+/>
+
+## Find the bottleneck with the Performance overlay
+
+Do not guess. The [Performance overlay](/docs/navigation/performance-overlay) tells you whether you are bound by beams, shadows, or raw pixel count, and it carries the same quality levers inline so you can react without leaving the view.
+
+<Steps>
+<Step>
+### Open the overlay
+Toggle it from **Window ▸ Performance** (it is off by default; set the `GLOWSTONE_PERF` env var to have it open on launch). The HUD docks top-right of the viewport. Drag its title bar to move it, or close it with the `x`. The big FPS number is green at `55`+, amber from `30`–`55`, and red below `30`.
+</Step>
+<Step>
+### Read the GPU Passes chart
+The per-pass bar chart shows milliseconds per pass. Bars are green under `1.5` ms, amber to `4.0` ms, and red beyond. The longest bar is your bottleneck. If you see "per-pass GPU timing unavailable on this adapter", fall back to the Rendering counts.
+</Step>
+<Step>
+### Match the pass to a lever
+A long volumetric pass → lower **raymarch steps**. A long shadow pass → lower **shadow maps**. High cost everywhere with a large render resolution → lower **render scale** (or enable **auto fps**).
+</Step>
+<Step>
+### Adjust inline and watch
+Move the matching slider in the overlay's Quality section and watch the FPS counter respond live. Stop when you are green and the look still holds.
+</Step>
+</Steps>
+
+<Callout type="success">
+  Use the Rendering section to sanity-check scale: `fixtures`, `beams (lit)`, `shadow maps`, and `geom draws`. If `beams (lit)` is high, steps and froxel matter most; if `shadow maps` is at its cap, that is where your milliseconds are going.
+</Callout>
+
+## Retina and high-DPI cost
+
+<Callout type="warn" title="High-DPI multiplies everything">
+  On a Retina or 4K display the viewport renders far more pixels than the window appears to show, and every per-pixel cost — raymarching, bloom, shadow sampling — scales with that count. `render_scale` is your first move here: dropping to `0.5` cuts pixel work to roughly a quarter while the bilinear upscale keeps the image readable. Each hero shadow map is quoted at ~`2`–`3` ms specifically at Retina resolution.
+</Callout>
+
+<Callout type="info">
+  Raising the **UI scale** in [Preferences](/docs/interface/preferences) enlarges the interface but does not change the 3D render resolution — that is governed by `render_scale` and the window size. The two are independent.
+</Callout>
+
+## Let Glowstone scale for you
+
+When a show varies in load — bursts of beams during a chase, then quiet looks — enable dynamic resolution instead of picking one fixed scale.
+
+<Tabs items={['Fixed scale', 'Dynamic (auto fps)']}>
+  <Tab value="Fixed scale">
+    Leave **auto fps** off and set **render scale** directly. Predictable and stable; best when the scene's complexity is roughly constant and you want a known image quality.
+  </Tab>
+  <Tab value="Dynamic (auto fps)">
+    Turn on **auto fps** and set **fps target** (e.g. `60`). Glowstone adjusts `render_scale` each frame to hold the target — dropping fast under load and raising slowly as it recovers. The render scale slider is disabled while this is on.
+  </Tab>
+</Tabs>
+
+## Notes & FAQ
+
+<Accordions type="single">
+  <Accordion title="Will my tuning persist when I reopen the project?">
+    Not reliably. Machine-specific render knobs such as `render_scale`, `auto_resolution`, and `shadow_max` are intentionally excluded from the saved `.glow` file and reset to defaults on load. Set them per session for your machine.
+  </Accordion>
+  <Accordion title="Does the render look different from my preview?">
+    No — by design. The Color Management settings (exposure, bloom, beam intensity, gobo sharpness, chroma haze) are shared between viewport and render, so a tweak previews instantly and the final plate matches. Only resolution, steps, and samples differ, and those make the render sharper, not different.
+  </Accordion>
+  <Accordion title="Why does lowering steps cause banding?">
+    Volumetric quality is sampled along each ray; too few samples leaves visible bands in the haze and aliasing across gobo cross-sections. Temporal jitter and accumulation hide some of it, but keep steps at ~`64`+ for clean beams.
+  </Accordion>
+  <Accordion title="Should I ever turn on the froxel grid?">
+    Only for very large rigs dominated by dim, wide washes, where you accept coarser beams in exchange for cost that no longer scales with fixture count. For normal stage work, leave it off.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Activity />} title="Performance overlay" href="/docs/navigation/performance-overlay">
+    Read FPS, GPU pass timings, and adjust quality levers live.
+  </Card>
+  <Card icon={<Layers />} title="Volumetric beams & haze" href="/docs/rendering/volumetrics">
+    How steps, density, and the froxel grid shape the beams.
+  </Card>
+  <Card icon={<SunMedium />} title="Shadows" href="/docs/rendering/shadows">
+    Hero beam shadow maps and the per-map cost.
+  </Card>
+  <Card icon={<MonitorCog />} title="Preferences & theme" href="/docs/interface/preferences">
+    UI scale, rendering sliders, and what does and does not persist.
+  </Card>
+  <Card title="Rendering a still image" href="/docs/rendering/render-image">
+    Apply these settings to an offline render and save to disk.
+  </Card>
+  <Card title="Rendering overview" href="/docs/rendering">
+    The pipeline these levers feed into.
+  </Card>
+</Cards>

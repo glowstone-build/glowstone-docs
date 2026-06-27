@@ -1,0 +1,209 @@
+---
+title: "Adding Fixtures & Objects"
+description: "Place fixtures, screens, pyro and fog volumes from the Add menu or the Library, and where they land."
+---
+
+import { Plus, Library, Crosshair, Lightbulb, MonitorPlay, CloudFog, Search, Star, Move3d, Flame } from 'lucide-react';
+
+Fixtures, LED screens, pyro devices and fog volumes all come from the **Add menu** (`Shift`+`A`) or the **Library** panel. This page covers both, where new objects land, and what ships in the built-in library.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Add menu open in the 3D viewport, anchored at the mouse cursor. Left column shows four category tabs (Fixtures, Screens, Pyro, Environment) with Fixtures active; right column shows a filterable list of entries with a search box at the top, a RECENT section, and a FAVOURITES section. Each row has a leading star toggle."
+/>
+
+## The Add menu (`Shift`+`A`)
+
+Press `Shift`+`A` with the 3D viewport focused to open the Add menu. The popup is cursor-anchored — it appears wherever the mouse was when you summoned it. (Where the *object* lands is a separate thing; see [Where new objects are placed](#where-new-objects-are-placed) below.)
+
+The menu has two columns:
+
+- **Left** — four category tabs: **Fixtures**, **Screens**, **Pyro**, **Environment**.
+- **Right** — a filterable list of entries for the active category, plus pinned **RECENT** and **FAVOURITES** sections when the search box is empty.
+
+<Steps>
+<Step>
+### Open the menu
+
+Press `Shift`+`A`. The menu opens anchored at the cursor with the filter box focused.
+</Step>
+<Step>
+### Choose a category
+
+Use `←`/`→` to switch between **Fixtures**, **Screens**, **Pyro** and **Environment** (the selection wraps). Fixtures is the default.
+</Step>
+<Step>
+### Filter the list
+
+Start typing to fuzzy-filter by entry label (case-insensitive). For example, type a manufacturer name to narrow the Fixtures list. The pinned RECENT and FAVOURITES sections hide while a query is active.
+</Step>
+<Step>
+### Highlight an entry
+
+Press `↑`/`↓` to move the highlight within the current category's list. Filtering resets the highlight to the top.
+</Step>
+<Step>
+### Place it
+
+Press `Enter` or click the row. The object is added to the scene, selected, and shown in the Inspector. The menu closes.
+</Step>
+</Steps>
+
+<Callout type="info" title="Keyboard summary">
+`↑`/`↓` move the highlight, `←`/`→` switch category, `Enter` adds the highlighted entry, and `Esc` (or a click outside the menu) dismisses it without adding anything.
+</Callout>
+
+You can also reach the Add menu without the keyboard: open the [operator search palette](/docs/interface/commands) with `F3` (or `Space`) and run **Add Object…**. This opens the same menu at the centre of the screen.
+
+### Recent & Favourites
+
+When the search box is empty, two pinned sections sit above the catalogue:
+
+- **RECENT** — the items you added most recently, in preferences order.
+- **FAVOURITES** — every starred item, resolved across all categories, in catalogue order.
+
+Each row has a leading star toggle. Click it to toggle that entry's favourite state. Starred entries render with an accent tint; the star click persists to preferences and does **not** close the menu, so you can star several entries in one sitting.
+
+<Callout type="idea">
+Star the handful of fixtures, screens, pyro devices and fog boxes you use on every show. They jump to the top of the Add menu the moment you open it with an empty search box.
+</Callout>
+
+## Dragging from the Library panel
+
+The [Library](/docs/library) panel lists the same catalogue of fixtures, screens, pyro devices and environments. Pick an entry from the panel to place the object in the scene — the same result as choosing it from the Add menu.
+
+<Tabs items={['Add menu', 'Library panel']}>
+  <Tab value="Add menu">
+    Fastest when your hands are on the keyboard and the viewport has focus. Press `Shift`+`A`, type to filter, `Enter` to place.
+  </Tab>
+  <Tab value="Library panel">
+    Better when you are browsing the catalogue or working from the panel. Pick the entry to add it to the scene.
+  </Tab>
+</Tabs>
+
+## Where new objects are placed
+
+New objects do **not** land at the mouse-anchor of the popup. The placement origin is:
+
+- the **3D cursor**, if you have positioned it this session (`Shift`+right-click in the viewport, or **Snap cursor to selection**); otherwise
+- the **view-centre anchor** — a ray cast through the middle of the framed view, hitting the ground/surface you are looking at (falling back to a point in front of the camera if the ray misses).
+
+How the object sits at that origin depends on its kind.
+
+<TypeTable
+  type={{
+    'Built-in fixture': { description: 'Placed at the placement origin, tilted down so the beam is visible in haze.', type: 'Add menu / Library' },
+    'GDTF fixture (from menu)': { description: 'Same placement origin as a built-in fixture.', type: 'Add menu / Library' },
+    'LED screen': { description: 'Stood upright over the placement origin (X/Z), with its base lifted to rest near the floor; the origin Y is ignored.', type: 'Add menu / Library' },
+    'Pyro device': { description: 'Stood on the floor over the placement origin (X/Z), nozzle a touch above the deck, aiming up; the origin Y is ignored.', type: 'Add menu / Library' },
+    'Environment (Fog Box)': { description: 'Resting on the floor over the placement origin (X/Z), so it never sinks below ground; the origin Y is ignored.', type: 'Add menu / Library' },
+  }}
+/>
+
+<Callout type="info">
+Built-in fixtures are created already aimed down, so the beam is immediately visible in haze. You can re-aim them afterwards — see [Pan, Tilt & Aiming](/docs/fixtures/movement).
+</Callout>
+
+### The 3D cursor as a placement origin
+
+The 3D cursor marks a reference point in the scene. Set it with `Shift`+right-click in the viewport. Two related commands are available from the [operator search palette](/docs/interface/commands) or the menu:
+
+| Command | Action |
+| --- | --- |
+| Snap cursor to selection | Move the 3D cursor to the selection median (marks it set, so Add places there) |
+| Reset cursor to origin | Return the 3D cursor to `0, 0, 0` and revert to view-centre placement |
+
+## What's in the built-in library
+
+Glowstone ships with a small set of built-in profiles for fixtures, environments, LED screens and pyro devices. Imported GDTF fixtures appear alongside the built-ins in the same Fixtures category.
+
+### Built-in fixtures
+
+<TypeTable
+  type={{
+    'PAR Can': { description: 'Warm-white generic PAR. Category: Generic.', type: 'Beam 24°' },
+    'Laser — Red': { description: 'Thin red laser streak (haze-only). Category: Laser.', type: 'Beam 0.2°' },
+    'Laser — Green': { description: 'Thin green laser streak (haze-only). Category: Laser.', type: 'Beam 0.2°' },
+    'Laser — Blue': { description: 'Thin blue laser streak (haze-only). Category: Laser.', type: 'Beam 0.2°' },
+  }}
+/>
+
+<Callout type="info">
+Laser profiles carry a distinct icon from the lamp-style fixtures in the Add menu. Imported GDTF entries may show a thumbnail decoded from the GDTF file in place of the glyph.
+</Callout>
+
+### Built-in environment
+
+<TypeTable
+  type={{
+    'Fog Box': { description: 'A box-shaped fog/haze volume. The only environment kind for now.', type: '40×20×40 m', default: 'density 0.03' },
+  }}
+/>
+
+See [Environments: Fog & Haze](/docs/scene/environment) for the full parameter set.
+
+### Built-in pyro devices
+
+The Pyro category ships cold-spark machines and CO2 jets (including moving-nozzle variants). Each is a separate placed entity with its own inline DMX patch — not a row in the fixture patch table.
+
+See [Pyro: CO2 & Cold Spark](/docs/fixtures/pyro) for the full device list, effect parameters and patching.
+
+### Built-in LED cabinet profiles
+
+Each profile sets the cabinet size, native resolution, pixel pitch and default brightness. A placed wall defaults to a 4 cabinets wide × 2 high array; every value is editable after placement.
+
+| Profile | Cabinet (mm) | Resolution (px) | Pitch (mm) | Default nits |
+| --- | --- | --- | --- | --- |
+| Indoor 3.9mm | 500×500 | 128×128 | 3.906 | 1200 |
+| Indoor 2.6mm | 500×500 | 192×192 | 2.604 | 1500 |
+| Broadcast / XR 1.56mm | 500×500 | 320×320 | 1.5625 | 1000 |
+| Outdoor 4.8mm | 500×1000 | 104×208 | 4.81 | 4500 |
+| Outdoor 10mm | 960×960 | 96×96 | 10 | 6000 |
+| Transparent 7.8mm | 1000×500 | 128×64 | 7.81 | 4500 |
+| Floor Tile 4.8mm | 500×500 | 104×104 | 4.81 | 1500 |
+
+See [LED Screens](/docs/media) for content sources, photometry and pixel mapping.
+
+## Importing your own fixtures
+
+The built-in fixtures are deliberately minimal. For real rigs, import GDTF profiles — they bring real 3D models, DMX modes and the full optical chain. Once imported, a GDTF profile shows up in the Fixtures category of the Add menu like any other entry, and adding it from there uses the same placement origin as the built-ins.
+
+<Accordions type="single">
+  <Accordion title="Where do GDTF fixtures come from?">
+    Import a `.gdtf` file from disk, or download one from GDTF Share. Imported profiles are tagged with their provenance (Import or GDTF Share), shown as a chip in the Inspector header. See [Importing GDTF Fixtures](/docs/library/import-gdtf).
+  </Accordion>
+  <Accordion title="Why did my dropped GDTF fixture land away from where I dropped it?">
+    Dropping a `.gdtf` file onto the window imports it and drops one copy at the fixed point `0, 4, 0` (4 m above the origin) — it doesn't use the drop point. Select it and nudge or move it into place. (Adding the same profile from the Add menu instead uses the normal placement origin.)
+  </Accordion>
+  <Accordion title="Can I add a whole rig at once?">
+    Yes — import an MVR scene to bring in fixtures plus stage geometry in their authored positions. See [MVR Scene Exchange](/docs/projects/mvr).
+  </Accordion>
+</Accordions>
+
+<Callout type="warn">
+Glowstone visualises DMX coming **from** a console — it never outputs or transmits DMX. A newly added fixture has no patch until you assign one (it also starts with sequence number 0, i.e. unassigned). See [Patching Fixtures](/docs/dmx/patching).
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Library />} title="The Fixture Library" href="/docs/library">
+    Browse the full catalogue of fixtures, screens, pyro and environments.
+  </Card>
+  <Card icon={<Plus />} title="Importing GDTF Fixtures" href="/docs/library/import-gdtf">
+    Add real fixture profiles with models, modes and optics.
+  </Card>
+  <Card icon={<MonitorPlay />} title="LED Screens" href="/docs/media">
+    Configure cabinet arrays, content sources and photometry.
+  </Card>
+  <Card icon={<Flame />} title="Pyro: CO2 & Cold Spark" href="/docs/fixtures/pyro">
+    Place CO2 jets and cold-spark machines and patch their effects.
+  </Card>
+  <Card icon={<CloudFog />} title="Environments: Fog & Haze" href="/docs/scene/environment">
+    Tune fog density, scattering and smoke clustering.
+  </Card>
+  <Card icon={<Move3d />} title="Moving, Rotating & Scaling" href="/docs/scene/transforming">
+    Reposition objects after you place them.
+  </Card>
+</Cards>

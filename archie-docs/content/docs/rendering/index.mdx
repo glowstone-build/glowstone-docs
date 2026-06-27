@@ -1,0 +1,136 @@
+---
+title: "Rendering Overview"
+description: "Glowstone's real-time HDR pipeline, shared by the viewport and final renders."
+---
+
+import { Sun, Cloudy, Aperture, ImageDown, Gauge, Palette } from 'lucide-react';
+
+Glowstone is built on **Spectre**, its custom GPU rendering engine. Spectre draws every frame through a real-time HDR pipeline: lit surfaces and volumetric beams accumulate in high dynamic range, then are exposed, bloomed, and tonemapped to a displayable image. The live viewport and the offline still render walk the **same path**.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A finished Beauty render: several moving-head beams cutting through theatrical haze over a dark stage, crisp gobo cross-sections in the shafts, gentle bloom on the brightest cores, floor gobo pools, and a subtly lit set — no grid or gizmos visible."
+/>
+
+## How a frame is built
+
+Every frame — viewport or render — runs the same ordered passes. Earlier passes work in linear HDR (`Rgba16Float`); only the final tonemap step produces a displayable 8-bit image (`Rgba8Unorm`).
+
+<Steps>
+<Step>
+### Forward opaque pass
+Lit meshes (the set, fixtures, floor) are drawn in linear light to an HDR target.
+</Step>
+<Step>
+### Volumetric raymarch
+Spectre marches each light beam through the [environment fog box](/docs/scene/environment) at half resolution, sampling haze density and the phase function, then composites the result over the opaque layer with transmittance blending.
+</Step>
+<Step>
+### Temporal resolve
+The volumetric layer is reprojected and EMA-blended across frames to suppress banding and noise.
+</Step>
+<Step>
+### Bloom
+Bright pixels (the over-`1.0` HDR energy) are extracted by a bright pass, then blurred by a separable horizontal/vertical Gaussian at half resolution so beam cores and highlights glow.
+</Step>
+<Step>
+### Tonemap & exposure
+Exposure, the Narkowicz ACES filmic tonemap, and an sRGB encode map the HDR image (plus bloom) down to the LDR target.
+</Step>
+</Steps>
+
+<Callout type="info" title="Why HDR is required">
+Beam glow only reads correctly because the image is accumulated in HDR before tonemapping. Clipping to LDR too early throws away the forward-scattered radiance that makes a beam look like bright light in haze.
+</Callout>
+
+## Render matches preview
+
+The viewport and the still render are not two separate renderers. They share the raster + volumetric path **and** the Color Management settings (`exposure`, `bloom`, `beam_intensity`, `gobo_sharpness`, `chroma_haze`), so adjusting the look updates the preview instantly and the final render inherits it.
+
+<Callout type="success" title="WYSIWYG by design">
+Frame, expose, and grade the shot in the viewport. The render reproduces that look at full resolution with higher sample counts — no surprises between preview and output.
+</Callout>
+
+The render does differ from the live preview in a few deliberate ways: it pins `render_scale` to `1.0` (full resolution), uses higher volumetric `steps` and sample counts, lets temporal accumulation converge over many frames, and drops the grid and gizmos for a clean plate. See [Rendering a Still Image](/docs/rendering/render-image) for the workflow.
+
+## Viewport modes
+
+A segmented **Display Mode** toggle in the viewport header switches how the 3D scene is drawn. This affects the preview only — the render always uses the full Beauty path.
+
+<TypeTable
+  type={{
+    Beauty: {
+      description: 'Full render: lit surfaces, volumetric beams, bloom, and tonemap. Matches the final render.',
+      type: 'default',
+      default: 'on',
+    },
+    Unlit: {
+      description: 'Flat albedo with no fixture or beam lighting and no fog — see raw geometry and set colours without lighting bias.',
+      type: 'mode',
+      default: '—',
+    },
+    Wireframe: {
+      description: 'Scene geometry as wireframe only (no fog, no beams) — read structure and validate fixture placement.',
+      type: 'mode',
+      default: '—',
+    },
+  }}
+/>
+
+<Callout type="idea">
+Switch to `Wireframe` to check spatial layout and rigging positions, then back to `Beauty` to judge the look in haze.
+</Callout>
+
+## Output formats
+
+The offline [render job](/docs/rendering/render-image) can write the finished plate to disk in three formats. All are post-tonemap LDR — even OpenEXR stores the tonemapped result, not raw linear HDR.
+
+<TypeTable
+  type={{
+    PNG: { description: '8-bit RGBA, lossless. The default.', type: 'image', default: 'default' },
+    JPEG: { description: '8-bit RGB, lossy. No alpha channel.', type: 'image', default: '—' },
+    OpenEXR: { description: '32-bit float RGBA, but post-tonemap LDR — intended for float-pipeline compositors.', type: 'image', default: '—' },
+  }}
+/>
+
+<Callout type="warn" title="Not yet functional">
+Several render controls are visible but not yet implemented: **Render Animation** (the disabled Animation button), the **Motion Blur** and **Caustics** stub panels, and the **New Window** display mode (only the Render Tab and Keep Interface modes work). These are greyed out or have no effect.
+</Callout>
+
+## Common questions
+
+<Accordions type="single">
+  <Accordion title="Does Glowstone output DMX to my console?">
+    No. Glowstone is input-only for DMX — it visualizes the DMX it receives from a console and never transmits DMX back. See the [DMX Overview](/docs/dmx).
+  </Accordion>
+  <Accordion title="Why is the per-pixel raymarch the default instead of the froxel grid?">
+    The optional froxel volumetric grid is off by default because it produces blocky "fog circle" artifacts near the camera and mushy gobos. Per-pixel raymarch is cleaner and sharper for typical stage shots. It is an opt-in performance tier for very large rigs. See [Volumetric Beams & Haze](/docs/rendering/volumetrics).
+  </Accordion>
+  <Accordion title="Where do I change exposure and bloom?">
+    In the shared Color Management controls, available both in the [Preferences](/docs/interface/preferences) panel and in Render Properties (select the World root node in the Inspector). Both edit the same values.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card icon={<Palette />} title="Look & Colour Management" href="/docs/rendering/look">
+    Exposure, bloom, beam intensity, gobo sharpness, and chroma haze — the shared grade.
+  </Card>
+  <Card icon={<Cloudy />} title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    How beams are raymarched through fog, plus the raymarch vs froxel methods.
+  </Card>
+  <Card icon={<Aperture />} title="Shadows" href="/docs/rendering/shadows">
+    Hero beam shadow maps that ground beams on surfaces and occlude them mid-air.
+  </Card>
+  <Card icon={<ImageDown />} title="Rendering a Still Image" href="/docs/rendering/render-image">
+    Quality presets, output resolution, and saving a finished plate.
+  </Card>
+  <Card icon={<Gauge />} title="Performance & Quality Tuning" href="/docs/rendering/performance">
+    Render scale, steps, shadow count, and dynamic resolution levers.
+  </Card>
+  <Card icon={<Sun />} title="World: Sky & Ambient" href="/docs/scene/world">
+    HDRI sky background and image-based ambient lighting.
+  </Card>
+</Cards>

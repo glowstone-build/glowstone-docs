@@ -1,0 +1,111 @@
+---
+title: "DMX Overview"
+description: "How Glowstone receives live DMX over the network — protocols, universes and the patch."
+---
+
+import { Network, ListOrdered, Activity, MonitorSpeaker, Cable, Layers } from 'lucide-react';
+
+Glowstone receives live DMX from a console over the network and decodes it every frame to drive each fixture's optics.
+
+<Callout type="warn" title="Input only by construction">
+Glowstone **never transmits, replies or discovers**. It listens for Art-Net and sACN packets, merges them and visualizes the result. `ArtPoll` packets are recognized but never answered. Set your console as the DMX source; Glowstone is always the receiver.
+</Callout>
+
+<ImagePlaceholder
+  label="Diagram"
+  ratio="16 / 9"
+  caption="Data flow left-to-right: a lighting console emits Art-Net/sACN over a network switch, into Glowstone's Connectivity receiver (showing a Sources table with one live source), then through the patch table mapping fixtures to universe+address, into the 3D viewport where moving heads fan out lit beams."
+/>
+
+## How the signal flows
+
+<Steps>
+<Step>
+### Console sends DMX
+Your console outputs DMX over **Art-Net** (UDP `6454`) or **sACN / E1.31** (UDP `5568`) onto the network.
+</Step>
+<Step>
+### Connectivity receives and merges
+A background receiver binds the sockets, tracks each live source and merges overlapping universes per the chosen merge policy. See [Connectivity](/docs/dmx/connectivity).
+</Step>
+<Step>
+### The patch maps fixtures
+The patch table assigns every fixture a **universe**, a start **address** and a channel **footprint**. See [Patching Fixtures](/docs/dmx/patching).
+</Step>
+<Step>
+### Decode drives the optics
+Once per frame, the current universe snapshot is applied to each enabled fixture and DMX values become degrees, levels and colours.
+</Step>
+</Steps>
+
+## Key concepts
+
+<TypeTable
+  type={{
+    Universe: { description: 'One block of 512 DMX channels. Universes are 1-based (universe 1, 2, 3 …).', type: '512 channels' },
+    Address: { description: "A fixture's starting channel within a universe.", type: '1–512' },
+    Footprint: { description: 'How many consecutive channels a fixture occupies, set by its GDTF mode or the 8-channel synthetic map.', type: 'channels' },
+    Merge: { description: 'How Glowstone combines multiple sources that send the same universe (Priority + HTP, HTP, or Latest).', type: 'policy' },
+  }}
+/>
+
+<Callout type="info" title="Universes versus addresses">
+A fixture is located by **universe + address**. A 65-fixture rig with an 8-channel footprint fills universe `1` (512 channels) and spills the last fixture into universe `2`. Auto-patch wraps to the next universe automatically.
+</Callout>
+
+## Protocols at a glance
+
+<Tabs items={['Art-Net', 'sACN']}>
+  <Tab value="Art-Net">
+  Broadcast on UDP `6454`. Glowstone accepts all Art-Net universes regardless of subscription. Because the protocol carries no per-source priority, Glowstone assigns Art-Net a single fixed priority (default `100`).
+  </Tab>
+  <Tab value="sACN">
+  Multicast on UDP `5568` (ANSI E1.31). Glowstone joins one multicast group per universe in your subscription list, so sACN universes you don't list aren't received — unlike Art-Net, an empty list joins nothing. Each packet carries its own priority (`0`–`200`); preview-data and stream-terminated packets are ignored.
+  </Tab>
+</Tabs>
+
+<Callout type="idea">
+Both protocols can run at once. If they overlap, the merge policy decides which source wins each channel — lower the Art-Net priority to let sACN take precedence.
+</Callout>
+
+## Where to look
+
+<Cards>
+  <Card icon={<Network />} title="Connectivity: Art-Net & sACN" href="/docs/dmx/connectivity">
+    Enable protocols, set the bind interface, subscriptions and merge policy.
+  </Card>
+  <Card icon={<ListOrdered />} title="Patching Fixtures" href="/docs/dmx/patching">
+    Auto-patch, the Patch dialog and the Fixture Manager.
+  </Card>
+  <Card icon={<MonitorSpeaker />} title="The DMX Monitor" href="/docs/dmx/dmx-monitor">
+    The live 512-channel grid with patch occupancy and conflicts.
+  </Card>
+  <Card icon={<Cable />} title="Connecting a Console" href="/docs/dmx/consoles">
+    Step-by-step setup for grandMA3, MagicQ and others.
+  </Card>
+</Cards>
+
+## Common questions
+
+<Accordions type="single">
+  <Accordion title="Can Glowstone output DMX to a console or node?">
+    No. Glowstone is input-only — it visualizes incoming DMX and never transmits, replies or sends discovery packets.
+  </Accordion>
+  <Accordion title="My fixtures aren't moving — where do I start?">
+    Confirm the source is live in the [Connectivity](/docs/dmx/connectivity) Sources table, then check the fixture is **enabled** and patched to the universe and address your console is driving. The [DMX Monitor](/docs/dmx/dmx-monitor) grid shows which channels are arriving.
+  </Accordion>
+  <Accordion title="What happens when two sources send the same universe?">
+    The merge policy resolves it. **Priority + HTP** (default) lets the highest-priority source win, with per-channel highest-takes-precedence among equal priorities. See [Connectivity](/docs/dmx/connectivity).
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Activity />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+    How a GDTF mode defines a fixture's channel footprint.
+  </Card>
+  <Card icon={<Layers />} title="MVR Scene Exchange" href="/docs/projects/mvr">
+    Importing rigs that arrive with their addresses already set.
+  </Card>
+</Cards>

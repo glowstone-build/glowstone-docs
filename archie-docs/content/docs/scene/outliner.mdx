@@ -1,0 +1,202 @@
+---
+title: "The Scene Outliner"
+description: "The scene tree: browse, group, filter, rename and hide every entity in your show."
+---
+
+import { MousePointerClick, Search, ArrowDownUp, Eye, Filter, SlidersHorizontal } from 'lucide-react';
+
+The Scene outliner is the tree on the left that lists every entity in your show — fixtures, objects, LED screens, pyro devices, the environment and the world.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Scene outliner docked at left: root 'Scene' node with World / Fixtures / Objects / Screens / Pyro groups nested beneath it, a fixture row showing its leading sequence number, name, and right-aligned channel-count ('47ch') and patch-address ('1.001') columns with one address tinted red for a conflict, and the chip row (All / Fixtures / Objects / Screens / Pyro, then Unpatched / Selected / Conflicts) with the filter box above the tree."
+/>
+
+The outliner is a live **view** of the scene, rebuilt every frame from the underlying data. It does not store its own copy of the show — what you see always reflects the current scene, sort, filter and search state.
+
+## Tree structure
+
+Everything hangs off a single `Scene` root. Hover the root for its total item count.
+
+<Files>
+  <Folder name="Scene" defaultOpen>
+    <Folder name="World" defaultOpen>
+      <Folder name="Environment">
+        <File name="Fog Box 1" />
+      </Folder>
+    </Folder>
+    <Folder name="Fixtures" defaultOpen>
+      <File name="PAR Can 1" />
+      <File name="Moving Head 1" />
+    </Folder>
+    <Folder name="Objects">
+      <File name="Stage Deck" />
+      <File name="Truss" />
+    </Folder>
+    <Folder name="Screens">
+      <File name="LED Wall 1" />
+    </Folder>
+    <Folder name="Pyro">
+      <File name="CO2 Jet 1" />
+    </Folder>
+  </Folder>
+</Files>
+
+The group containers are `Fixtures`, `Objects`, `Screens` and `Pyro`, plus a `World` branch holding the nested `Environment` container. The `World` and `Environment` branches only appear under the **All** type filter (and disappear when any state chip is active). The visible-child count of each group is shown on hover (`empty` when the group has none).
+
+## Row anatomy
+
+Every row is laid out the same way: indent, disclosure, icon and name on the left, with metadata columns marched in from the right edge. The single-line row shows only the name — the type icon already conveys the kind, and the secondary text moves to a hover tooltip.
+
+<TypeTable
+  type={{
+    'Disclosure triangle': { description: 'The triangle control on container rows. Click to expand or collapse.', type: 'control' },
+    'Type icon': { description: 'Identifies the row kind: Scene, World, Environment, Fixture, Object, Screen or Pyro.', type: 'icon' },
+    'Sequence number': { description: 'A leading monospace number before the fixture name — the console-style channel number. Fixtures only.', type: 'fixtures only' },
+    'Name': { description: 'The instance name, left-aligned and elided to fit the reserved right-side columns. Double-click to rename.', type: 'text' },
+    'Secondary text': { description: 'Shown on hover as a tooltip — profile, object/MVR kind, screen resolution and content, or pyro kind.', type: 'tooltip' },
+    'Eye': { description: 'Visibility toggle. Always present on every row.', type: 'toggle' },
+    'Channel count': { description: 'DMX footprint of the active mode, e.g. "47ch". Fixtures only.', type: 'fixtures only' },
+    'Patch address': { description: 'The patched universe and address, e.g. "1.001", shown only when patched. Tinted with the fixture\'s DMX-grid colour, and turns red on an address conflict. Fixtures and pyro.', type: 'fixtures / pyro' },
+  }}
+/>
+
+Rows are indented `14 px` per level, carry subtle zebra striping, and are joined by hierarchy guide lines. A red patch address is your fastest cue that two fixtures share an address — fix it in [Patching](/docs/dmx/patching). Unpatched fixtures simply show no address; use the **Unpatched** chip or the DMX pane to find them.
+
+The leading sequence number is editable and sortable; see [Fixtures](/docs/fixtures/fixtures) for renumber-by-position.
+
+## Visibility states
+
+The eye column reflects the combined visibility of a row and, for containers, of its children.
+
+| State | Eye | Meaning |
+| --- | --- | --- |
+| Shown | Open eye | The row and all its children are visible. |
+| Hidden | Closed eye | The row, or every child, is hidden. |
+| Mixed | Open eye, muted | Some children are hidden. Clicking hides the remaining visible ones. |
+
+<Callout type="info">Hiding only affects the viewport: a hidden fixture is not drawn and not pickable. Visibility is a session toggle, not a render setting.</Callout>
+
+## Filtering and searching
+
+The outliner narrows down with a row of chips above the tree and a filter box.
+
+### Type filter chips
+
+These are mutually exclusive; pick one kind to scope the tree to.
+
+<Tabs items={['All', 'Fixtures', 'Objects', 'Screens', 'Pyro']}>
+  <Tab value="All">Shows everything: fixtures, objects, screens, pyro, plus the `World` and `Environment` branches. This is the only filter that reveals world and environment.</Tab>
+  <Tab value="Fixtures">Fixture leaves only. The group header is still shown.</Tab>
+  <Tab value="Objects">Static imported geometry only.</Tab>
+  <Tab value="Screens">LED screens only.</Tab>
+  <Tab value="Pyro">Pyro devices only — CO2 jets and cold-spark machines. See [Pyro](/docs/fixtures/pyro).</Tab>
+</Tabs>
+
+### State filter chips
+
+These act on fixtures and compose as AND with each other. Any active state chip puts the tree in fixture-focus mode, hiding all non-fixture kinds (objects, screens, pyro, world).
+
+<TypeTable
+  type={{
+    'Unpatched': { description: 'Only fixtures with no enabled patch.', type: 'chip' },
+    'Selected': { description: 'Only the current selection.', type: 'chip' },
+    'Conflicts': { description: 'Only address-conflicting fixtures.', type: 'chip' },
+  }}
+/>
+
+<Callout type="idea">Combine the `Conflicts` chip with the [DMX Monitor](/docs/dmx/dmx-monitor) to track down overlapping addresses on a large rig quickly.</Callout>
+
+### Filter box
+
+The filter box above the chips does a case-insensitive substring match on entity names in real time. Clear it to restore the full tree.
+
+## Sorting
+
+The sort row sets the order of the fixture list. It does not reorder objects, screens or pyro.
+
+<TypeTable
+  type={{
+    'Patch': { description: 'By DMX patch (universe, address); unpatched fixtures fall to the end.', type: 'order' },
+    'Name': { description: 'Alphabetical by instance name.', type: 'order' },
+    'Type': { description: 'By fixture profile / type, then name.', type: 'order' },
+    'Seq': { description: 'By the user-facing sequence number, then name.', type: 'order' },
+  }}
+/>
+
+<Callout type="info">Shift-range selection on fixtures follows the **visible, sorted** order — change the sort and a `Shift`-click range follows suit.</Callout>
+
+## Interactive gestures
+
+Clicks in the tree drive selection, expansion, visibility and rename. `Cmd` is `Ctrl` on Windows and Linux.
+
+| Gesture | Effect |
+| --- | --- |
+| `Click` | Select a single row; clears selection in other kinds. |
+| `Shift`+`Click` | Extend a range from the anchor, in visible order (fixtures and pyro). |
+| `Cmd`/`Ctrl`+`Click` | Toggle membership within the same kind. |
+| `Click` eye | Toggle visibility; a mixed parent hides its remaining visible children. |
+| `Click` disclosure | Expand or collapse a container. |
+| `Double-click` name | Start inline rename. |
+| `Click` group header | Select all visible members of that kind; `Cmd`/`Ctrl`-click the Fixtures header again to deselect. |
+| `Click` empty space | Clear the selection. |
+
+For the full selection model — replace, add, subtract, toggle, primary selection and active kind — see [Selecting Objects](/docs/scene/selection).
+
+## Rename an entity
+
+<Steps>
+<Step>
+### Open inline edit
+Double-click the name of a fixture, object, screen, pyro device or environment. Container rows (the group headers, Scene, World) cannot be renamed.
+</Step>
+<Step>
+### Type the new name
+A text field opens in the row's name slot. The name is trimmed and must be non-empty.
+</Step>
+<Step>
+### Commit or cancel
+Press `Enter` (or click away) to commit, or `Esc` to cancel. The change is wrapped in a single undo step.
+</Step>
+</Steps>
+
+## Hide and show entities
+
+<Steps>
+<Step>
+### Toggle a single row
+Click the eye on any row to hide or show that entity.
+</Step>
+<Step>
+### Toggle a whole group
+Click the eye on a group header. A mixed group (open eye, muted) hides its remaining visible children on the next click.
+</Step>
+<Step>
+### Bring it back
+Click the eye again — or switch the type filter to **All** if a hidden branch has been filtered out of view.
+</Step>
+</Steps>
+
+<Callout type="info">Hide and rename are deferred actions handled outside the widget, so both land cleanly on the undo stack.</Callout>
+
+## Large rigs
+
+The outliner only builds the rows currently on screen, so an imported [MVR](/docs/projects/mvr) scene with thousands of objects scrolls smoothly. Rows are a fixed `20 px` tall. Expand-state and the range anchor are keyed to stable entity identities, so they survive adding, deleting and reordering entities.
+
+## See also
+
+<Cards>
+  <Card icon={<MousePointerClick />} title="Selecting Objects" href="/docs/scene/selection">
+    The full selection model: kinds, primary selection and click algebra.
+  </Card>
+  <Card icon={<Filter />} title="Patching Fixtures" href="/docs/dmx/patching">
+    Assign universes and addresses, and resolve the conflict highlights.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Adding Fixtures & Objects" href="/docs/scene/adding-objects">
+    Add fixtures, screens, geometry and environments to the scene.
+  </Card>
+  <Card icon={<Eye />} title="Display Modes & Overlays" href="/docs/navigation/overlays">
+    Control what the viewport draws beyond per-entity visibility.
+  </Card>
+</Cards>

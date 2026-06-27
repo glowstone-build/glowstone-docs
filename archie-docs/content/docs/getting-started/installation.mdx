@@ -1,0 +1,147 @@
+---
+title: "Installation & Requirements"
+description: "Download Glowstone for your platform, or build it from source."
+---
+
+import { Apple, MonitorPlay, Rocket, TerminalSquare, Radio, Download } from 'lucide-react';
+
+Download a prebuilt release for your platform, or build from source with the Rust toolchain.
+
+<Callout type="warn" title="Vulkan is not currently supported">
+Glowstone runs on **macOS** (Metal) and **Windows** (Direct3D 12). The **Vulkan** backend — and therefore **Linux** — is **not supported at this time**.
+</Callout>
+
+## Download
+
+Grab the latest build for your OS from the releases page:
+
+<Cards>
+  <Card icon={<Download />} title="Latest release" href="https://github.com/embedder-dev/glowstone/releases/latest">
+    Download the macOS or Windows build from GitHub Releases.
+  </Card>
+</Cards>
+
+<Tabs items={['macOS', 'Windows']}>
+  <Tab value="macOS">
+    Download the macOS build, open it, and drag Glowstone to Applications. Tested on Apple Silicon; rendering runs on Metal.
+  </Tab>
+  <Tab value="Windows">
+    Download the Windows build and run it. Rendering runs on Direct3D 12.
+  </Tab>
+</Tabs>
+
+## System requirements
+
+<TypeTable
+  type={{
+    macOS: { description: 'Apple Metal. Primary development and test platform (Apple Silicon).', type: 'Metal', default: 'supported' },
+    Windows: { description: 'Direct3D 12.', type: 'DX12', default: 'supported' },
+    Linux: { description: 'Vulkan backend — not supported at this time.', type: 'Vulkan', default: 'unsupported' },
+  }}
+/>
+
+A modern GPU is required — the renderer raymarches volumetric beams every frame. The active backend is shown in the **Statistics** overlay (`View ▸ Overlays ▸ Statistics`).
+
+## First launch
+
+<Steps>
+<Step>
+### Open Glowstone
+Launch the app. The window opens at `1280×800` and the welcome splash appears.
+</Step>
+<Step>
+### Pick a starting point
+Choose **New Project** for a blank scene, **Open…** to load a saved `.glow` project (legacy `.archie` files still open), or **Continue without a project** to explore the demo scene.
+</Step>
+<Step>
+### Explore the demo scene
+The demo scene shows a `PAR Can` aimed down into a `Fog Box` over a reflective floor. Drag to orbit, `Shift`+drag to pan, scroll to zoom.
+</Step>
+</Steps>
+
+## Development
+
+Build and run from source with a recent stable Rust toolchain (edition 2024, MSRV `1.92` — install via [rustup](https://rustup.rs)).
+
+```bash
+cargo run --release
+```
+
+<Callout type="idea" title="Always use --release">
+The renderer raymarches volumetric beams every frame; debug builds are dramatically slower. Use `--release` for any interactive work, and reserve plain `cargo run` for chasing a crash backtrace.
+</Callout>
+
+<Tabs items={['macOS', 'Windows']}>
+  <Tab value="macOS">
+    Install the Xcode Command Line Tools (`xcode-select --install`) so Cargo can link native dependencies.
+  </Tab>
+  <Tab value="Windows">
+    Install the Visual Studio C++ build tools so Cargo can link native dependencies.
+  </Tab>
+</Tabs>
+
+To see init details while running:
+
+```bash
+RUST_LOG=glowstone=debug,wgpu=warn cargo run --release
+```
+
+## NDI video (optional)
+
+NDI receive is an **optional compile-time feature**, off by default. A default build ships a no-op stub; to actually receive NDI you must build with the `ndi` feature and have the NDI runtime installed.
+
+<Steps>
+<Step>
+### Install the NDI SDK
+Download and install the **NDI 6 SDK** from the [official NDI SDK page](https://ndi.video/for-developers/ndi-sdk/) (you must accept the licence/EULA). It includes the runtime needed at run time.
+</Step>
+<Step>
+### Build with the NDI feature
+Building the feature also needs Clang available on `PATH`:
+
+```bash
+cargo run --release --features ndi
+```
+</Step>
+<Step>
+### Pick a source on a screen
+With the runtime installed, discovered NDI sources appear in an LED screen's content picker. See [NDI Video](/docs/media/ndi) for usage.
+</Step>
+</Steps>
+
+<Callout type="info">
+Without the `ndi` feature (or without the runtime), Glowstone still runs normally and simply reports NDI as unavailable.
+</Callout>
+
+## Headless & automation
+
+Glowstone can run windowless, driven by `GLOWSTONE_*` environment variables — intended for CI, batch rendering, screenshots, and profiling, not everyday use. They are read once at startup and are not exposed in the UI.
+
+<TypeTable
+  type={{
+    GLOWSTONE_SCREENSHOT: { description: 'Render the scene to a PNG at the given path and exit (no window).', type: 'path.png', default: '—' },
+    GLOWSTONE_BENCH: { description: 'Benchmark N offscreen frames, then print ms/frame and fps.', type: 'integer', default: '—' },
+    GLOWSTONE_OPEN: { description: 'Load a saved .glow project at startup.', type: 'show.glow', default: '—' },
+    GLOWSTONE_GDTF: { description: 'Import a GDTF fixture and clear the demo scene.', type: 'fixture.gdtf', default: '—' },
+    GLOWSTONE_MVR: { description: 'Load an MVR scene at startup.', type: 'scene.mvr', default: '—' },
+    GLOWSTONE_LOOK: { description: 'Apply a designed concert palette, camera pose, and haze.', type: 'flag', default: '—' },
+  }}
+/>
+
+```bash
+GLOWSTONE_OPEN=show.glow GLOWSTONE_SCREENSHOT=out.png cargo run --release
+```
+
+## See also
+
+<Cards>
+  <Card icon={<Rocket />} title="Quick Start" href="/docs/getting-started/quick-start">
+    Build a small rig and see DMX-driven beams in minutes.
+  </Card>
+  <Card icon={<MonitorPlay />} title="Interface Overview" href="/docs/getting-started/interface-overview">
+    Tour the panels, viewport, and menu bar.
+  </Card>
+  <Card icon={<Radio />} title="NDI Video" href="/docs/media/ndi">
+    Receive live NDI sources onto LED screens.
+  </Card>
+</Cards>

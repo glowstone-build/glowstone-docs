@@ -1,0 +1,140 @@
+---
+title: "Glossary"
+description: "How Glowstone uses common lighting and rendering terms — ranges, defaults, and behaviour."
+---
+
+import { Network, SlidersHorizontal, Library, FileBox, Cloud } from 'lucide-react';
+
+How Glowstone treats the terms you will meet across the app. Each entry links to the page where the topic is covered in depth.
+
+<Callout type="info">Glowstone is **input-only** for DMX: it visualizes the DMX a console sends, but it never outputs or transmits DMX itself.</Callout>
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Glowstone workspace with labelled callouts pointing at the terms in this glossary: a moving-head beam in haze (volumetric beam, hero beam), the DMX Monitor grid (universe, address, footprint), the Connectivity panel (Art-Net, sACN), and the Inspector (zoom, frost, CMY)."
+/>
+
+## Protocols & patching
+
+**Art-Net** — Glowstone receives Art-Net on UDP port `6454` but never answers `ArtPoll` discovery. See [Connectivity](/docs/dmx/connectivity).
+
+**sACN / E1.31** — Received on UDP port `5568`. Each source carries a priority (`0`–`200`) and a stable CID. See [Connectivity](/docs/dmx/connectivity).
+
+**DMX** — Glowstone decodes DMX every frame to drive fixture optics. See [DMX Overview](/docs/dmx).
+
+**Universe** — Glowstone uses 1-based universe numbers (`1`–`63999` for sACN). See [Patching](/docs/dmx/patching).
+
+**Address** — The starting channel (`1`–`512`) a fixture occupies within its universe. See [Patching](/docs/dmx/patching).
+
+**Footprint** — The number of consecutive channels a fixture occupies, set by its GDTF mode (plain fixtures use a fixed 8-channel synthetic map). See [DMX Modes & Channels](/docs/library/dmx-modes).
+
+**Patch** — The table that maps each fixture to a universe, address, footprint, and mode. Stored separately from the scene so duplicating a fixture never duplicates its address. See [Patching](/docs/dmx/patching).
+
+<Callout type="idea">Auto-patch assigns every unpatched fixture in turn, packing them sequentially from universe `1`, address `1`.</Callout>
+
+**Sequence** — Each fixture carries an editable sequence number (a "channel number"-style id; `0` = unassigned) that you sort and renumber by. Shown in the outliner and Fixture Manager, with renumber-by-position. See [Patching](/docs/dmx/patching).
+
+## File formats
+
+**GDTF** — A `.gdtf` file is a ZIP of `description.xml`, glTF models, and wheel/thumbnail images describing a fixture's modes, channels, wheels, and optics. See [Importing GDTF Fixtures](/docs/library/import-gdtf).
+
+**MVR** — An `.mvr` interchange ZIP (`GeneralSceneDescription.xml` plus embedded GDTF and geometry) for round-tripping whole scenes with tools like grandMA3, Vectorworks, and Capture. See [MVR Scene Exchange](/docs/projects/mvr).
+
+**.glow** — Glowstone's native binary project format (magic `GLOW\0`). A complete, self-contained snapshot of the scene, fixtures, preferences, the DMX patch + config, selection groups, and cues, with pyro devices in a self-describing JSON trailer. Legacy **`.archie`** files (the previous extension) still open. See [Projects](/docs/projects).
+
+<Files>
+  <Folder name="show.mvr (ZIP)" defaultOpen>
+    <File name="GeneralSceneDescription.xml" />
+    <Folder name="(embedded resources)">
+      <File name="Robe Lighting@Robin Esprite.gdtf" />
+      <File name="truss.glb" />
+    </Folder>
+  </Folder>
+</Files>
+
+## Optical components
+
+**Gobo** — The disc is always physically present; the open slot is a clear hole. The image rotates independently of the wheel position. See [Gobos, Animation, Prism & Frost](/docs/fixtures/gobos-prism).
+
+**Animation wheel** — A scrolling glass wheel that adds movement (flames, water, clouds) to the beam. At most one is active per fixture. See [Gobos, Animation, Prism & Frost](/docs/fixtures/gobos-prism).
+
+**Prism** — Splits the beam into multiple copies (2–16 facets per prism, up to 24 copies when stacked). Slides into the beam over ~0.4 s. See [Gobos, Animation, Prism & Frost](/docs/fixtures/gobos-prism).
+
+**Frost** — Softens the beam edge and spreads the cone wider (`tan_half` × `1 + 0.4·frost`). See [Gobos, Animation, Prism & Frost](/docs/fixtures/gobos-prism).
+
+**Iris** — `1` = fully open, `0` = closed to the GDTF minimum. See [Beam Parameter Reference](/docs/fixtures/parameters).
+
+**Zoom** — The beam cone angle, mapped across the fixture's GDTF zoom range. Narrow beams are brighter as luminous flux concentrates. See [Beam Parameter Reference](/docs/fixtures/parameters).
+
+## Colour
+
+**CMY** — Subtractive mixing via three dichroic flags. Each flag inserts `0`–`1`; rendered per-fragment as sliding graduated colour, not a flat tint. See [Colour](/docs/fixtures/color).
+
+**CTO** — A warm filter that shifts the source white point toward `2800` K. `0` = off, `1` = full warm. See [Colour](/docs/fixtures/color).
+
+**CCT** — The source white point in Kelvin (typically `2800`–`8000` K for stage lamps). Converted to linear RGB via a Planckian-locus fit. See [Colour](/docs/fixtures/color).
+
+## Rendering & lighting
+
+**Haze / Fog (participating media)** — The airborne volume that scatters light and makes beams visible. See [Environments: Fog & Haze](/docs/scene/environment).
+
+**Volumetric beam** — The visible shaft of light rendered by single-scattering raymarch through haze. See [Volumetric Beams & Haze](/docs/rendering/volumetrics).
+
+**Hero beam** — A bright, well-defined signature beam — the look that volumetric rendering and haze are tuned to deliver. See [Volumetric Beams & Haze](/docs/rendering/volumetrics).
+
+**Anisotropy (Henyey–Greenstein)** — The phase function controlling forward-versus-even scattering. High forward anisotropy gives bright, punchy beams when the camera faces the source. See [Volumetric Beams & Haze](/docs/rendering/volumetrics).
+
+**Bloom** — The soft glow that bleeds from bright highlights. See [Look & Colour Management](/docs/rendering/look).
+
+**Tonemapping** — The step that maps the HDR render down to a displayable image, shaping contrast and colour. See [Look & Colour Management](/docs/rendering/look).
+
+**HDRI** — The environment map that lights the scene and sets the sky/ambient background. Bundled inline in the `.glow` project. See [World: Sky & Ambient](/docs/scene/world).
+
+**Exposure** — The overall brightness multiplier applied before tonemapping. See [Look & Colour Management](/docs/rendering/look).
+
+<Callout type="warn">The froxel volumetric grid is off by default. Per-pixel raymarch is the default and produces a better-looking beam.</Callout>
+
+## Interface & scene
+
+**Cue** — A saved lighting look (the state of all fixtures) with crossfade playback. Distinct from camera bookmarks, which only store camera poses. See [Cues & Playback](/docs/cues).
+
+**Workspace** — A saved dock layout, tool, and overlay set. Built-in workspaces ship with Glowstone, and you can save your own. See [Workspaces](/docs/interface/workspaces).
+
+**Operator** — A registered, named action that menus, the `F3` palette, keybindings, and undo history all reference. Press `F9` to adjust the last operator. See [Commands & Operator Search](/docs/interface/commands).
+
+**Pivot** — The point a transform rotates or scales around. See [Moving, Rotating & Scaling](/docs/scene/transforming).
+
+**3D cursor** — The cursor-anchored location where `Shift`+`A` adds new fixtures, geometry, and screens. See [Adding Fixtures & Objects](/docs/scene/adding-objects).
+
+**Pyro** — A placed effect device (CO2 jet or cold-spark machine) with its own inline DMX patch (not the fixture patch table). A distinct entity kind, with its own outliner chip. See [Pyro](/docs/fixtures/pyro).
+
+## Media & screens
+
+**NDI** — Carries live video over the network as content for LED screens. See [NDI Video](/docs/media/ndi).
+
+**CITP / MSEX** — Used to pull thumbnails and content from media servers. See [Media Servers (CITP/MSEX)](/docs/media/media-servers).
+
+**LED cabinet / pitch / nits** — A *cabinet* is one modular LED panel; *pitch* is pixel spacing in millimetres; *nits* is peak brightness (cd/m²). See [LED Screens](/docs/media).
+
+<Callout type="warn">LED screen curvature is stored and round-tripped but is not yet rendered as a curved surface.</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Network />} title="DMX Overview" href="/docs/dmx">
+    Protocols, patching, and the DMX Monitor.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Beam Parameter Reference" href="/docs/fixtures/parameters">
+    Every optical control and its range.
+  </Card>
+  <Card icon={<Library />} title="The Fixture Library" href="/docs/library">
+    Built-in, imported, and GDTF Share fixtures.
+  </Card>
+  <Card icon={<FileBox />} title="Projects & the .glow Format" href="/docs/projects">
+    What a project saves and how MVR round-trips.
+  </Card>
+  <Card icon={<Cloud />} title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    Participating media and the hero-beam look.
+  </Card>
+</Cards>

@@ -1,0 +1,137 @@
+---
+title: "Fixtures Overview"
+description: "Inspecting and editing fixtures in Glowstone."
+---
+
+import { Lightbulb, SlidersHorizontal, Palette, Aperture, Move3d, Boxes, Layers, FileBox } from 'lucide-react';
+
+Each fixture has a 3D position and orientation, a set of beam parameters, and (for moving heads) a pan/tilt mechanism. Select a fixture, read and edit it in the Inspector, and watch the beam update live in the viewport.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A single moving head selected in the 3D viewport with its beam visible in light haze. The Inspector is docked right, showing the fixture name, a provenance chip in the header, and editable fields (Transform, Pan, Tilt, Dimmer, Color, Beam). The Scene Outliner is docked left with the fixture row highlighted."
+/>
+
+## What a fixture is made of
+
+A fixture comes from one of two kinds of definition:
+
+- **GDTF-backed** — imported from a `.gdtf` file or downloaded from GDTF Share. It carries a real 3D model, a beam optical chain (gobo, colour, prism, animation, frost wheels), and one or more **DMX modes** that determine the channel layout. See [Importing GDTF Fixtures](/docs/library/import-gdtf).
+- **Built-in profile** — Glowstone's own simple fixtures: `PAR Can` and the laser engines `Laser — Red`, `Laser — Green`, `Laser — Blue`. The PAR uses a cylinder body with a default beam angle and warm tint; the lasers render as razor-thin, haze-only streaks.
+
+<Callout type="info">
+Glowstone visualises DMX from a lighting console — it is input-only and never transmits DMX. The Inspector values below are the live state being driven by the console (or by your manual edits when no DMX is patched).
+</Callout>
+
+## The fixture Inspector
+
+Select a fixture and the Inspector shows its editable state. The header carries the fixture **name** (double-click the Outliner row to rename) and a coloured **provenance chip** telling you where the fixture came from, with a `category · profile` subtitle beneath it:
+
+| Chip | Source | Meaning |
+| --- | --- | --- |
+| Built-in | `Builtin` | Glowstone's standard library (PAR Can, lasers) |
+| Imported | `Import` | Loaded from a `.gdtf` file on disk |
+| GDTF Share | `GdtfShare` | Downloaded from the online GDTF Share catalogue |
+| MVR | `Mvr` | Brought in as part of an [MVR scene](/docs/projects/mvr) import |
+
+Every fixture also carries an editable **sequence number** — a "channel number"-style id you sort and renumber by, shown in the Outliner and the Fixture Manager (`0` = unassigned). See [Patching Fixtures](/docs/dmx/patching) and [The Scene Outliner](/docs/scene/outliner).
+
+### Editable fields
+
+The grid is split into a **Transform** group (rig placement) and a **Fixture** group (the head's own state). Pan, tilt, dimmer and colour are also written live by a connected console. Per-row revert arrows snap a value back to its template default where one is recoverable.
+
+<TypeTable
+  type={{
+    'Position': { description: 'World position of the fixture body, in metres (Y up).', type: 'X, Y, Z (m)', default: 'placed at cursor' },
+    'Rotation': { description: 'Rig hang orientation (the base rotation an MVR import places it with). Pan/tilt are applied on top. Reverts to identity.', type: 'euler', default: 'identity' },
+    'Move speed': { description: 'Pan/tilt motor speed. 0 = fastest (snap); 1 = slowest. Slider.', type: '0–1', default: '0' },
+    'Pan': { description: 'Commanded yaw about world Y; the head slews physically toward it. Moving heads only.', type: '−270…270°', default: '0' },
+    'Tilt': { description: 'Commanded tilt. 0 aims straight down; the body slews physically toward the target.', type: 'GDTF ±135° / built-in ±180°', default: '30 when placed' },
+    'Dimmer': { description: 'Master dimmer for the fixture (the level DMX drives).', type: '0–1', default: '1.0' },
+    'Color': { description: 'Emitted colour of the beam (linear RGB).', type: 'RGB', default: 'white (GDTF) / profile tint' },
+  }}
+/>
+
+Two more controls live in the Fixture group's **Advanced** disclosure:
+
+<TypeTable
+  type={{
+    'Beam': { description: 'Volumetric beam intensity multiplier. Scales the visible beam shaft + floor pool without dimming the lens face (0 = no beam, 1 = normal).', type: '0–4', default: '1.0' },
+    'Beam angle': { description: 'Full beam cone angle. Built-in fixtures only — a GDTF beam angle is template-driven (by Zoom), not editable here.', type: '2–90°', default: 'profile default' },
+  }}
+/>
+
+<Callout type="info" title="Pan and tilt are physically slewed">
+The Inspector value is the *commanded* target (its tooltip also shows the actual angle "now"). The body ramps toward it at the motor speed and decelerates without overshoot, so you see realistic movement rather than an instant snap. Max slew rate depends on the fixture class.
+</Callout>
+
+Mechanical shutter blade style (None / Blade / Sawtooth), gobo, prism, frost and the rest of the optical chain are GDTF-only and live in the **Optics** section of the GDTF Inspector — see [Gobos, Animation, Prism & Frost](/docs/fixtures/gobos-prism). Visibility (the eye toggle) lives in the [Scene Outliner](/docs/scene/outliner), not the property grid.
+
+## Multi-emitter and pixel fixtures
+
+A GDTF fixture's active DMX mode defines how many **emitters** (cells) it has. A blinder, an LED bar, or a pixel wash exposes one cell per pixel/zone:
+
+- Each cell has its own colour, white at rest; the Inspector's Color picker tints all of them.
+- Fixtures whose heads tilt or pan independently also carry per-cell pan and tilt (e.g. a wave-effect bar).
+- Switching the DMX mode re-resizes the cell layout — see [DMX Modes & Channels](/docs/library/dmx-modes).
+
+<Callout type="idea">
+To address individual cells from a console, patch the fixture in its multi-emitter mode and drive the per-cell channels. Each cell decodes its own colour from the DMX stream.
+</Callout>
+
+## Editing several fixtures at once
+
+Selection in Glowstone works on one *kind* of object at a time, and the first item selected is the **primary**. With several fixtures selected, the Inspector edits apply across the whole multi-selection, while single-value displays follow the primary (a row whose values differ shows a "Multiple" placeholder you can click to unify).
+
+<Steps>
+<Step>
+### Select multiple fixtures
+Click the first fixture, then `Shift`+click to extend a range, or `Cmd`/`Ctrl`+click to add or remove individual fixtures. See [Selecting Objects](/docs/scene/selection).
+</Step>
+<Step>
+### Edit a shared field
+Change dimmer, colour, or another field in the Inspector. The edit is applied to every fixture in the selection.
+</Step>
+</Steps>
+
+<Callout type="warn">
+LED screen curvature, render animation, motion blur, caustics, contact shadows and a few other controls are visible in the UI but not yet functional. Where you meet one of these on a related page, it is marked with a warning.
+</Callout>
+
+## Where to go next
+
+<Cards>
+  <Card icon={<Lightbulb />} title="The Beam Engine" href="/docs/fixtures/beam-engine">
+    How beams, pools and volumetrics are rendered.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Beam Parameter Reference" href="/docs/fixtures/parameters">
+    Every beam parameter with type, range and default.
+  </Card>
+  <Card icon={<Palette />} title="Colour" href="/docs/fixtures/color">
+    Setting and mixing fixture colour.
+  </Card>
+  <Card icon={<Aperture />} title="Gobos, Animation, Prism & Frost" href="/docs/fixtures/gobos-prism">
+    The optical chain on GDTF fixtures.
+  </Card>
+  <Card icon={<Move3d />} title="Pan, Tilt & Aiming" href="/docs/fixtures/movement">
+    Move speed, slew and the Aim tool.
+  </Card>
+</Cards>
+
+## See also
+
+<Cards>
+  <Card icon={<Boxes />} title="Adding Fixtures & Objects" href="/docs/scene/adding-objects">
+    Place fixtures from the library into the scene.
+  </Card>
+  <Card icon={<FileBox />} title="The Fixture Library" href="/docs/library">
+    Browse built-in, imported and GDTF Share fixtures.
+  </Card>
+  <Card icon={<Layers />} title="The Scene Outliner" href="/docs/scene/outliner">
+    Find, rename, hide and filter fixtures in the tree.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Patching Fixtures" href="/docs/dmx/patching">
+    Assign universes and addresses so the console can drive them.
+  </Card>
+</Cards>

@@ -1,0 +1,136 @@
+---
+title: "Camera & Navigation"
+description: "Steering the orbit camera, framing, and switching between perspective and orthographic."
+---
+
+import { Orbit, Compass, Bookmark, Eye, SquareStack, Crosshair } from 'lucide-react';
+
+Glowstone uses an **orbit camera** that revolves around a target point in world space, with dolly and pan controls.
+
+<ImagePlaceholder
+  label="GIF"
+  ratio="16 / 9"
+  caption="The 3D Viewport mid-orbit around a single moving-head fixture with a visible beam: the camera rotates around the fixture while the origin grid and RGB world axes stay anchored at the floor. The top-left corner shows the view tag 'Persp · User'."
+/>
+
+## Mouse and trackpad
+
+The viewport reads direct pointer input. Drag to orbit, hold `Shift` to pan, and scroll to zoom toward whatever is under the cursor.
+
+| Action | Input | Behaviour |
+| --- | --- | --- |
+| Orbit | `Drag` (no modifier) | Rotate the camera around the target; the scene follows your hand |
+| Pan | `Shift`+`Drag` | Slide the target across the view plane, keeping distance constant |
+| Zoom (dolly) | `Scroll` | Change distance; zooms toward the world point under the cursor |
+| Place 3D cursor | `Shift`+`Right-click` | Drop the 3D cursor (the transform pivot) on the surface under the pointer |
+| Select | `Click` | Select the object under the pointer |
+| Add to selection | `Cmd`/`Ctrl`+`Click` | Toggle an object in or out of the current selection |
+
+<Callout type="info" title="Zoom-to-cursor">
+Scrolling zooms toward the world point beneath the pointer, so the surface under the cursor stays fixed on screen. If the cursor is pointing at the sky, it falls back to the ground plane (`y=0`).
+</Callout>
+
+<Callout type="idea">
+Pan speed scales with distance, so panning feels consistent whether you are framing the whole rig or inspecting a single gobo. Zoom in before you pan for fine adjustments.
+</Callout>
+
+## The camera model
+
+The camera is fully described by a target point, two orbit angles, a distance, and a projection. The orbit pose (target, angles, distance, FOV, clip planes) is saved with the project file (`.glow`); [camera bookmarks](/docs/navigation/bookmarks) additionally store the projection flag per slot. The projection toggle itself is session state and resets to perspective on load.
+
+<TypeTable
+  type={{
+    target: { description: 'The point the camera orbits around and looks at (world space).', type: 'Vec3 (m)', default: '(0, 2.7, -0.4)' },
+    yaw: { description: 'Horizontal rotation around the target (left/right). Unbounded; jumps take the shortest arc.', type: 'radians', default: '0.6' },
+    pitch: { description: 'Vertical angle, clamped to ±1.5533 rad (~±89°) to avoid flipping over the poles.', type: 'radians', default: '0.08' },
+    distance: { description: 'Dolly distance from the target to the camera eye. Clamped to 0.5–200 m.', type: 'm', default: '7.5' },
+    fov_y: { description: 'Vertical field of view (perspective mode).', type: 'degrees', default: '55°' },
+    znear: { description: 'Near clipping plane.', type: 'm', default: '0.05' },
+    zfar: { description: 'Far clipping plane.', type: 'm', default: '500.0' },
+    ortho: { description: 'Projection mode: false = perspective, true = orthographic. Session state (not persisted in the project file).', type: 'bool', default: 'false' },
+  }}
+/>
+
+<Callout type="info">
+The default view frames a typical fixture and beam: target at roughly 2.7 m height, a 3/4 yaw of about 34° (0.6 rad), a gentle 4.6° pitch (0.08 rad), and a distance of 7.5 m.
+</Callout>
+
+## Perspective vs orthographic
+
+Glowstone renders in **perspective** by default. Switch to **orthographic** for parallel, plan-style views when checking alignment and symmetry.
+
+<Tabs items={['Perspective', 'Orthographic']}>
+  <Tab value="Perspective">
+    The natural 3/4 working view. Objects converge toward vanishing points, matching how the rig reads on stage. Vertical FOV defaults to `55°` and is saved per bookmark.
+  </Tab>
+  <Tab value="Orthographic">
+    Parallel projection with no perspective divide. The frame size is matched to the perspective framing at the same distance, and clipping is symmetric about the target so geometry between the eye and target is never front-clipped.
+  </Tab>
+</Tabs>
+
+Toggle between the two with `Numpad 5`, or via the **Persp/Ortho** entry in the View pie. Switching the projection animates smoothly over `0.25 s`.
+
+<Callout type="info" title="Axis views auto-switch">
+The six axis views (Front, Back, Left, Right, Top, Bottom) automatically switch to orthographic, while the Perspective view restores perspective mode. See [Views, Gizmo & Pie Menus](/docs/navigation/views) for the full list.
+</Callout>
+
+## Framing the scene
+
+Use framing to snap the camera onto what matters. Both operations ease the camera to centre and fit the target over `0.25 s`.
+
+<Steps>
+<Step>
+### Select what to frame
+`Click` a fixture or object in the viewport. For Frame All, no selection is needed.
+</Step>
+<Step>
+### Frame the selection
+Press `F` to aim at and fit the current selection. The camera dollies so the selection fills the view with a small margin.
+</Step>
+<Step>
+### Frame everything
+Press `Shift`+`F` to fit the entire scene in view.
+</Step>
+</Steps>
+
+<Callout type="idea">
+Grabbing the camera at any time — orbit, pan or zoom — instantly cancels an in-flight framing or recall animation, so you are never fighting a transition for control.
+</Callout>
+
+## The view tag
+
+A small monospace label in the top-left corner of the viewport reports the current state in the form `<Projection> · <View name>`.
+
+- Projection reads `Persp` or `Ortho`.
+- The view name shows `Front`, `Back`, `Left`, `Right`, `Top` or `Bottom` when the orbit angles snap to a canned view; otherwise it reads `User` for a free orbit.
+
+Examples: `Ortho · Front`, `Persp · User`.
+
+<ImagePlaceholder
+  label="Close-up"
+  ratio="4 / 3"
+  caption="Top-left corner of the viewport showing the view tag in monospace 12px text reading 'Ortho · Front', positioned just below the FPS HUD."
+/>
+
+## See also
+
+<Cards>
+  <Card icon={<Compass />} title="Views, Gizmo & Pie Menus" href="/docs/navigation/views">
+    Snap to axis views with the navigation gizmo, View pie and Shading pie.
+  </Card>
+  <Card icon={<Bookmark />} title="Camera Bookmarks" href="/docs/navigation/bookmarks">
+    Save and recall up to 9 numbered camera poses.
+  </Card>
+  <Card icon={<Eye />} title="Display Modes & Overlays" href="/docs/navigation/overlays">
+    Toggle shading modes, the grid, fixture labels and the navigation gizmo.
+  </Card>
+  <Card icon={<SquareStack />} title="Performance Overlay" href="/docs/navigation/performance-overlay">
+    Monitor frame rate and scene statistics while you navigate.
+  </Card>
+  <Card icon={<Crosshair />} title="Moving, Rotating & Scaling" href="/docs/scene/transforming">
+    The 3D cursor you place here is the pivot for transforms.
+  </Card>
+  <Card icon={<Orbit />} title="Key Concepts" href="/docs/getting-started/key-concepts">
+    How the viewport fits into the wider Glowstone workflow.
+  </Card>
+</Cards>

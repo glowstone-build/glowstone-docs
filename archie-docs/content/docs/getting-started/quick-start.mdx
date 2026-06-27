@@ -1,0 +1,190 @@
+---
+title: "Quick Start"
+description: "Add a fixture, aim it, raise its dimmer, and light the haze in Glowstone's demo scene."
+---
+
+import { LayoutDashboard, Lightbulb, Network, MousePointerClick, Crosshair } from 'lucide-react';
+
+From cold launch to a volumetric beam in haze in a few minutes, using Glowstone's default demo scene plus one fixture you add yourself.
+
+<Callout type="info" title="What you already have">
+Every new project starts with a small demo scene: one **PAR Can 1** at full intensity, hung 4 m up and aimed 45° down-and-forward, inside one **Fog Box** haze volume, over the world floor. That is enough to see beams immediately, before you add anything.
+</Callout>
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="Glowstone on first launch after starting a New Project: Scene/Library tabs docked left, Inspector docked right, the 3D Viewport centred showing the default PAR Can 1 beam striking the floor through the Fog Box, and the DMX Monitor docked along the bottom. Dark theme."
+/>
+
+## Build your first lit scene
+
+<Steps>
+
+<Step>
+### Launch and start a new project
+
+Open Glowstone. The **Welcome** splash appears with a `glowstone` wordmark and two columns — **New** on the left, **Recent Files** on the right.
+
+- Click **New Project** (under **New**) to create a blank scene.
+- Or click **Continue without a project** in the footer to keep the demo scene already loaded.
+
+You can reopen this splash any time from **Window → Welcome**, and create a fresh project from **File → New Project**.
+
+<Callout type="idea">
+Right after launch you already have a lit beam in haze. If you only want to look around, skip straight to step 2.
+</Callout>
+</Step>
+
+<Step>
+### Orbit, pan, and zoom the viewport
+
+Navigate the 3D stage with the mouse inside the **Viewport**:
+
+| Gesture | Action |
+| --- | --- |
+| `Drag` | Orbit the camera around the target |
+| `Shift`+`Drag` | Pan the camera |
+| `Scroll` | Zoom in and out |
+
+Press `F` to frame the current selection, or `Shift`+`F` to frame the whole scene. Jump to a preset angle from **View → Camera** (Top, Bottom, Front, Back, Left, Right).
+
+<Callout type="info" title="Save a view for later">
+**Window → View Bookmarks → Save Current View** stores the camera pose to the next free numbered slot (1–9). These camera bookmarks persist and are separate from cues. See [Camera Bookmarks](/docs/navigation/bookmarks).
+</Callout>
+</Step>
+
+<Step>
+### Add a fixture
+
+You have two ways to put a new light in the scene.
+
+<Tabs items={['Add menu (Shift+A)', 'From the Library']}>
+  <Tab value="Add menu (Shift+A)">
+Press `Shift`+`A` in the Viewport to open the cursor-anchored **Add** menu. Its left column lists the categories — **Fixtures**, **Screens**, **Pyro**, **Environment** — and the right column lists that category's entries. Pick a fixture (for example **PAR Can**); it is created on the ground at the cursor location.
+  </Tab>
+  <Tab value="From the Library">
+Switch to the **Library** tab in the left panel, browse the built-in fixtures, and place a profile such as **PAR Can**. You can also **Import GDTF…** to load a real moving head. See [The Fixture Library](/docs/library).
+  </Tab>
+</Tabs>
+
+New fixtures are placed aimed down-and-forward (`tilt` 30°) so they light the floor right away.
+
+<ImagePlaceholder
+  label="Close-up"
+  ratio="4 / 3"
+  caption="The Shift+A Add menu open over the 3D Viewport at the cursor position, the left column showing Fixtures / Screens / Pyro / Environment, with a PAR Can entry highlighted on the right."
+/>
+
+<Callout type="info">
+The **Pyro** category adds CO2 jets and cold-spark machines — placed devices with their own inline DMX patch, separate from the fixture patch. See [Pyro Devices](/docs/fixtures/pyro).
+</Callout>
+</Step>
+
+<Step>
+### Select it and aim it
+
+Click the fixture in the Viewport to select it (or click its row in the **Scene** outliner). The header in the **Inspector** on the right now shows that fixture.
+
+Aim the beam in either of two ways:
+
+- **Pan / Tilt fields:** type or drag `Pan` and `Tilt` (in degrees) in the Inspector's **Fixture** group. `Tilt` 0 aims straight down `-Y`; 45 aims down-and-forward.
+- **Aim tool:** drag to point the selected head at the cursor; Glowstone solves the `Pan` and `Tilt` for you. See [Pan, Tilt & Aiming](/docs/fixtures/movement).
+
+<Callout type="info">
+Use `Cmd`/`Ctrl`+click to toggle fixtures in a multi-selection, and `Shift`+click in the outliner to select a range. See [Selecting Objects](/docs/scene/selection).
+</Callout>
+</Step>
+
+<Step>
+### Raise the dimmer and light the haze
+
+In the Inspector's **Fixture** group, set the fixture's **Dimmer** (`0`–`1`) up toward `1.0`. The beam brightens and a volumetric shaft appears where it crosses the **Fog Box**.
+
+A few parameters shape what you see (Beam controls live under the group's **Advanced** disclosure):
+
+<TypeTable
+  type={{
+    Dimmer: { description: 'Master dimmer for the fixture.', type: '0–1', default: 'profile default' },
+    Beam: { description: 'Volumetric beam intensity multiplier (0 = off, 1 = normal). Scales the visible shaft and floor pool without touching the lens face.', type: '0–4', default: '1.0' },
+    Color: { description: 'Emitted beam colour (linear RGB).', type: 'RGB', default: 'profile default' },
+    'Beam angle': { description: 'Full cone angle (built-in fixtures only; GDTF heads drive it from Zoom).', type: '2–90°', default: 'profile default' },
+  }}
+/>
+
+If the shaft looks thin or invisible, the haze may be too light. Select the **Fog Box** in the outliner and raise its `Density` (default `0.03` is a light haze with visible beams; range `0`–`4`). See [Environments: Fog & Haze](/docs/scene/environment) and [Volumetric Beams & Haze](/docs/rendering/volumetrics).
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A single fixture at full intensity casting a sharp volumetric beam shaft down through the Fog Box onto the floor, with the Inspector on the right showing the Dimmer near maximum."
+/>
+
+<Callout type="warn">
+The volumetric beam uses per-pixel raymarching by default, which looks cleaner. The optional froxel volumetric grid is off by default and is not the recommended path.
+</Callout>
+</Step>
+
+<Step>
+### (Optional) Drive it from a console or record a cue
+
+Your fixture is lit and aimed. Two natural next moves:
+
+<Tabs items={['Patch & feed from a console', 'Record a cue']}>
+  <Tab value="Patch & feed from a console">
+Glowstone **receives** live DMX from a console over Art-Net or sACN; it never transmits DMX.
+
+1. Select the fixture and press `P` to open the **Patch** dialog. Set a starting **Universe** and **Address**, then confirm — selected fixtures are packed sequentially from there.
+2. Open the **Connectivity** tab. Art-Net and sACN are both enabled by default and the receiver starts automatically; leave the **Bind interface** at `0.0.0.0` and confirm the console appears in **Sources**.
+3. Fade the fixture on the console; the 3D fixture follows in real time.
+
+See [Patching Fixtures](/docs/dmx/patching) and [Connecting a Console](/docs/dmx/consoles).
+  </Tab>
+  <Tab value="Record a cue">
+Open the **Cues** tab and store the current state of all fixtures as a named cue. Recall cues later with a crossfade. See [Cues & Playback](/docs/cues).
+  </Tab>
+</Tabs>
+
+<Callout type="warn">
+Glowstone is input-only for DMX. It visualises what a console sends but never outputs or transmits DMX itself.
+</Callout>
+</Step>
+
+</Steps>
+
+## Frequently asked questions
+
+<Accordions type="single">
+  <Accordion title="My beam is invisible. What's wrong?">
+    Check three things: the fixture's `Dimmer` is above `0`, the fixture's `Beam` multiplier is above `0`, and the beam actually passes through the **Fog Box**. Volumetric shafts only render inside the haze volume, so a beam aimed outside the box shows just a floor pool.
+  </Accordion>
+  <Accordion title="Where did the demo scene come from?">
+    Every new project seeds a demo scene (one PAR Can, one Fog Box, over the world floor) so the beam engine and volumetrics are visible without importing anything. Delete or edit these freely.
+  </Accordion>
+  <Accordion title="Does my work save automatically?">
+    Save with `Cmd`/`Ctrl`+`S` to write a `.glow` project file (legacy `.archie` files still open). Glowstone also keeps a crash-recovery autosave, offered as **Recover Last Session** on the Welcome splash. See [Projects & the .glow Format](/docs/projects).
+  </Accordion>
+  <Accordion title="The fixture won't react to my console.">
+    Confirm the fixture is patched (`enabled`) at the universe and address the console is driving, that the matching protocol is enabled in **Connectivity**, and that the console appears in **Sources**. See [The DMX Monitor](/docs/dmx/dmx-monitor) to inspect live channel values.
+  </Accordion>
+</Accordions>
+
+## Next steps
+
+<Cards>
+  <Card icon={<LayoutDashboard />} title="Interface Overview" href="/docs/getting-started/interface-overview">
+    Tour the panels, docks, and menu bar.
+  </Card>
+  <Card icon={<Lightbulb />} title="Fixtures Overview" href="/docs/fixtures">
+    Understand the optical chain and every beam parameter.
+  </Card>
+  <Card icon={<Network />} title="DMX Overview" href="/docs/dmx">
+    Patch fixtures and connect a console for live playback.
+  </Card>
+  <Card icon={<Crosshair />} title="Pan, Tilt & Aiming" href="/docs/fixtures/movement">
+    Point moving heads precisely with the Aim tool.
+  </Card>
+  <Card icon={<MousePointerClick />} title="Adding Fixtures & Objects" href="/docs/scene/adding-objects">
+    Place fixtures, geometry, screens, and fog volumes.
+  </Card>
+</Cards>

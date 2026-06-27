@@ -1,0 +1,166 @@
+---
+title: "Look & Colour Management"
+description: "Global exposure, bloom, beam intensity, haze chroma and gobo sharpness in RenderSettings."
+---
+
+import { Sun, Sparkles, Zap, Droplets, ScanLine, Image, Wind } from 'lucide-react';
+
+The **look** is the set of global, image-wide controls that shape Glowstone's final picture: brightness, bloom, how colour survives in haze, and how crisp gobos read. These five sliders live in `RenderSettings` and are shared between the live viewport and the offline render, so what you tune on screen is exactly what the render produces.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The 3D viewport in Beauty mode showing several moving-head beams cutting through haze over a stage, with the viewport header Exposure control visible at the top and the World > Render Properties > Color Management section open in the Inspector on the right showing Exposure, Bloom, Beam intensity, Gobo sharpness and Chroma haze sliders."
+/>
+
+<Callout type="success" title="Preview equals render">
+The Color Management controls are shared by the viewport and the render engine. Every tweak previews instantly and carries straight into the rendered plate — no separate "render look" to keep in sync.
+</Callout>
+
+## The five look controls
+
+These are global multipliers applied across the whole image, not per-fixture settings. Per-fixture beam properties (colour, intensity, zoom) come from DMX and the [Beam Engine](/docs/fixtures/beam-engine); the controls below scale and grade the combined result.
+
+<TypeTable
+  type={{
+    Exposure: {
+      description: 'Linear brightness multiplier applied before bloom and tonemap — the master stop for the picture.',
+      type: '0.05–8.0',
+      default: '1.0',
+    },
+    Bloom: {
+      description: 'Intensity of the bloom pass — how much bright pixels glow and bleed. 0 = off, 1.0 = moderate glow. This is what sells light reading as "hot" in haze.',
+      type: '0–2.0',
+      default: '0.85',
+    },
+    'Beam intensity': {
+      description: 'Global scalar on volumetric scatter accumulation for every beam in fog. Higher = brighter, more visible shafts. Visual only — it does not change the raymarch step count, so there is no performance cost.',
+      type: '0–2000',
+      default: '650',
+    },
+    'Chroma haze': {
+      description: 'Helmholtz–Kohlrausch lift on saturated dim colours (blue, magenta, deep red) in haze, so they read as colour instead of flattening to grey or neon. White and pastel beams are untouched.',
+      type: '0–2.0',
+      default: '1.2',
+    },
+    'Gobo sharpness': {
+      description: 'Steepens the edge contour of floor-pool gobo projections. 0 = soft projection, higher = crisp, defined edges.',
+      type: '0–2.0',
+      default: '0.6',
+    },
+  }}
+/>
+
+<Callout type="info" title="Where the ranges differ">
+The table above lists the ranges from **World ▸ Render Properties ▸ Color Management**. The **Preferences ▸ Rendering** panel exposes wider safety ranges for three of these — Bloom up to `3.0`, Beam intensity up to `4000`, Chroma in haze up to `3.0` — giving you extra headroom for stylised looks. Exposure (`0.05–8.0`) and Gobo sharpen (`0–2.0`) are the same in both.
+</Callout>
+
+## What each control does perceptually
+
+<Cards>
+  <Card icon={<Sun />} title="Exposure">
+    The master brightness. Raise it for a washed, bright stage; lower it to let beams pop against a deep black. Because it is applied before tonemap, it changes which highlights clip and bloom.
+  </Card>
+  <Card icon={<Sparkles />} title="Bloom">
+    The glow halo around bright sources. A little reads as "real light energy" in fog; too much smears the whole frame. The default `0.85` is a moderate, photographic glow.
+  </Card>
+  <Card icon={<Zap />} title="Beam intensity">
+    How visible the shafts are in the air, independent of the surfaces they hit. Crank it for hero beam shots; pull it down for a subtle, atmospheric haze fill.
+  </Card>
+  <Card icon={<Droplets />} title="Chroma haze">
+    Keeps saturated dim colours alive in haze. Blues and deep reds normally desaturate in fog; this lifts their perceived colour without turning them neon.
+  </Card>
+  <Card icon={<ScanLine />} title="Gobo sharpness">
+    Controls how crisp floor-pool gobo edges look. Low values give a soft, diffuse projection; high values define the pattern's contour.
+  </Card>
+</Cards>
+
+### Good starting values
+
+Start from the defaults — they are tuned for a typical hazy theatrical look — then nudge.
+
+| Control | Default | Nudge up when… | Nudge down when… |
+| --- | --- | --- | --- |
+| Exposure | `1.0` | the stage looks dim or beams feel weak | highlights clip / the image is blown out |
+| Bloom | `0.85` | you want hotter, more dramatic glow | glow smears detail or fog looks milky |
+| Beam intensity | `650` | shafts are barely visible in the haze | beams overpower the scene |
+| Chroma haze | `1.2` | blues/reds wash out to grey in fog | colours look artificially neon |
+| Gobo sharpness | `0.6` | gobo patterns look mushy on the floor | edges look harsh or aliased |
+
+<Callout type="idea">
+Exposure and beam intensity overlap visually but serve different jobs. Use **exposure** to set the overall picture brightness first, then use **beam intensity** to balance how much the shafts read against the lit surfaces.
+</Callout>
+
+## Where to set them
+
+All three locations write to the same shared `RenderSettings`, so changing a value in one place updates it everywhere.
+
+<Steps>
+<Step>
+### Viewport header (Exposure)
+
+The fastest grab is the **Exposure** control in the viewport header. Use it to set the overall picture brightness while you frame a shot.
+</Step>
+<Step>
+### Preferences ▸ Rendering
+
+Open **Preferences** and expand the **Rendering** section for all five sliders (Exposure, Bloom, Beam intensity, Chroma in haze, Gobo sharpen) alongside the volumetric step and display-mode controls.
+</Step>
+<Step>
+### World ▸ Render Properties ▸ Color Management
+
+Select the **World** root node in the [Outliner](/docs/scene/outliner) to open **Render Properties** in the Inspector, then expand **Color Management**. These are the same sliders, grouped with the rest of the render setup so the look travels with the shot you are about to render.
+</Step>
+</Steps>
+
+<Callout type="warn" title="The look saves with the project, not as a global preference">
+The look lives in `RenderSettings`, which is serialized into the `.glow` project file — so saving your project keeps Exposure, Bloom, Beam intensity, Chroma haze and Gobo sharpness. The **Preferences** window's general settings, by contrast, are applied live each frame and are not yet written to disk. Treat the Render Properties values as the look that belongs to your scene and save the project to keep them.
+</Callout>
+
+## Low vs high beam intensity
+
+Beam intensity has the most dramatic, look-defining effect of the five. The comparison below shows the same rig and haze at two settings.
+
+<ImagePlaceholder
+  label="Comparison"
+  ratio="21 / 9"
+  caption="Side-by-side of the same stage scene with identical fixtures, haze density and exposure. Left: Beam intensity at a low value (~150) — beams are faint, barely-visible shafts. Right: Beam intensity at a high value (~1500) — the same beams are bright, solid volumetric shafts dominating the frame. Caption each side with its beam_intensity value."
+/>
+
+<Callout type="info">
+Beam intensity scales the scatter accumulation, so its visible effect depends on how much haze there is. With no haze there is nothing to scatter and the beams stay invisible regardless of this value — set [fog density](/docs/scene/environment) first.
+</Callout>
+
+## FAQ
+
+<Accordions type="single">
+  <Accordion title="Why are my colourful beams turning grey in haze?">
+    Raise **Chroma haze** to lift blues, magentas and deep reds back toward their intended colour. White and pastel beams are unaffected by this control.
+  </Accordion>
+  <Accordion title="My render looks different from the viewport — why?">
+    The look controls are shared, so exposure, bloom and grade always match. Any remaining difference comes from sampling and step count, not the look: the viewport runs at reduced scale and fewer samples for speed, while the render accumulates more. See [Rendering a Still Image](/docs/rendering/render-image) and [Performance & Quality Tuning](/docs/rendering/performance).
+  </Accordion>
+  <Accordion title="I raised exposure but the beams didn't get more visible.">
+    Exposure brightens the whole image, including surfaces. To make the shafts themselves read more strongly relative to everything else, raise **Beam intensity** instead, and confirm there is enough haze for the beams to scatter through.
+  </Accordion>
+  <Accordion title="Should I touch these for an LED-screen-heavy show?">
+    The same controls apply. Bloom and exposure affect screen content too. If wide washes need a perf boost, that is a separate decision — see the froxel note on the volumetrics page.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Wind />} title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    How beams scatter through the fog box, and the per-pixel raymarch that the look controls grade.
+  </Card>
+  <Card icon={<Image />} title="Rendering a Still Image" href="/docs/rendering/render-image">
+    Take the graded viewport look to a saved PNG, JPEG or OpenEXR plate.
+  </Card>
+  <Card icon={<ScanLine />} title="Performance & Quality Tuning" href="/docs/rendering/performance">
+    Steps, samples, shadow maps and render scale — the quality levers that sit alongside the look.
+  </Card>
+  <Card icon={<Droplets />} title="Environments: Fog & Haze" href="/docs/scene/environment">
+    Set fog density and character so the look controls have something to grade.
+  </Card>
+</Cards>

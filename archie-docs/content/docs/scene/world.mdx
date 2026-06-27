@@ -1,0 +1,144 @@
+---
+title: "World: Sky & Ambient"
+description: "HDRI sky background plus image-based ambient fill, with one World node per scene."
+---
+
+import { Image, Sun, SlidersHorizontal, Film, Compass } from 'lucide-react';
+
+The **World** node holds a single equirectangular HDRI that does two jobs at once: it paints the sky background behind your set and lights every surface with image-based ambient fill. There is one World per scene, and it lives at the top of the [Scene Outliner](/docs/scene/outliner).
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A stage scene rendered with an HDRI sky: a moving-head rig on truss against a sunset equirectangular background, the set surfaces picking up warm ambient fill from the map. The World node is selected at the top of the Scene Outliner on the left, and the Inspector on the right shows the World HDRI controls (Brightness, Ambient, Rotation, Background) above the Render Properties panel."
+/>
+
+## What the World does
+
+<Cards>
+  <Card icon={<Image />} title="Sky background">
+    With `show_background` on, the HDRI is drawn behind the scene as the visible sky.
+  </Card>
+  <Card icon={<Sun />} title="Ambient lighting">
+    The same map provides image-based fill on geometry, so surfaces are never pure black.
+  </Card>
+</Cards>
+
+The World is the only source of ambient image-based light. It does not output DMX or replace your fixtures — it complements them with a backdrop and soft fill.
+
+## Selecting the World
+
+Click the **World** row at the top of the Scene Outliner to select it. The World is a single-only selection: choosing it clears any other selection (fixtures, objects, screens, pyro or environment), and selecting any of those clears the World.
+
+<Callout type="info">
+With the World selected, the Inspector also shows the **Render Properties** panel. The World's `Brightness`, `Ambient`, `Rotation` and `Background` controls are mirrored there in the **World** section alongside the rest of the render look. See [Rendering Overview](/docs/rendering) for the full panel.
+</Callout>
+
+## Loading an HDRI
+
+<Steps>
+<Step>
+### Select the World
+Click the **World** node in the Scene Outliner.
+</Step>
+<Step>
+### Load the map
+Choose an equirectangular HDRI file. Supported formats are `.hdr` (Radiance HDR), `.exr` (OpenEXR), `.png`, and `.jpg`.
+</Step>
+<Step>
+### Shape the look
+Adjust `brightness` and `ambient` for overall level, and `rotation` to spin the sky and its lighting to the angle you want.
+</Step>
+</Steps>
+
+<Callout type="idea">
+Use a true HDR format (`.hdr` or `.exr`) when you want a bright sun or sky that still reads after exposure and bloom. LDR `.png`/`.jpg` maps work for a flat backdrop but carry less highlight energy.
+</Callout>
+
+## Parameters
+
+<TypeTable
+  type={{
+    brightness: {
+      description: 'Overall multiplier on the environment (sky background and ambient contribution together).',
+      type: '0.0–4.0',
+      default: '1.0',
+    },
+    ambient: {
+      description: 'How strongly the map illuminates geometry as image-based diffuse fill.',
+      type: '0.0–2.0',
+      default: '1.0',
+    },
+    rotation: {
+      description: 'Azimuth rotation of the environment about the vertical (Y) axis. Turns the sky and its lighting together.',
+      type: '0–2π rad',
+      default: '0',
+    },
+    show_background: {
+      description: 'Draw the map as the visible sky. Off uses the HDRI for lighting only, leaving a dark void behind the set.',
+      type: 'on / off',
+      default: 'on',
+    },
+  }}
+/>
+
+<Callout type="info" title="Lighting without a sky">
+Turn `show_background` off when you want the ambient fill from the HDRI but a clean dark background — useful for isolated render plates while keeping natural fill on the set.
+</Callout>
+
+## How the HDRI is loaded
+
+The map is decoded on the CPU and uploaded as a 16-bit float texture (`Rgba16Float`) so it carries bright highlights without clipping. A few limits shape what to feed it:
+
+<TypeTable
+  type={{
+    'Max width': {
+      description: 'Maps are capped at 1024 px wide. Wider maps are resampled down with the source aspect ratio preserved.',
+      type: 'pixels',
+      default: '1024',
+    },
+    'Mip chain': {
+      description: 'Box-filtered mips are built from full resolution down, giving a sharp sky and softer blurred fill for ambient lighting.',
+      type: 'CPU mips',
+      default: '—',
+    },
+    Wrapping: {
+      description: 'The horizontal (azimuth) axis wraps so rotation is seamless; the vertical axis clamps at the poles. Trilinear mip filtering.',
+      type: 'U wrap / V clamp',
+      default: '—',
+    },
+  }}
+/>
+
+<Callout type="warn">
+There is no benefit to importing maps wider than `1024` px — anything larger is downsampled on load. Resize wide panoramas to roughly that width before importing to avoid wasted decode time.
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="Why is the background dark even though I loaded an HDRI?">
+    Check that `show_background` is on. With it off, the map still lights the scene but is not drawn as the sky, leaving a dark void. Also confirm `brightness` is above 0.
+  </Accordion>
+  <Accordion title="What happens before any HDRI is loaded?">
+    With no map loaded, the World uses a flat placeholder and provides no image-based fill. Load a map to get both sky and ambient lighting.
+  </Accordion>
+  <Accordion title="Does the World replace my fixtures or the fog volume?">
+    No. The World only adds sky and ambient fill. Fixtures still light the scene, and the haze that makes beams visible comes from an Environment volume — see Environments below.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<SlidersHorizontal />} title="Rendering Overview" href="/docs/rendering">
+    The Render Properties panel shown when the World is selected, including the shared World controls.
+  </Card>
+  <Card icon={<Film />} title="Look & Colour Management" href="/docs/rendering/look">
+    Exposure, bloom and tonemapping that shape how the HDRI reads in the final image.
+  </Card>
+  <Card icon={<Compass />} title="Environments: Fog & Haze" href="/docs/scene/environment">
+    Add a fog volume so beams scatter and become visible in the air.
+  </Card>
+  <Card icon={<Sun />} title="The Scene Outliner" href="/docs/scene/outliner">
+    Where the World node lives and how to select it.
+  </Card>
+</Cards>

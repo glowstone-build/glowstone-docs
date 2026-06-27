@@ -1,0 +1,209 @@
+---
+title: "Connectivity: Art-Net & sACN"
+description: "Receive Art-Net and sACN, set the merge policy, and monitor live sources."
+---
+
+import { Radio, Network, Activity, SlidersHorizontal, Plug, Table2 } from 'lucide-react';
+
+The **Connectivity** panel binds Glowstone to your lighting network to receive live DMX from a console. Glowstone is **input-only**: it listens for Art-Net or sACN and never outputs, transmits, or replies.
+
+<ImagePlaceholder
+  label="UI panel"
+  ratio="16 / 9"
+  caption="The Connectivity tab docked at the bottom of the Glowstone window: Receive DMX toggle checked with a status dot reading 'Art-Net + sACN · 2 source(s)', the Protocols row with Art-Net and sACN both ticked, Bind interface 0.0.0.0, sACN universes field reading '1,2,5-8', the Merge selector set to Priority + HTP, Art-Net priority 100, and a Reapply button. Below, the SOURCES table lists two live sources — one Art-Net (green FPS) and one sACN (name plus CID prefix shown)."
+/>
+
+## How input works
+
+A single background thread binds UDP sockets, receives packets, merges them per universe, and publishes the result to the renderer. The [patch table](/docs/dmx/patching) then maps each fixture to a universe and address, decoding the merged values every frame to drive fixture optics.
+
+The receiver starts automatically on the first interactive frame, so in typical use you do not need to start anything by hand. Open the panel from the **Connectivity** tab at the bottom of the window. When running, the **Receive DMX** toggle shows a status dot with the bound protocols and source count (e.g. `Art-Net + sACN · 2 source(s)`); when stopped it reads `stopped`.
+
+## Protocols
+
+Glowstone speaks two industry protocols. Both can run at the same time, and their data merges according to your [merge policy](#merge-policy).
+
+<Tabs items={['Art-Net', 'sACN / E1.31']}>
+  <Tab value="Art-Net">
+    - **Port**: UDP `6454`
+    - **Transport**: broadcast — Glowstone accepts **all** Art-Net universes regardless of the universe list.
+    - **Addressing**: Art-Net Port-Addresses map to **1-based** universe numbers (Art-Net port 0 → universe `1`).
+    - **Priority**: the protocol carries no per-source priority, so Glowstone assigns every Art-Net source a fixed [Art-Net priority](#art-net-priority).
+    - **Loss detection**: from the packet sequence number (`0`–`255`). A sequence of `0` disables loss counting.
+    - `ArtPoll` packets are recognised but never answered (input-only).
+  </Tab>
+  <Tab value="sACN / E1.31">
+    - **Port**: UDP `5568` (ANSI E1.31-2018)
+    - **Transport**: multicast — Glowstone joins one group **per subscribed universe** (group `239.255.{hi}.{lo}`).
+    - **Addressing**: natively 1-based (universe `1` = `239.255.0.1`).
+    - **Priority**: each packet carries its own priority (`0`–`200`).
+    - **Identity**: a source is tracked by its CID (a stable UUID), not its IP address.
+    - Only the standard DMX start code (`0x00`) is accepted. Preview and stream-terminated flags are honoured.
+
+    <Callout type="info">sACN is multicast, so Glowstone only receives a universe whose group it has explicitly joined. List every sACN universe you want — an empty list joins no groups (the socket still binds the port, but the OS delivers no multicast traffic).</Callout>
+  </Tab>
+</Tabs>
+
+<Callout type="idea">Art-Net and sACN can coexist on the same NIC as the console, and multiple Glowstone instances can listen on one host. Sockets use `SO_REUSEADDR` / `SO_REUSEPORT` so nothing blocks the port.</Callout>
+
+## Settings
+
+<TypeTable
+  type={{
+    'Receive DMX': {
+      description: 'Checkbox that starts or stops the background receiver thread. When running, the adjacent status dot shows the bound protocols and source count; when stopped it reads "stopped".',
+      type: 'checkbox',
+      default: 'on (auto-started)',
+    },
+    'Protocols': {
+      description: 'A row of two checkboxes — Art-Net (UDP 6454) and sACN (UDP 5568). Toggling either requires Reapply to (re)bind.',
+      type: 'checkboxes',
+      default: 'both on',
+    },
+    'Bind interface': {
+      description: 'Which NIC the UDP sockets listen on. 0.0.0.0 binds all interfaces (recommended). Invalid text turns red and is ignored until valid. Requires Reapply.',
+      type: 'IPv4',
+      default: '0.0.0.0',
+    },
+    'sACN universes': {
+      description: 'sACN multicast groups to join. Comma/space separated with ranges (e.g. 1,2,5-8). An empty list joins no groups, so list every sACN universe you want. Art-Net is broadcast and ignores this. Applies live.',
+      type: 'list',
+      default: '1',
+    },
+    'Merge': {
+      description: 'How overlapping sources combine per channel, picked from three selectable buttons. Applies live.',
+      type: 'Priority + HTP / HTP / Latest',
+      default: 'Priority + HTP',
+    },
+    'Art-Net priority': {
+      description: 'Fixed priority assigned to every Art-Net source. Lets Art-Net win or lose a priority merge against sACN. Applies live.',
+      type: '0–200',
+      default: '100',
+    },
+  }}
+/>
+
+<Callout type="info" title="Universe list format">The list expands ranges automatically (`5-8` becomes `5, 6, 7, 8`), de-duplicates, and sorts. Patch and bulk fields clamp universes to `1`–`63999`, matching the sACN multicast range.</Callout>
+
+### Merge policy
+
+When more than one source sends the same universe, the merge policy decides which values reach the renderer.
+
+<TypeTable
+  type={{
+    'Priority + HTP': {
+      description: 'Only the highest-priority source(s) contribute; among equal priorities, the highest value wins each channel (Highest Takes Precedence).',
+      type: 'default',
+    },
+    'HTP': {
+      description: 'Priority is ignored. The highest value across all sources wins each channel.',
+      type: '',
+    },
+    'Latest': {
+      description: 'The most recently updated source wins the entire universe. Older sources are discarded.',
+      type: '',
+    },
+  }}
+/>
+
+### Art-Net priority
+
+Because Art-Net packets carry no priority, Glowstone stamps a single fixed value (`0`–`200`, default `100`) onto every Art-Net source. Lower it below a console's sACN priority to let sACN win a [Priority + HTP](#merge-policy) merge, or raise it to let Art-Net win.
+
+### Reapply
+
+Some settings re-bind sockets and so are **deferred** until you press **Reapply**, which stops and restarts the receiver. The button is only enabled while the receiver is running.
+
+<Callout type="warn" title="Which changes need Reapply">Changing the **protocols** (Art-Net/sACN) or the **bind interface** requires pressing **Reapply** to take effect. The **universe list**, **merge policy**, and **Art-Net priority** all apply live.</Callout>
+
+## Monitoring live sources
+
+The **Sources** table lists every source currently sending packets, with one row per source.
+
+<TypeTable
+  type={{
+    Proto: { description: 'Protocol: Art-Net or sACN.', type: '' },
+    Source: { description: 'ip:port for Art-Net; for sACN the source name with the CID hex prefix in parentheses (just the CID prefix if no name was sent).', type: '' },
+    Universes: { description: 'Sorted list of universes this source has sent, e.g. 1-3, 5.', type: '' },
+    Prio: { description: 'Source priority — fixed for Art-Net, per-packet for sACN.', type: '0–200' },
+    FPS: { description: 'Smoothed packets per second (exponential moving average).', type: 'Hz' },
+    Lost: { description: 'Cumulative packet-loss count from sequence gaps (wrap-aware).', type: 'count' },
+    Seen: { description: 'Seconds since the last packet from this source.', type: 's' },
+  }}
+/>
+
+The **FPS** column is colour-tiered so you can read network health at a glance:
+
+| FPS | Colour | Meaning |
+| --- | --- | --- |
+| ≥ 30 Hz | Green | Healthy |
+| 10–30 Hz | Yellow | Marginal |
+| Below 10 Hz | Red | Conflict / lossy |
+
+<Callout type="info">A source idle for more than **2.5 s** is dropped from the merge and removed from the table.</Callout>
+
+## Connect a console
+
+<Steps>
+<Step>
+### Output from the console
+On the console, enable Art-Net or sACN output and point it at the universe and network interface you want Glowstone to receive. See [Connecting a Console](/docs/dmx/consoles) for grandMA3 and MagicQ walkthroughs.
+</Step>
+<Step>
+### Match the protocol in Glowstone
+In the Connectivity panel, tick **Art-Net** or **sACN** to match the console, leave **Bind interface** at `0.0.0.0`, and press **Reapply**.
+</Step>
+<Step>
+### Subscribe the universe (sACN only)
+For sACN, add the console's universe to the **sACN universes** list — sACN is multicast, so an unlisted universe is never joined. Art-Net needs no subscription.
+</Step>
+<Step>
+### Confirm the source
+Watch the **Sources** table — the console should appear with green FPS and its universe list. If nothing shows, see [Troubleshooting](#troubleshooting).
+</Step>
+<Step>
+### Patch and play
+Patch fixtures to matching addresses in the [patch table](/docs/dmx/patching) or the **Fixture Manager** — select fixtures and use **Patch seq** to assign them sequentially from a starting universe/address by footprint. As the console fades the rig, the 3D fixtures update live.
+</Step>
+</Steps>
+
+<Callout type="success">Once a green source is listed and fixtures are patched, the [DMX Monitor](/docs/dmx/dmx-monitor) shows live channel levels and the viewport reacts in real time.</Callout>
+
+## Troubleshooting
+
+<Accordions type="single">
+  <Accordion title="No sources appear in the table">
+    - Confirm the console's Art-Net/sACN output is enabled and aimed at the right universe and IP.
+    - Check firewall rules for UDP `6454` (Art-Net) and `5568` (sACN).
+    - If Glowstone and the console are on different NICs, set **Bind interface** to `0.0.0.0` and press **Reapply**.
+    - For sACN, verify the console's universe is in your subscription list — sACN is multicast, so unlisted universes are never joined.
+  </Accordion>
+  <Accordion title="The Lost column keeps climbing">
+    Packet loss comes from sequence gaps, usually network congestion. Check the **FPS** column: a value below 30 Hz suggests the console is throttling or the link is lossy. If two sources are fighting for the same universe, review the [merge policy](#merge-policy).
+  </Accordion>
+  <Accordion title="The wrong universe is coming through (or none)">
+    - For sACN, the **sACN universes** list must include the console's universe; ranges like `5-8` expand automatically.
+    - Art-Net accepts every universe regardless of the list — if it still seems wrong, confirm the console's Art-Net Port-Address maps to the 1-based universe you expect (Art-Net port 0 → universe `1`).
+    - After editing protocols or the bind interface, press **Reapply**.
+  </Accordion>
+  <Accordion title="Sources are listed but fixtures do not move">
+    The source is arriving but the [patch](/docs/dmx/patching) may not match. Verify each fixture is enabled and its universe/address line up with the console's rig, and confirm the GDTF mode footprint is correct.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Plug />} title="Connecting a Console" href="/docs/dmx/consoles">
+    Step-by-step setup for grandMA3 and MagicQ.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Patching Fixtures" href="/docs/dmx/patching">
+    Assign universes and addresses to your fixtures.
+  </Card>
+  <Card icon={<Table2 />} title="The DMX Monitor" href="/docs/dmx/dmx-monitor">
+    Watch live per-universe channel levels.
+  </Card>
+  <Card icon={<Network />} title="DMX Overview" href="/docs/dmx">
+    How the whole DMX pipeline fits together.
+  </Card>
+</Cards>

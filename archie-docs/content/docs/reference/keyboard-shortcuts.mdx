@@ -1,0 +1,424 @@
+---
+title: "Keyboard Shortcuts"
+description: "Every default keyboard and mouse binding, grouped by context."
+---
+
+import { Keyboard, MousePointer2, SlidersHorizontal, Search, BookMarked } from 'lucide-react';
+
+Every action in Glowstone lives in a single command registry and is dispatched through a keymap. This page lists every default binding, grouped by the context it fires in.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The in-app Keyboard Shortcuts cheat sheet (Window menu) open over the 3D Viewport, showing commands grouped by category with their current bindings on the right."
+/>
+
+## How shortcuts are resolved
+
+Keymaps are organised into three contexts. When the same key is bound in more than one context, dispatch is **first-match-wins** in priority order:
+
+<Steps>
+<Step>
+### Modal (highest priority)
+Active only while a `G` / `R` / `S` transform is in progress. Only the axis-lock keys (`X` / `Y` / `Z`) and the hardcoded confirm/cancel keys fire. Global and Viewport bindings are suppressed, so `A` (Select all) or `S` (Quick-select) cannot fire mid-grab.
+</Step>
+<Step>
+### Viewport
+Active when the 3D Viewport is the focused panel. Masks Global bindings on the same key — for example `S` is **Scale** here, not Quick-select.
+</Step>
+<Step>
+### Global (lowest priority)
+Always active unless a text field is editing. Used when no more specific context matches.
+</Step>
+</Steps>
+
+<Callout type="info" title="A few things to keep in mind">
+- `Cmd` on macOS = `Ctrl` on Windows/Linux. Shortcuts below are written as `Cmd`/`Ctrl`.
+- Shortcuts do **not** fire while a text field, search box, or numeric input is actively editing.
+- Some keys are context-dependent: `S` = Quick-select (Global) or Scale (Viewport); `Z` = Shading pie (Viewport) or axis lock (Modal).
+</Callout>
+
+<Callout type="idea">
+Every binding here is rebindable, can be disabled, or extended with your own. See [Preferences & Theme](/docs/interface/preferences) for the Keymap editor; custom bindings persist to `keymap.json`.
+</Callout>
+
+## Mouse — viewport navigation & selection
+
+### Navigation
+
+| Interaction | Action |
+| --- | --- |
+| `Drag` | Orbit — rotate the view around its centre |
+| `Shift`+`Drag` | Pan — move the view horizontally/vertically |
+| `Scroll` | Zoom — dolly in/out |
+| `Shift`+`Right-click` | Place the [3D cursor](/docs/scene/transforming) at the ray-hit point |
+
+<Callout type="info">
+`Shift`+`Right-click` consumes the click: the context menu does **not** open and selection does **not** fire.
+</Callout>
+
+### Selection
+
+| Interaction | Action |
+| --- | --- |
+| `Click` | Select — pick the object under the cursor |
+| `Cmd`/`Ctrl`+`Click` | Toggle — add/remove from selection |
+| `Shift`+`Click` | Range select — from the last pick to the current one |
+| `Click`+`Drag` | Range box — drag a box to select multiple |
+
+### Library & outliner
+
+| Interaction | Action |
+| --- | --- |
+| `Drag` Library row | Drag a fixture from the [Library](/docs/library) panel into the viewport |
+| Release `Drag` over viewport | Add the fixture at the cursor position |
+| `Double-click` tree row | Rename — enter inline rename in the [Outliner](/docs/scene/outliner) |
+
+## Navigation & framing
+
+| Shortcut | Action |
+| --- | --- |
+| `F` | Frame selection |
+| `Shift`+`F` | Frame all |
+| `.` (period) | Frame selection (alias) |
+| `Home` | Frame all (alias) |
+| `L` | Toggle fixture labels |
+
+See [Views, Gizmo & Pie Menus](/docs/navigation/views) for the full navigation model.
+
+## Numpad views & orbit
+
+Blender-style orthographic snaps and stepped orbit. Hold `Cmd`/`Ctrl` to snap to the opposite view.
+
+### Camera views (Viewport)
+
+| Shortcut | Action |
+| --- | --- |
+| `Numpad 1` | Front view |
+| `Cmd`/`Ctrl`+`Numpad 1` | Back view |
+| `Numpad 3` | Right view |
+| `Cmd`/`Ctrl`+`Numpad 3` | Left view |
+| `Numpad 7` | Top view |
+| `Cmd`/`Ctrl`+`Numpad 7` | Bottom view |
+| `Numpad 5` | Toggle orthographic / perspective |
+
+### Stepped orbit (Viewport)
+
+Each press orbits the camera by 15°.
+
+| Shortcut | Action |
+| --- | --- |
+| `Numpad 8` | Orbit up (+15° pitch) |
+| `Numpad 2` | Orbit down (−15° pitch) |
+| `Numpad 4` | Orbit left (−15° yaw) |
+| `Numpad 6` | Orbit right (+15° yaw) |
+
+## Pie menus
+
+| Shortcut | Action |
+| --- | --- |
+| `` ` `` (backtick) | View pie — radial camera-view menu at the cursor |
+| `Z` | Shading pie — display modes, grid and stats toggles |
+
+The shading pie offers **Beauty**, **Unlit** and **Wireframe** display modes plus quick grid/stats toggles. See [Display Modes & Overlays](/docs/navigation/overlays).
+
+<Callout type="info">
+`Z` opens the shading pie in the Viewport, but during a `G`/`R`/`S` transform the same key locks the transform to the Z axis.
+</Callout>
+
+## Camera bookmarks
+
+Camera (view) bookmarks store up to nine numbered camera poses (slots 1–9). They are distinct from [Cues](/docs/cues), which store fixture looks, and they persist to `bookmarks.json`.
+
+| Shortcut | Action |
+| --- | --- |
+| (no default key) | Recall view bookmark N (eased transition) |
+| (no default key) | Save current camera pose to the next free slot |
+
+Recall and save commands ship without a default key — run them from the [Commands palette](/docs/interface/commands) / Window menu, or bind a key in the Keymap editor.
+
+See [Camera Bookmarks](/docs/navigation/bookmarks) for details.
+
+## Panel toggles
+
+| Shortcut | Action |
+| --- | --- |
+| `N` | Toggle the N-panel (Item/Transform sidebar) |
+| `T` | Toggle the T-panel (tool rail) |
+
+### Overlay toggles
+
+The following live in the Overlays submenu and have no default key, but can be bound in the Keymap editor.
+
+| Action |
+| --- |
+| Toggle scene statistics (corner HUD) |
+| Toggle grid + world axes |
+| Toggle navigation gizmo |
+| Toggle transform hint line |
+
+## Selection
+
+| Shortcut | Action |
+| --- | --- |
+| `A` | Select all |
+| `Alt`+`A` | Deselect all (none) |
+| `Esc` | Deselect all (also cancels the active tool or modal op) |
+| `Cmd`/`Ctrl`+`I` | Invert selection |
+| `S` | Quick-select menu (Global context only) |
+| `Shift`+`R` | Replace selected fixtures |
+
+The Quick-select palette (`S` when the viewport is not focused) offers `A` all, `T` same type, `M` same maker, `I` invert, `N` none. See [Selecting Objects](/docs/scene/selection).
+
+<Callout type="warn">
+`S` only opens Quick-select when the viewport is **not** focused. With the viewport focused, `S` enters Scale instead.
+</Callout>
+
+## Transform
+
+Modal transforms run live in the Viewport. Type a number during the grab to set an exact amount (distance for Move, degrees for Rotate, factor for Scale).
+
+### Enter a transform (Viewport)
+
+| Shortcut | Action |
+| --- | --- |
+| `G` | Move (grab) |
+| `R` | Rotate |
+| `S` | Scale |
+
+### Axis lock (Modal — only during a transform)
+
+| Shortcut | Action |
+| --- | --- |
+| `X` | Lock to X axis |
+| `Y` | Lock to Y axis |
+| `Z` | Lock to Z axis (height) |
+
+### Confirm / cancel (Modal)
+
+| Shortcut | Action |
+| --- | --- |
+| `Enter` | Confirm the transform |
+| `Space` | Confirm (alternative) |
+| `Esc` | Cancel and revert |
+| `Right-click` | Cancel and revert |
+
+<Callout type="info">
+`Space` confirms during a transform; everywhere else it opens the operator search. The dispatcher suppresses operator search while a transform is active so `Space` is free to confirm.
+</Callout>
+
+See [Moving, Rotating & Scaling](/docs/scene/transforming).
+
+## Nudge
+
+Arrow keys move the selection in fixed world-space steps: a plain press = 0.1 m, with `Shift` = 1.0 m. Bursts within 600 ms coalesce into one undo step. Nudge only fires while the 3D Viewport is focused, something is selected, and no transform is in progress.
+
+| Shortcut | Step | Action |
+| --- | --- | --- |
+| `Left Arrow` | 0.1 m | Nudge −X |
+| `Right Arrow` | 0.1 m | Nudge +X |
+| `Up Arrow` | 0.1 m | Nudge −Z |
+| `Down Arrow` | 0.1 m | Nudge +Z |
+| `PageUp` | 0.1 m | Nudge +height (Y up) |
+| `PageDown` | 0.1 m | Nudge −height (Y down) |
+| `Shift`+`Left Arrow` | 1.0 m | Nudge −X |
+| `Shift`+`Right Arrow` | 1.0 m | Nudge +X |
+| `Shift`+`Up Arrow` | 1.0 m | Nudge −Z |
+| `Shift`+`Down Arrow` | 1.0 m | Nudge +Z |
+| `Shift`+`PageUp` | 1.0 m | Nudge +height |
+| `Shift`+`PageDown` | 1.0 m | Nudge −height |
+
+## 3D cursor
+
+The 3D cursor is a movable world point used as the transform pivot (when Pivot Mode is **Cursor 3D**) and as the placement origin for new fixtures.
+
+| Shortcut | Action |
+| --- | --- |
+| `Shift`+`Right-click` | Place the 3D cursor at the ray-hit point |
+| (no default key) | Snap cursor to the selection's median point |
+| (no default key) | Reset cursor to the world origin (0, 0, 0) |
+
+## Add
+
+| Shortcut | Action |
+| --- | --- |
+| `Shift`+`A` | Open the Add menu at the cursor |
+
+The Add menu has Fixtures / Screens / Environment tabs. Navigate with `Arrow Up`/`Down`, switch tabs with `Arrow Left`/`Right`, `Enter` to add, `Esc` to dismiss. See [Adding Fixtures & Objects](/docs/scene/adding-objects).
+
+## Object & edit
+
+### Duplicate
+
+| Shortcut | Action |
+| --- | --- |
+| `D` | Duplicate / Array… (opens the Array dialog) |
+| `Shift`+`D` | Duplicate & grab — duplicate and enter Move immediately |
+
+With **Duplicate & grab**, copies follow the mouse, typing a number sets the array clone count, `Enter`/click confirms, and `Esc` cancels. See [Duplicate & Array](/docs/scene/duplicate-array).
+
+### Patch (DMX)
+
+| Shortcut | Action |
+| --- | --- |
+| `P` | Patch selected fixtures (opens the Patch dialog) |
+| `U` | Unpatch selected fixtures (runs immediately) |
+| `Cmd`/`Ctrl`+`Shift`+`R` | Renumber sequence by position (rows then columns; all fixtures if none selected) |
+
+Renumber assigns each fixture's [sequence number](/docs/fixtures) by stage position. See [Patching Fixtures](/docs/dmx/patching).
+
+### Delete
+
+| Shortcut | Action |
+| --- | --- |
+| `Delete` | Delete selected |
+| `Backspace` | Delete selected (alias) |
+
+### Undo / redo
+
+| Shortcut | Action |
+| --- | --- |
+| `Cmd`/`Ctrl`+`Z` | Undo |
+| `Cmd`/`Ctrl`+`Shift`+`Z` | Redo |
+| `Cmd`/`Ctrl`+`Y` | Redo (alias) |
+
+### Command search & last operation
+
+| Shortcut | Action |
+| --- | --- |
+| `F3` | Operator search (command palette) |
+| `Space` | Operator search (Global; suppressed during a transform) |
+| `F9` | Adjust last operation — re-invoke with its dialog |
+
+See [Commands & Operator Search](/docs/interface/commands).
+
+## File
+
+| Shortcut | Action |
+| --- | --- |
+| `Cmd`/`Ctrl`+`S` | Save project (`.glow`) |
+| `Cmd`/`Ctrl`+`Shift`+`S` | Save project as… |
+| `Cmd`/`Ctrl`+`O` | Open project (`.glow`; legacy `.archie` files still open) |
+| `Cmd`/`Ctrl`+`N` | New project |
+
+See [Projects & the .glow Format](/docs/projects).
+
+## App
+
+| Shortcut | Action |
+| --- | --- |
+| `Cmd`/`Ctrl`+`,` | Open Preferences |
+| (no default key) | Report Log — show notification history |
+| (no default key) | Welcome Screen — re-open the welcome / recovery splash |
+
+Workspaces 1–9 and "Save current as workspace…" are available from the [Commands palette](/docs/interface/commands) and have no default key.
+
+## Rebinding shortcuts
+
+<Steps>
+<Step>
+### Open the Keymap editor
+Press `Cmd`/`Ctrl`+`,` to open [Preferences](/docs/interface/preferences) and switch to the Keymap section.
+</Step>
+<Step>
+### Rebind, disable or add
+Assign a command to a new trigger, disable a default, or add a brand-new binding in any context. Conflicts are detected and flagged before you save.
+</Step>
+<Step>
+### Saved automatically
+Every change persists immediately to `keymap.json`. A missing or corrupt file falls back to the shipped defaults.
+</Step>
+</Steps>
+
+<Accordions type="single">
+  <Accordion title="Why isn't my shortcut firing?">
+    A text field is probably focused. While any search box, name input, or numeric field is editing, all shortcuts are suppressed so your keystrokes go into the field. Click elsewhere or press `Esc`, then try again.
+  </Accordion>
+  <Accordion title="Why does S do two different things?">
+    Context. With the 3D Viewport focused, `S` enters Scale; otherwise it opens the Quick-select menu. The same context rule makes `Z` either the shading pie or, during a transform, the Z-axis lock.
+  </Accordion>
+  <Accordion title="Where do operator-only commands live?">
+    Modal-only actions (`G`/`R`/`S`, axis lock, Camera view) and `kmi.*` keymap twins are not listed in the `F3` palette because they need live viewport state or would duplicate a canonical entry. Everything else is searchable in operator search.
+  </Accordion>
+</Accordions>
+
+## All default bindings
+
+A compact summary of every default key. A dash means the key is unbound in that context.
+
+| Key | Global | Viewport | Modal |
+| --- | --- | --- | --- |
+| `A` | Select all | — | — |
+| `Alt`+`A` | Deselect | — | — |
+| `Shift`+`A` | — | Add menu | — |
+| `D` | — | Duplicate / Array | — |
+| `Shift`+`D` | — | Duplicate & grab | — |
+| `Delete` | Delete | — | — |
+| `Backspace` | Delete (alias) | — | — |
+| `Esc` | Deselect | — | Cancel |
+| `Enter` | — | — | Confirm |
+| `Space` | Operator search | — | Confirm |
+| `F` | Frame selection | — | — |
+| `Shift`+`F` | Frame all | — | — |
+| `.` | Frame selection (alias) | — | — |
+| `Home` | Frame all (alias) | — | — |
+| `L` | Toggle labels | — | — |
+| `G` | — | Move | — |
+| `R` | — | Rotate | — |
+| `Shift`+`R` | Replace select | — | — |
+| `Shift`+`R` | Replace select | — | — |
+| `Cmd`/`Ctrl`+`Shift`+`R` | Renumber sequence | — | — |
+| `S` | Quick-select | Scale | — |
+| `N` | — | Toggle N-panel | — |
+| `T` | — | Toggle T-panel | — |
+| `P` | Patch | — | — |
+| `U` | Unpatch | — | — |
+| `X` | — | — | Lock X |
+| `Y` | — | — | Lock Y |
+| `Z` | — | Shading pie | Lock Z |
+| `` ` `` | — | View pie | — |
+| `Cmd`/`Ctrl`+`I` | Invert select | — | — |
+| `Cmd`/`Ctrl`+`Z` | Undo | — | — |
+| `Cmd`/`Ctrl`+`Shift`+`Z` | Redo | — | — |
+| `Cmd`/`Ctrl`+`Y` | Redo (alias) | — | — |
+| `Cmd`/`Ctrl`+`S` | Save | — | — |
+| `Cmd`/`Ctrl`+`Shift`+`S` | Save as | — | — |
+| `Cmd`/`Ctrl`+`O` | Open | — | — |
+| `Cmd`/`Ctrl`+`N` | New | — | — |
+| `Cmd`/`Ctrl`+`,` | Preferences | — | — |
+| `F3` | Operator search | — | — |
+| `F9` | Adjust last | — | — |
+| `Numpad 1` | — | Front view | — |
+| `Cmd`/`Ctrl`+`Numpad 1` | — | Back view | — |
+| `Numpad 2` | — | Orbit down | — |
+| `Numpad 3` | — | Right view | — |
+| `Cmd`/`Ctrl`+`Numpad 3` | — | Left view | — |
+| `Numpad 4` | — | Orbit left | — |
+| `Numpad 5` | — | Toggle ortho | — |
+| `Numpad 6` | — | Orbit right | — |
+| `Numpad 7` | — | Top view | — |
+| `Cmd`/`Ctrl`+`Numpad 7` | — | Bottom view | — |
+| `Numpad 8` | — | Orbit up | — |
+| `Left`/`Right`/`Up`/`Down Arrow` | Nudge (0.1 m) | — | — |
+| `Shift`+Arrows | Nudge (1.0 m) | — | — |
+| `PageUp`/`PageDown` | Nudge ±height | — | — |
+
+## See also
+
+<Cards>
+  <Card icon={<Search />} title="Commands & Operator Search" href="/docs/interface/commands">
+    Run any command by name with F3, and repeat the last op with F9.
+  </Card>
+  <Card icon={<Keyboard />} title="Command Reference" href="/docs/reference/commands">
+    Every registered command, its category and binding.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Preferences & Theme" href="/docs/interface/preferences">
+    Rebind keys in the Keymap editor; changes persist to keymap.json.
+  </Card>
+  <Card icon={<MousePointer2 />} title="Views, Gizmo & Pie Menus" href="/docs/navigation/views">
+    The full navigation model behind the mouse and numpad shortcuts.
+  </Card>
+  <Card icon={<BookMarked />} title="Camera Bookmarks" href="/docs/navigation/bookmarks">
+    Save and recall the nine numbered camera poses.
+  </Card>
+</Cards>

@@ -1,0 +1,137 @@
+---
+title: "The Fixture Library"
+description: "Built-in fixtures, imported GDTF profiles, and Recent/Favourites."
+---
+
+import { Download, FileUp, PencilRuler, Cloud, ListTree, Star, Box } from 'lucide-react';
+
+The Library is the project's catalogue of every fixture, environment, and screen profile you can place in a scene. It combines a small built-in set with any GDTF you import from disk or download from [GDTF Share](/docs/library/gdtf-share), and is shared across all scenes in the project.
+
+<ImagePlaceholder
+  label="UI panel"
+  ratio="4 / 3"
+  caption="The Library panel docked in the left dock: an icon toolbar (Online, Export MVR, Import MVR, Import GDTF), a search box, a sort row (Category / Name / Maker), a row of content-class chips, a pinned Recent section and a pinned Favourites section above the category-grouped list of rows. Each row shows its icon (or GDTF thumbnail), name, dim meta line, and a colour-coded provenance tag. One row has a filled star."
+/>
+
+## What's in the Library
+
+The Library always ships with a small built-in set, and grows as you import profiles.
+
+<Cards>
+  <Card icon={<Box />} title="Built-in fixtures">
+    A `PAR Can` plus `Laser — Red`, `Laser — Green`, and `Laser — Blue` engines (slate grey provenance chip).
+  </Card>
+  <Card icon={<Box />} title="Built-in environment">
+    A `Fog Box` for haze and volumetric beams.
+  </Card>
+  <Card icon={<Box />} title="Built-in screens">
+    Seven LED-wall cabinet profiles for building [LED screens](/docs/media).
+  </Card>
+  <Card icon={<Download />} title="Imported & downloaded GDTF">
+    Any `.gdtf` profiles you import from disk or download from GDTF Share.
+  </Card>
+</Cards>
+
+The built-in catalogue also includes a set of [pyro devices](/docs/fixtures/pyro) (CO2 jets and cold-spark machines), placed as their own entity type.
+
+Fixture rows carry a colour-coded **provenance tag** showing where the profile came from:
+
+<TypeTable
+  type={{
+    'Built-in': { description: 'Glowstone pre-made profiles (PAR Can, Laser engines).', type: 'tag', default: 'slate grey' },
+    Imported: { description: 'Loaded from disk via Import GDTF, or dragged onto the app.', type: 'tag', default: 'light blue' },
+    'GDTF Share': { description: 'Downloaded from the online GDTF Share catalogue.', type: 'tag', default: 'green' },
+    MVR: { description: 'Brought in as part of an MVR scene import.', type: 'tag', default: 'amber' },
+  }}
+/>
+
+<Callout type="info">
+Environment and screen rows have no fixture source, so they carry no provenance tag.
+</Callout>
+
+## The Library panel
+
+Open the **Library** tab in the left dock to browse, search, and place profiles.
+
+- **Search** filters the list with a fuzzy matcher that ranks by contiguity, word boundaries, and prefix hits.
+- **Sort** by `Category`, `Name`, or `Maker`. Sorting by Category groups the list under section headers.
+- **Content-class chips** partition the catalogue by kind: `All`, `Fixtures`, `Lasers`, `Screens`, `Environments`, `Imported`. They compose with search and sort.
+- **Multi-select** (`Shift` = range, `Cmd`/`Ctrl` = toggle) lets you act on several rows at once; the **Add** button then adds them all at the cursor (also `Enter`).
+- **Recent** and **Favourites** are pinned to the top of the list for quick access (hidden while searching, which scans the full catalogue).
+- Click the **star** on any row to favourite it; click again to unfavourite.
+- The icon toolbar has **Online** (open GDTF Share), **Export** (export the scene to MVR), **Import MVR**, and **Import GDTF** (file dialog filtered to `.gdtf`).
+- **Double-click a row, or drag it out into the viewport**, to place that profile in the scene.
+
+<Callout type="idea">
+Star the handful of fixtures a show actually uses. The Favourites section keeps them at the top of both the Library panel and the `Shift`+`A` Add menu.
+</Callout>
+
+### Placing a fixture
+
+<Steps>
+<Step>
+### Find the profile
+Type in the search box, narrow with a content-class chip, or pick from the **Recent** or **Favourites** sections.
+</Step>
+<Step>
+### Add it to the scene
+Double-click a row, drag it into the 3D viewport, or select rows and press the **Add** button (or `Enter`). The instance lands at the current placement point — the 3D cursor if set, otherwise where the camera ray meets the ground (or in front of the camera if the ray misses).
+</Step>
+<Step>
+### Configure the instance
+Select the fixture and open its profile to set the instance name, DMX mode, and other per-placement settings. See the [Profile Editor](/docs/library/profile-editor).
+</Step>
+</Steps>
+
+## Recent & Favourites
+
+The Library remembers what you use. These preferences persist to `library.json` in your per-user config directory (`dev/Embedder/glowstone`) and are shared by both the Library panel and the `Shift`+`A` Add menu.
+
+<TypeTable
+  type={{
+    Recent: { description: 'Most-recently-added entries, front-inserted and de-duplicated.', type: 'list', default: 'capped at 20' },
+    Favourites: { description: 'Entries you have starred. Rendered in catalog order.', type: 'set', default: 'empty' },
+  }}
+/>
+
+### Entry-key format
+
+Each profile is identified by a stable entry key. The same key is used for Recent, Favourites, and search.
+
+| Kind | Key format | Example |
+| --- | --- | --- |
+| GDTF fixture | `gdtf:<manufacturer>/<name>` | `gdtf:Robe Lighting/Robin Esprite` |
+| Built-in fixture | `fixture:<category>/<name>` | `fixture:Generic/PAR Can` |
+| Environment | `env:<name>` | `env:Fog Box` |
+| Screen | `screen:<name>` | `screen:Indoor 3.9mm` |
+| Pyro device | `pyro:<name>` | `pyro:CO2 Jet` |
+
+<Callout type="info">
+Recent and Favourites persist between sessions. Downloaded `.gdtf` files are cached on disk and reused across projects, so the same fixture never downloads twice.
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="Where do imported fixtures live?">
+    Imported and downloaded GDTF profiles are stored in the project Library and saved inside the `.glow` project file (legacy `.archie` files still open). Downloaded `.gdtf` archives are also cached on disk so they can be re-added to any project without downloading again.
+  </Accordion>
+  <Accordion title="What's the difference between a profile and a placed fixture?">
+    A Library entry is a reusable *profile* (the fixture type). When you add it to the scene you create a *fixture instance* with its own instance name, sequence number, DMX mode, and patch. One profile can back many instances.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<FileUp />} title="Importing GDTF Fixtures" href="/docs/library/import-gdtf">
+    Import `.gdtf` files from disk and drag-and-drop fixtures onto the app.
+  </Card>
+  <Card icon={<PencilRuler />} title="The Profile Editor" href="/docs/library/profile-editor">
+    Inspect identity, optics, wheels, and channels; set the instance name and DMX mode.
+  </Card>
+  <Card icon={<Cloud />} title="GDTF Share" href="/docs/library/gdtf-share">
+    Browse and download thousands of fixtures from the online catalogue.
+  </Card>
+  <Card icon={<ListTree />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+    Understand modes, footprints, and how channels map to a fixture.
+  </Card>
+</Cards>

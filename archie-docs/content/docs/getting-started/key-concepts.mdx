@@ -1,0 +1,154 @@
+---
+title: "Key Concepts"
+description: "Glowstone's vocabulary: scenes, fixtures, the optical chain, DMX and interchange."
+---
+
+import { Boxes, Lightbulb, Telescope, FileBox, Network, MapPin, Layers, LayoutDashboard, Save, Camera, Flame } from 'lucide-react';
+
+The vocabulary you will meet everywhere else in the docs, with a pointer to the deeper page for each term.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The default Glowstone workspace on first launch: Scene/Library panel docked left, Inspector right, 3D Viewport center showing the demo PAR Can beam in light haze, DMX Monitor docked bottom. Status bar visible at the very bottom with the 'DMX off' indicator."
+/>
+
+## The core terms
+
+<Cards>
+  <Card icon={<Boxes />} title="Scene" href="/docs/scene">
+    The container for everything you place: fixtures, objects, screens, pyro, environments and the world.
+  </Card>
+  <Card icon={<Lightbulb />} title="Fixture" href="/docs/fixtures">
+    A controllable light: PAR, moving head, wash, laser. Has a position, an aim and an optical chain.
+  </Card>
+  <Card icon={<Telescope />} title="Optical chain" href="/docs/fixtures/beam-engine">
+    The physically motivated source-to-lens path that turns control values into a rendered beam.
+  </Card>
+  <Card icon={<FileBox />} title="GDTF" href="/docs/library/import-gdtf">
+    A real-world fixture profile: 3D model, wheels and DMX modes for a specific product.
+  </Card>
+  <Card icon={<Layers />} title="MVR" href="/docs/projects/mvr">
+    A scene interchange file for round-tripping rigs with consoles and CAD tools.
+  </Card>
+  <Card icon={<Network />} title="DMX" href="/docs/dmx">
+    Live lighting data received from a console over Art-Net or sACN.
+  </Card>
+  <Card icon={<MapPin />} title="Patch" href="/docs/dmx/patching">
+    The mapping that tells each fixture which universe and address to listen on.
+  </Card>
+  <Card icon={<Flame />} title="Pyro" href="/docs/fixtures/pyro">
+    A placed CO₂ jet or cold-spark machine, triggered over an inline DMX patch.
+  </Card>
+  <Card icon={<Save />} title=".glow project" href="/docs/projects">
+    The native project file holding your entire show in one bundle.
+  </Card>
+</Cards>
+
+## Definitions
+
+<Accordions type="single">
+
+<Accordion title="Scene — and its entities">
+The **scene** is the flat container for everything in your show. It owns these kinds of entity:
+
+- **Fixtures** — controllable light sources (PARs, moving heads, washes, lasers).
+- **Objects** — static imported geometry: stage decks, truss, set pieces and props.
+- **Screens** — LED video walls built from a cabinet grid.
+- **Pyro** — placed CO₂ jets and cold-spark machines (see [Pyro](/docs/fixtures/pyro)).
+- **Environments** — fog/haze volumes that make beams visible.
+- **World** — the global HDRI sky and image-based ambient light.
+
+The [Scene Outliner](/docs/scene/outliner) shows these as a tree (World, Environment, Fixtures, Objects, Screens, Pyro) that is rebuilt from the scene every frame. Learn more in [Scene Concepts](/docs/scene).
+</Accordion>
+
+<Accordion title="Fixture & the optical chain">
+A **fixture** is a single controllable light. Beyond its `position`, `pan` and `tilt`, every fixture runs an **optical chain** — a physically motivated path from source to lens:
+
+> engine → shutter/dimmer → animation wheel → gobo wheels → colour (wheel / CMY / CTO) → prism → frost → focus → zoom lens
+
+Each stage is driven by normalized `0`–`1` controls that resolve through the fixture's real-world ranges into a beam the renderer draws. Fixtures also carry an editable **sequence number** — a console-style id (`0` = unassigned) shown and sortable in the outliner and Fixture Manager. See [The Beam Engine](/docs/fixtures/beam-engine) and the [Beam Parameter Reference](/docs/fixtures/parameters).
+</Accordion>
+
+<Accordion title="GDTF — real fixture profiles">
+A `.gdtf` file bundles the fixture's 3D model, wheel images, and its **DMX modes** (each mode defines the emitters, optical components and channel map). Import one via **File ▸ Import GDTF Fixture…**. See [Importing GDTF Fixtures](/docs/library/import-gdtf) and [DMX Modes & Channels](/docs/library/dmx-modes).
+</Accordion>
+
+<Accordion title="MVR — scene interchange">
+An `.mvr` archive round-trips a whole scene — fixtures, geometry, LED screens, transforms and patch — between tools such as grandMA3, Vectorworks, Capture and Depence. Use **File ▸ Import MVR Scene…** and **File ▸ Export MVR Scene…**. See [MVR Scene Exchange](/docs/projects/mvr).
+</Accordion>
+
+<Accordion title="DMX — live input from a console">
+Glowstone receives DMX from a console over [Art-Net or sACN](/docs/dmx/connectivity). Once a fixture is patched, its DMX values are decoded every frame to drive pan, tilt, intensity, colour and optics. See the [DMX Overview](/docs/dmx) and [Connecting a Console](/docs/dmx/consoles).
+</Accordion>
+
+<Accordion title="Patch — universe & address">
+The **patch** maps each fixture to a **universe** (1-based, up to 63999) and a starting **address** (`1`–`512`), plus a channel **footprint** from its DMX mode. The patch is kept separate from the fixture so duplicating a light never clones its address. Pyro devices carry their own **inline** patch instead of using the fixture patch table. Inspect the fixture patch in the [DMX Monitor](/docs/dmx/dmx-monitor) and edit it in [Patching Fixtures](/docs/dmx/patching).
+</Accordion>
+
+<Accordion title="Cue — a saved look">
+A **cue** stores a snapshot of all fixtures' looks and plays back with a crossfade. Cues capture the state of the rig, not the camera. See [Cues & Playback](/docs/cues).
+</Accordion>
+
+<Accordion title="Workspace — a saved layout">
+A **workspace** is a saved dock layout plus tool and overlay emphasis. Switch between built-in and user-saved workspaces from **Window ▸ Workspace**. Distinct from cues (looks) and from camera bookmarks (views). See [Workspaces](/docs/interface/workspaces).
+</Accordion>
+
+<Accordion title=".glow — the project file">
+The native **`.glow`** file is an atomic snapshot of your entire show: scene, fixtures, bundled GDTF and geometry, world, camera, render settings, preferences, DMX patch and config, selection groups, cues, and pyro devices. GDTF and mesh assets are bundled inline, so no external files are needed to reopen a project. Legacy **`.archie`** files from older builds still open. See [Projects & the .glow Format](/docs/projects).
+</Accordion>
+
+</Accordions>
+
+## Two ideas that trip people up
+
+<Callout type="warn" title="Glowstone is input-only for DMX">
+Glowstone **receives and visualizes** DMX from a console — it never outputs or transmits DMX, answers polls, or sends discovery packets. Use it to preview what your console is doing, not to drive real fixtures.
+</Callout>
+
+<Callout type="idea" title="Looks, views and layouts are different things">
+A [**cue**](/docs/cues) saves a fixture *look*. A [**camera bookmark**](/docs/navigation/bookmarks) (9 numbered slots) saves a *view*. A [**workspace**](/docs/interface/workspaces) saves a *panel layout*. They are independent — saving one does not affect the others.
+</Callout>
+
+## How the pieces fit together
+
+<Steps>
+
+<Step>
+### Build or import a scene
+Add fixtures and objects from the [Library](/docs/library), or import a full rig from [MVR](/docs/projects/mvr). Imported fixtures bring their [GDTF](/docs/library/import-gdtf) modes with them.
+</Step>
+
+<Step>
+### Patch the fixtures
+Assign each fixture a [universe and address](/docs/dmx/patching) so it knows which DMX channels to read.
+</Step>
+
+<Step>
+### Connect a console
+Point your console's [Art-Net or sACN](/docs/dmx/connectivity) output at Glowstone. Live values decode every frame and drive the rig.
+</Step>
+
+<Step>
+### Light the room
+Add an [environment](/docs/scene/environment) so beams are visible in haze, then design, store [cues](/docs/cues), and capture [still renders](/docs/rendering/render-image).
+</Step>
+
+</Steps>
+
+## See also
+
+<Cards>
+  <Card icon={<LayoutDashboard />} title="Interface Overview" href="/docs/getting-started/interface-overview">
+    Tour the panels, menus and status bar.
+  </Card>
+  <Card icon={<Lightbulb />} title="Quick Start" href="/docs/getting-started/quick-start">
+    Go from empty scene to a lit, console-driven preview.
+  </Card>
+  <Card icon={<Camera />} title="Camera & Navigation" href="/docs/navigation">
+    Orbit, frame and bookmark views in the viewport.
+  </Card>
+  <Card icon={<Network />} title="DMX Overview" href="/docs/dmx">
+    How live input, patching and decoding work end to end.
+  </Card>
+</Cards>

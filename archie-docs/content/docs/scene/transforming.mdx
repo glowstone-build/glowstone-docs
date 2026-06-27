@@ -1,0 +1,258 @@
+---
+title: "Moving, Rotating & Scaling"
+description: "Transform objects with the gizmo or modal G/R/S, with axis locks, snapping and numeric entry."
+---
+
+import { Move3d, RotateCw, Scale, Crosshair, Compass, Copy, Keyboard } from 'lucide-react';
+
+Glowstone gives you two ways to move, rotate and scale anything in the scene: the on-screen **gizmo** for direct mouse manipulation, and **modal transforms** (`G` / `R` / `S`) for fast, keyboard-driven edits. Both share the same axis locks, snapping and numeric entry, so you can mix them freely.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A moving-head fixture selected in the 3D Viewport with the Move gizmo drawn at its pivot: three RGB axis arrows (red X, green Y, blue Z), three translucent plane quads near the pivot corner, and the white centre view square. The header shows the active tool name, pivot point selector, transform orientation and snap settings."
+/>
+
+<Callout type="info" title="Pick the tool in the T-panel">
+The transform tool (Select / Move / Rotate / Scale) lives in the **T-panel** tool rail. Press `T` to show or hide it. The gizmo that appears at the selection pivot follows the active tool.
+</Callout>
+
+## Two ways to transform
+
+<Tabs items={['Gizmo', 'Modal (G/R/S)']}>
+
+<Tab value="Gizmo">
+
+The gizmo is drawn in screen space at the selection pivot. The active tool decides which gizmo group appears.
+
+### Move gizmo
+
+- **Three RGB axis arrows** — drag to translate along one world axis (red `X`, green `Y`, blue `Z`).
+- **Three plane quads** — translucent squares near the pivot corner of each axis pair. The plane's normal is the fixed axis, so a Z-normal quad slides freely on `X` and `Y`. The quad sticks to the cursor on its plane.
+- **Centre view square** (white) — drags on the screen-parallel plane, so movement follows the view direction.
+
+Pick priority: the centre view square wins first, then the plane quads, then the axis arrows. The grab radius is 7 pixels.
+
+### Rotate gizmo
+
+- **Three coloured dial rings** — one per world axis; drag to rotate about that axis.
+- **Outer view ring** (white) — a screen-aligned trackball ring just outside the axis rings; rotates about the camera's forward direction.
+
+The nearest ring within the grab radius wins.
+
+### Scale gizmo
+
+- **Three coloured axis boxes** — small squares at the end of each axis arm; drag the box or the arm to scale that one axis.
+- **Uniform centre box** (white) — drag to scale all three axes uniformly.
+
+The centre box wins first, then the per-axis boxes.
+
+<Callout type="idea">
+You can press `X`, `Y` or `Z` mid-drag to override a gizmo handle with an axis lock, or start typing a number for an exact amount — the gizmo and modal systems share the same machinery.
+</Callout>
+
+</Tab>
+
+<Tab value="Modal (G/R/S)">
+
+Modal transforms are Blender-style: press a key, move the mouse for a live preview, then confirm or cancel. They work in the **Viewport** context.
+
+| Key | Mode | Unit you type |
+| --- | --- | --- |
+| `G` | Move (grab) | metres |
+| `R` | Rotate | degrees |
+| `S` | Scale | factor (multiplier) |
+
+While a transform is active:
+
+- **Lock an axis** — press `X`, `Y` or `Z` to constrain the transform to that axis.
+- **Type a number** — the first digit activates numeric mode and overrides the mouse. Press `-` to toggle the sign; the header shows the readout (e.g. `4.0` or `-4.5`). `Backspace` past empty reverts to mouse control.
+- **Confirm** — press `Enter` or `Space`.
+- **Cancel** — press `Esc` or right-click to restore the original pose.
+
+<Callout type="warn" title="Normal keys are suppressed mid-transform">
+While a `G` / `R` / `S` transform is in progress, only the axis-lock keys (`X` / `Y` / `Z`) and the confirm/cancel keys are active. Shortcuts like `A` (Select all) or `S` (Quick-select) will not fire until you confirm or cancel.
+</Callout>
+
+</Tab>
+
+</Tabs>
+
+## Arrow-key nudges
+
+For small, exact moves without entering a transform, nudge the selection with the arrow keys. These work in the **Global** context (whenever no text field is editing).
+
+| Shortcut | Action |
+| --- | --- |
+| `←` / `→` | Move −0.1 m / +0.1 m along `X` |
+| `↑` / `↓` | Move −0.1 m / +0.1 m along `Z` |
+| `PageUp` / `PageDown` | Move +0.1 m / −0.1 m of height (`Y`) |
+| `Shift`+ any of the above | Move by 1.0 m instead of 0.1 m |
+
+## Snapping
+
+Increment snapping rounds the committed transform amount to a regular step. The master toggle is a persistent preference.
+
+<Callout type="info" title="Ctrl inverts the toggle mid-drag">
+Hold `Cmd`/`Ctrl` during a transform to temporarily invert the snap toggle for that drag (Blender-style). If snapping is off, holding `Cmd`/`Ctrl` snaps; if it is on, holding `Cmd`/`Ctrl` frees the drag.
+</Callout>
+
+### Default increments
+
+<TypeTable
+  type={{
+    Move: { description: 'Each axis component snaps independently. Composes with numeric entry.', type: 'metres', default: '1.0' },
+    Rotate: { description: 'Angle snaps to the nearest step (degrees).', type: 'degrees', default: '15°' },
+    Scale: { description: 'Factor snaps to the nearest step; clamped to a minimum of one step so geometry never collapses to zero.', type: 'factor', default: '0.1' },
+  }}
+/>
+
+All increments are editable in the N-panel (press `N` to show it).
+
+### Snap modes (Move only)
+
+Rotate and Scale always use the increment quantizer. Move offers three snap targets:
+
+<TypeTable
+  type={{
+    Grid: { description: 'Snap the committed amount to the grid increment.', type: 'Increment', default: 'default' },
+    Vertex: { description: 'Snap the moved origin onto the nearest OTHER entity origin (fixture, geometry or screen) within a pixel threshold. Absolute snap — replaces the position.', type: 'Vertex' },
+    Surface: { description: 'Snap the moved origin onto the nearest geometry or ground hit under the cursor, using ray-cast picking. Absolute snap.', type: 'Surface' },
+  }}
+/>
+
+## Pivot point
+
+The pivot decides where rotation and scale are computed from for the current selection. Cycle the non-cursor modes from the header; the 3D Cursor mode is chosen from the dropdown.
+
+<TypeTable
+  type={{
+    'Median Point': { description: 'Centroid of every selected element. The default for multi-selections.' },
+    'Active Element': { description: 'Pivot about the primary (first) selected element’s origin.' },
+    'Individual Origins': { description: 'Each element transforms about its own origin — a scattered rig spins or scales in place without orbiting a shared centre.' },
+    '3D Cursor': { description: 'Pivot about the movable world 3D cursor. Place it with Shift + right-click in the viewport.' },
+  }}
+/>
+
+<Callout type="idea">
+**Individual Origins** is ideal for fanning or aiming a scattered rig: select every head, switch the pivot, then `R` to rotate each one about itself instead of orbiting the group centre.
+</Callout>
+
+## Transform orientation
+
+The orientation sets which coordinate frame the move/rotate/scale axis is expressed in. It changes both axis-lock direction and the default axis for single-value numeric input.
+
+<TypeTable
+  type={{
+    Global: { description: 'World axes — X/Y/Z stay fixed regardless of object orientation. The default, always available.' },
+    Local: { description: 'The active (first selected) element’s own orientation — a head on a tilted truss moves along its own up.' },
+    View: { description: 'The camera basis — screen-right is X, screen-up is Y, toward-viewer is Z; moves follow the screen plane.' },
+  }}
+/>
+
+## Procedures
+
+<Steps>
+
+<Step>
+
+### Move an object with the mouse
+
+Select the object, press `G`, move the mouse to drag it, then click or press `Enter` to confirm. Press `Esc` to cancel.
+
+</Step>
+
+<Step>
+
+### Constrain to one axis
+
+After pressing `G`, press `X`, `Y`, or `Z` to lock the move to that axis. The object now slides only along that direction.
+
+</Step>
+
+<Step>
+
+### Drop it exactly where you want
+
+With Move snapping set to **Surface**, drag until the origin lands on the floor or another surface under the cursor — it snaps absolutely to the hit point.
+
+</Step>
+
+</Steps>
+
+### Rotate by an exact angle
+
+<Steps>
+
+<Step>
+
+### Set the pivot and start rotating
+
+Choose a pivot point in the header (for example **Active Element**), then press `R`.
+
+</Step>
+
+<Step>
+
+### Lock the axis
+
+Press `Y` to rotate about world up (pan/heading), or `X` / `Z` for the other axes.
+
+</Step>
+
+<Step>
+
+### Type the angle
+
+Type the number of degrees, e.g. `45`. Press `-` first to flip the sign if you need `-45`. The header shows the live readout.
+
+</Step>
+
+<Step>
+
+### Confirm
+
+Press `Enter` (or `Space`) to apply, or `Esc` to cancel and restore the original orientation.
+
+</Step>
+
+</Steps>
+
+<Callout type="info" title="Numeric entry obeys snapping too">
+A typed value is quantized by the same increment as a mouse drag. Type `47` with a `15°` rotate increment and snapping on, and the result snaps to the nearest step.
+</Callout>
+
+## Frequently asked
+
+<Accordions type="single">
+
+<Accordion title="Why won’t S scale my selection?">
+`S` only means Scale when the **3D Viewport** is the focused panel. Outside the viewport, `S` opens the Quick-select menu. Click into the viewport first, then press `S`.
+</Accordion>
+
+<Accordion title="How do I move the selection up or down without the mouse?">
+Use `PageUp` and `PageDown` to nudge height (the `Y` axis) by 0.1 m, or `Shift`+`PageUp` / `Shift`+`PageDown` for 1 m steps.
+</Accordion>
+
+<Accordion title="There are no align or distribute tools — how do I arrange a rig?">
+Glowstone has no dedicated align/distribute tools. Use **Individual Origins** pivot mode for in-place rotation and scaling of a multi-selection, and the [Duplicate & Array](/docs/scene/duplicate-array) tools for repeated, evenly spaced placement.
+</Accordion>
+
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Copy />} title="Duplicate & Array" href="/docs/scene/duplicate-array">
+    Clone fixtures with offsets, fan angles and live counts.
+  </Card>
+  <Card icon={<Compass />} title="Views, Gizmo & Pie Menus" href="/docs/navigation/views">
+    Snap to standard views with the navigation gizmo and pie menus.
+  </Card>
+  <Card icon={<Crosshair />} title="Selecting Objects" href="/docs/scene/selection">
+    Pick, box-select and refine what the transform acts on.
+  </Card>
+  <Card icon={<Keyboard />} title="Keyboard Shortcuts" href="/docs/reference/keyboard-shortcuts">
+    The full shortcut reference, including every transform key.
+  </Card>
+</Cards>

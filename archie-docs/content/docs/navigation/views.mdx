@@ -1,0 +1,180 @@
+---
+title: "Views, Gizmo & Pie Menus"
+description: "Snap the orbit camera to preset angles via the navigation gizmo, the View pie, and numpad shortcuts."
+---
+
+import { Compass, Grid3x3, Keyboard, Move3d, Bookmark, Layers } from 'lucide-react';
+
+Glowstone's orbit camera revolves around a focal target. Snap straight to a preset view with the on-screen navigation gizmo, a radial pie menu, or the numpad.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The 3D Viewport with the navigation gizmo visible in the top-right corner (six coloured axis balls), a moving-head fixture with a visible beam in the centre, and the view tag overlay reading 'Persp · User' in the top-left."
+/>
+
+## Preset views
+
+Six axis views plus a default perspective view frame the scene from a fixed direction. Selecting an axis view (Front, Back, Left, Right, Top, Bottom) switches the camera to **orthographic**; selecting Perspective restores it. Every transition eases over roughly a quarter-second, taking the shortest arc.
+
+| View | What you see | Projection on load |
+| --- | --- | --- |
+| Front | Eye on +Z, looking down −Z | Ortho |
+| Back | Eye on −Z, looking down +Z | Ortho |
+| Left | Eye on −X, looking down +X | Ortho |
+| Right | Eye on +X, looking down −X | Ortho |
+| Top | Overhead bird's-eye, looking down | Ortho |
+| Bottom | Floor view, looking up | Ortho |
+| Perspective | Default 3/4 view; restores perspective | Persp |
+
+<Callout type="info" title="View tag overlay">
+The top-left corner shows the current projection and view name, for example `Ortho · Front`. If you orbit away from a preset it reads `Persp · User` (free orbit). See [Display Modes & Overlays](/docs/navigation/overlays).
+</Callout>
+
+The top-left status overlay only names a preset when the camera angle snaps to it within a small tolerance — nudging the view by hand reverts the label to `User`.
+
+## Navigation gizmo
+
+The navigation gizmo is the cluster of six coloured balls in the top-right corner of the viewport. It rotates live with the camera, doubling as an orientation readout, and you click a ball to snap the view to that axis.
+
+<ImagePlaceholder
+  label="Close-up"
+  ratio="1 / 1"
+  caption="Close-up of the navigation gizmo: six axis balls arranged as a 3D sphere. The +X (red), +Y (green) and +Z (blue) balls are solid and labelled X, Y, Z; the negative −X, −Y, −Z balls are hollow rings. A faint backing disc sits behind the cluster."
+/>
+
+### Reading the gizmo
+
+- **Colours** follow the standard convention: X is red, Y is green, Z is blue.
+- **Positive balls** (+X, +Y, +Z) are solid circles labelled with their axis letter.
+- **Negative balls** (−X, −Y, −Z) are hollow rings with no label, so the cluster reads as a 3D sphere.
+- Depth drives draw order — near balls overlap far ones — and each ball's arm fades when it points away from you. Hovering a ball draws it solid and highlights it in white.
+
+### Clicking a ball
+
+Click a ball to ease the camera to look straight down that axis:
+
+| Ball | Snaps to |
+| --- | --- |
+| +X (red, solid) | Right view |
+| −X (red, hollow) | Left view |
+| +Y (green, solid) | Top view |
+| −Y (green, hollow) | Bottom view |
+| +Z (blue, solid) | Front view |
+| −Z (blue, hollow) | Back view |
+
+<Callout type="idea">
+When near and far balls overlap on screen, the nearer (front-facing) ball wins the click — so you always grab the ball facing you.
+</Callout>
+
+<Callout type="info" title="Hide the gizmo">
+The navigation gizmo is on by default. Toggle it from **Preferences → Viewport → Navigation gizmo**, the **View menu → Overlays**, or the bound `view.toggle_gizmos` command. While hidden it is neither drawn nor clickable.
+</Callout>
+
+## Pie menus
+
+Pie menus are cursor-anchored radial menus. Two cover camera and display work: the **View pie** and the **Shading pie**. Both open at the cursor and pick instantly — no confirmation step.
+
+<Tabs items={['View pie', 'Shading pie']}>
+<Tab value="View pie">
+
+Press `` ` `` (backtick / tilde) to open the View pie. Its eight sectors gather every preset view plus the projection toggle and frame-selection:
+
+- Top view
+- Right view
+- Persp/Ortho toggle
+- Back view
+- Bottom view
+- Frame Sel. (eased fit-to-view)
+- Front view
+- Left view
+
+</Tab>
+<Tab value="Shading pie">
+
+Press `Z` to open the Shading pie. It combines viewport display modes with quick overlay toggles, applied immediately on pick:
+
+- **Display modes:** Beauty, Unlit, Wireframe
+- **Overlay toggles:** Grid, Stats
+
+For the full set of display modes and overlays, see [Display Modes & Overlays](/docs/navigation/overlays).
+
+</Tab>
+</Tabs>
+
+### Picking from a pie
+
+<Steps>
+<Step>
+### Open the pie
+Press the menu key (`` ` `` for View, `Z` for Shading). The pie appears centred on the cursor over a dimmed backdrop.
+</Step>
+<Step>
+### Aim at a sector
+Move the cursor toward the sector you want. The hovered sector's pill fills with the accent colour and a pointer line follows the cursor.
+</Step>
+<Step>
+### Pick
+Either click the sector, or use a press-drag-release gesture from the centre outward and release on the sector.
+</Step>
+<Step>
+### Cancel if needed
+Release inside the central dead-zone disc, or press `Esc`, to dismiss the pie without choosing anything.
+</Step>
+</Steps>
+
+<Callout type="info">
+Pie shortcuts (and all others) are rebindable. Open **Preferences → Keymap**, click a command's shortcut chip, and press a new chord. Custom binds persist to `keymap.json` immediately.
+</Callout>
+
+## Numpad
+
+The numpad gives fast keyboard access to the same preset views, the projection toggle, and fixed-step orbiting. These binds live in the **Viewport** keymap, so they fire only while the 3D viewport is focused. `Cmd`/`Ctrl` flips an axis view to its opposite-facing pair.
+
+| Shortcut | Action |
+| --- | --- |
+| `Num1` | Front view |
+| `Cmd`/`Ctrl`+`Num1` | Back view |
+| `Num3` | Right view |
+| `Cmd`/`Ctrl`+`Num3` | Left view |
+| `Num7` | Top view |
+| `Cmd`/`Ctrl`+`Num7` | Bottom view |
+| `Num5` | Toggle perspective / orthographic |
+| `Num8` / `Num2` | Orbit up / down (pitch) |
+| `Num4` / `Num6` | Orbit left / right (yaw) |
+
+<Callout type="info">
+egui maps the numpad digits onto the same key codes as the top-row digits, so these binds fire on either row. Like every shortcut, they are rebindable in **Preferences → Keymap**.
+</Callout>
+
+<Callout type="idea">
+The orbit commands (`view.orbit_up` / `down` / `left` / `right`) rotate the camera by a fixed 15° step, so you can spin around a fixture in even increments without dragging.
+</Callout>
+
+## Frame the selection
+
+Snapping to an angle does not change how much you see. To fill the view with what you care about, frame it.
+
+| Command | Default key | Action |
+| --- | --- | --- |
+| Frame Selection | `F` (or `.`) | Aim at and fit the selected objects |
+| Frame All | `Shift`+`F` (or `Home`) | Aim at and fit the entire scene |
+
+The View pie also includes a **Frame Selection** sector. Framing eases the camera over about a quarter-second and recomputes the distance to fit the bounding box.
+
+## See also
+
+<Cards>
+  <Card icon={<Move3d />} title="Camera & Navigation" href="/docs/navigation">
+    Orbit, pan, and zoom the viewport camera.
+  </Card>
+  <Card icon={<Bookmark />} title="Camera Bookmarks" href="/docs/navigation/bookmarks">
+    Save and recall custom camera poses to nine numbered slots.
+  </Card>
+  <Card icon={<Layers />} title="Display Modes & Overlays" href="/docs/navigation/overlays">
+    Beauty, Unlit, Wireframe, and the viewport overlay toggles.
+  </Card>
+  <Card icon={<Keyboard />} title="Keyboard Shortcuts" href="/docs/reference/keyboard-shortcuts">
+    The full shortcut reference across every context.
+  </Card>
+</Cards>

@@ -1,0 +1,179 @@
+---
+title: "Projects & the .glow Format"
+description: "Create, open and save .glow projects, and what the format bundles inline."
+---
+
+import { FilePlus2, FolderOpen, Save, History, Package, Boxes, Flame } from 'lucide-react';
+
+A Glowstone project is a single self-contained `.glow` file (magic `GLOW\0`). It bundles the entire show inline — scene, fixtures, GDTF definitions, geometry, render settings, preferences, DMX patch/config, selection groups, cues and pyro devices — so a project is portable with no external assets to track. Legacy `.archie` files (the previous extension) still open.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Glowstone welcome splash on launch: a hero image with the glowstone wordmark and version overlaid, New Project / Open… / Recover Last Session buttons on the left, and a Recent Files list on the right."
+/>
+
+## Project basics
+
+Use the **File** menu (or the welcome screen) to manage projects. The window title shows the current project name; an untitled project has no on-disk path until you save it.
+
+<Cards>
+  <Card icon={<FilePlus2 />} title="New Project" href="/docs/projects">
+    Clears the scene to a blank, untitled project.
+  </Card>
+  <Card icon={<FolderOpen />} title="Open Project…" href="/docs/projects">
+    Load an existing `.glow` (or legacy `.archie`) file from disk.
+  </Card>
+  <Card icon={<Save />} title="Save" href="/docs/projects">
+    Write changes to the current file with `Cmd`/`Ctrl`+`S`.
+  </Card>
+  <Card icon={<History />} title="Open Recent" href="/docs/projects">
+    Re-open one of your recent projects.
+  </Card>
+</Cards>
+
+## The welcome screen
+
+The welcome splash appears at startup, and on demand from **Window ▸ Welcome** (choosing **File ▸ New Project** also re-opens it). It offers:
+
+- **New Project** — clears the current scene (fixtures, geometry, screens, groups, cues) and opens an untitled project.
+- **Open…** — a native file picker filtered to `.glow` and legacy `.archie` files.
+- **Recover Last Session** — reopens the auto-saved session from the last run. Shown only when a valid autosave exists (see [Crash recovery](#autosave--crash-recovery)).
+- **Recent Files** — the most recent projects (up to 8 shown here), newest first.
+
+Use **Continue without a project** to dismiss the splash and keep the current scene.
+
+## Creating, opening and saving
+
+<Steps>
+<Step>
+### Start a new project
+
+Choose **File ▸ New Project** (or **Window ▸ Welcome**), then click **New Project** on the welcome screen. This clears the current scene and opens an untitled project with no on-disk path.
+</Step>
+<Step>
+### Open an existing project
+
+Choose **File ▸ Open Project…** and pick a `.glow` (or legacy `.archie`) file. Glowstone validates the file magic and version, decodes it, and restores the scene, fixtures, GDTF library, camera, render settings, preferences, DMX patch/config, selection groups, cues and pyro devices.
+</Step>
+<Step>
+### Save your work
+
+Press `Cmd`/`Ctrl`+`S` (**File ▸ Save**). If the project already has a path, it writes there. If it is untitled, a Save As dialog opens first.
+</Step>
+<Step>
+### Save a copy
+
+Choose **File ▸ Save As…** (`Cmd`/`Ctrl`+`Shift`+`S`) to write to a new location. The save dialog forces the `.glow` extension; the default name is `show.glow` for an untitled project, or the current filename otherwise. This updates the window title and adds the path to Recent Files.
+</Step>
+</Steps>
+
+### File operation shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| `Cmd`/`Ctrl`+`S` | Save (Save As if untitled) |
+| `Cmd`/`Ctrl`+`Shift`+`S` | Save As… |
+
+<Callout type="info" title="Atomic, crash-safe writes">
+Saving writes to a temporary sibling file first, then renames it onto the target. If a save is interrupted, your existing project file is left intact — there are no partial or corrupt saves.
+</Callout>
+
+## What the .glow file preserves
+
+Everything the show needs lives inside the one file. GDTF definitions, geometry meshes, textures and the HDRI are all stored inline — no external references to break.
+
+<TypeTable
+  type={{
+    Scene: { description: 'All fixtures, static geometry, LED screens, world settings and environments (haze/fog).', type: 'inline' },
+    Fixtures: { description: 'Position, pan/tilt, colour, beam, dimmer and wheel/optics state, the editable sequence number, plus the GDTF spec key for each.', type: 'inline' },
+    'GDTF definitions': { description: 'Original .gdtf archive bytes, bundled inline and deduplicated (one copy per unique fixture type). Re-parsed on open — no external files needed.', type: 'bundled' },
+    Geometry: { description: 'Static stage, rigging and prop meshes (the model bytes ride inline inside the Scene), with placement transforms.', type: 'bundled' },
+    'Textures & HDRI': { description: 'Image and world-map bytes embedded inline.', type: 'bundled' },
+    'LED screens': { description: 'Cabinet grid, pitch, brightness and content source.', type: 'inline' },
+    Camera: { description: 'Orbit camera pose: distance, pan/tilt and target.', type: 'inline' },
+    'Render settings': { description: 'The still-render recipe — resolution, sampling, output format and path.', type: 'inline' },
+    'DMX patch & config': { description: 'Universe-to-fixture address mapping plus the Art-Net / sACN input config.', type: 'inline' },
+    Cues: { description: 'The cue engine — cue list plus playback state.', type: 'inline' },
+    'Selection groups': { description: 'Named fixture/geometry selection groups.', type: 'inline' },
+    Preferences: { description: 'App preferences saved with the show.', type: 'inline' },
+    'Pyro devices': { description: 'Placed CO2 jets and cold-spark machines (with their inline DMX patch), stored in a self-describing trailer.', type: 'trailer' },
+    'MVR metadata': { description: 'If the scene was imported from MVR: the original header and imported resources, kept for faithful round-trip export.', type: 'optional' },
+  }}
+/>
+
+<Callout type="idea" title="Projects are portable">
+Because GDTF files are embedded in the `.glow` file, you can hand a project to anyone and it opens with the correct fixtures — no need to share or re-install `.gdtf` files alongside it. Each fixture's GDTF is re-parsed from the bundled bytes on open.
+</Callout>
+
+### File layout
+
+The `.glow` format is a binary snapshot: a magic + version header, a positional `bincode` core, then a self-describing JSON trailer for the version-tolerant data (pyro devices and per-fixture sequence numbers).
+
+<Files>
+  <Folder name="show.glow (binary)" defaultOpen>
+    <File name="Magic header — GLOW\0 (5 bytes; legacy ARCHIE\0 = 7)" />
+    <File name="Format version — 4-byte little-endian integer" />
+    <Folder name="Core body (bincode-encoded, positional)" defaultOpen>
+      <File name="Scene, fixtures, LED screens, world, environments" />
+      <File name="Bundled GDTF archive bytes + per-fixture spec keys" />
+      <File name="Geometry meshes, textures, HDRI (inline in Scene)" />
+      <File name="Camera, render settings, preferences" />
+      <File name="DMX patch + config, selection groups, cues" />
+    </Folder>
+    <File name="JSON trailer — pyro devices + per-fixture sequences" />
+  </Folder>
+</Files>
+
+<Callout type="warn">
+A project from a format version newer than your build, or older than the build's minimum readable layout, is rejected on open with a clear error rather than loading partially or mis-decoding. An absent or unreadable trailer (e.g. a legacy `.archie`) is skipped silently — the rest of the project still loads.
+</Callout>
+
+## Autosave & crash recovery
+
+Glowstone writes a periodic background autosave (roughly every 20 s, when the scene has content) so you can recover after an unexpected quit.
+
+- On macOS, the autosave lives at `~/Library/Caches/dev.Embedder.glowstone/last-session.glow`. Other platforms use the equivalent cache location.
+- After a crash, if a valid autosave exists, the welcome screen shows a **Recover Last Session** button. A recovered session opens as untitled, so the next Save prompts for a destination instead of overwriting the autosave.
+
+<Callout type="warn">
+Autosave is a safety net, not a substitute for saving. Save your project with `Cmd`/`Ctrl`+`S` regularly so your named file stays current.
+</Callout>
+
+## Recent projects
+
+The Recent Files list (in the **File ▸ Open Recent** submenu and on the welcome screen) shows recently opened or saved projects, newest first.
+
+- The stored list holds up to 12 entries, deduplicated by path; the welcome screen shows up to 8.
+- Projects that no longer exist on disk are pruned automatically, so the list only shows files you can actually open.
+
+## Frequently asked
+
+<Accordions type="single">
+  <Accordion title="Do I need to keep the original .gdtf files after importing?">
+    No. Once a fixture is in your project, its GDTF is bundled into the `.glow` file and re-parsed on open. The original `.gdtf` is not required to reopen the project.
+  </Accordion>
+  <Accordion title="Why are identical truss copies still fast after reload?">
+    On load, Glowstone re-deduplicates identical geometry blobs by their resource name, restoring the memory sharing from import time so repeated meshes draw as instanced copies rather than separate objects.
+  </Accordion>
+  <Accordion title="Can I still open my old .archie files?">
+    Yes. Files saved by older builds (the `.archie` magic and extension) are still read — the open dialog accepts them and they're migrated to the current format in memory. The current native format is `.glow`.
+  </Accordion>
+  <Accordion title="Can I open a project saved by a newer version of Glowstone?">
+    No. The loader checks the version against a supported range: a version newer than your build is reported as an error (update the app), and a layout older than the minimum readable version is skipped cleanly rather than mis-decoded. In-range versions load and migrate up.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Boxes />} title="MVR Scene Exchange" href="/docs/projects/mvr">
+    Import and export scenes with other design tools.
+  </Card>
+  <Card icon={<Package />} title="Supported File Formats" href="/docs/projects/file-formats">
+    Which formats Glowstone can read and write.
+  </Card>
+  <Card icon={<Flame />} title="Pyro Devices" href="/docs/fixtures/pyro">
+    CO2 jets and cold-spark machines stored in the project trailer.
+  </Card>
+</Cards>

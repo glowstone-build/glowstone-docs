@@ -1,0 +1,271 @@
+---
+title: "Command Reference"
+description: "Every operator and command available from the F3 palette and menus."
+---
+
+import { Search, MousePointerClick, Move3d, PlusSquare, Boxes, FileText, AppWindow, Keyboard, Terminal } from 'lucide-react';
+
+Glowstone keeps every user-triggerable action in one **command registry**, dispatched through the keyboard, the `F3` operator-search palette, the menu bar, and the `F9` adjust-last affordance. The tables below are the single source of truth for what Glowstone can do and how to reach it.
+
+For the concepts behind this system (operators, dialogs, undo), see [Commands & Operator Search](/docs/interface/commands). For a platform-grouped key chart, see [Keyboard Shortcuts](/docs/reference/keyboard-shortcuts).
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The F3 operator-search palette open over the 3D viewport: a centered floating window titled '🔍 Run Operator', a single-line filter at the top, and a scrollable list of commands — each row showing the command label on the left, its bound shortcut in the middle, and a category badge (e.g. OBJECT, VIEW, TRANSFORM) on the right. One disabled row is greyed out."
+/>
+
+## How to run any command
+
+The `F3` palette lists every palette-runnable command and runs it by name.
+
+<Steps>
+<Step>
+### Open the palette
+Press `F3` (or `Space` outside a modal transform). A centered window titled `🔍 Run Operator` appears.
+</Step>
+<Step>
+### Filter by name
+Type part of the label. Matching is fuzzy and case-insensitive, so `mvx` finds `Move on X`. Non-matching commands drop from the list.
+</Step>
+<Step>
+### Pick and run
+Use `Arrow Up`/`Arrow Down` to highlight, then `Enter` to run the highlighted command. `Esc` dismisses the palette.
+</Step>
+</Steps>
+
+<Callout type="info" title="Disabled rows">
+A command is greyed out when its `poll()` check fails — for example `Delete Selected` is disabled with nothing selected. Pure view, navigation, and selection actions are always enabled.
+</Callout>
+
+### Operator types
+
+Every entry in the tables below is one of three kinds, which decides what happens when you run it.
+
+<TypeTable
+  type={{
+    Action: { description: 'A pure action (view, navigation, selection). Dispatches immediately and is always enabled.', type: 'Action', default: '—' },
+    Direct: { description: 'A Direct operator. Runs immediately through the operator pipeline — no dialog.', type: 'Operator', default: '—' },
+    Dialog: { description: 'A Dialog operator. Opens a parameter dialog; confirming the dialog runs the op.', type: 'Operator', default: '—' },
+  }}
+/>
+
+<Callout type="idea" title="Repeat with F9">
+After running any operator that registers itself, press `F9` to adjust the last operation. **Dialog** operators (Duplicate, Patch, Add) re-open their dialog with the previous settings so you can tweak and confirm again; **Direct** operators (Delete, Unpatch, Renumber) simply re-run. See [Commands & Operator Search](/docs/interface/commands) for the full workflow.
+</Callout>
+
+## Navigation & view
+
+Framing, standard views, orbit, overlays, and bookmarks. These are pure actions and dispatch instantly.
+
+| Command | Default shortcut | What it does |
+| --- | --- | --- |
+| Frame selection | `F` (also `.`) | Frames the camera on the current selection |
+| Frame all | `Shift`+`F` (also `Home`) | Frames the camera on the whole scene |
+| Toggle fixture labels | `L` | Shows/hides fixture name labels |
+| Toggle scene statistics | overlay submenu | Shows/hides the scene stats overlay |
+| Toggle grid + world axes | overlay submenu | Shows/hides the floor grid and world axes |
+| Toggle navigation gizmo | overlay submenu | Shows/hides the orientation gizmo |
+| Toggle transform hint line | overlay submenu | Shows/hides the transform hint line |
+| Front view | `Num 1` | Snaps to the front orthographic view |
+| Back view | `Cmd`/`Ctrl`+`Num 1` | Snaps to the back view |
+| Right view | `Num 3` | Snaps to the right view |
+| Left view | `Cmd`/`Ctrl`+`Num 3` | Snaps to the left view |
+| Top view | `Num 7` | Snaps to the top view |
+| Bottom view | `Cmd`/`Ctrl`+`Num 7` | Snaps to the bottom view |
+| Toggle ortho/persp | `Num 5` | Switches between orthographic and perspective |
+| Orbit up | `Num 8` | Orbits the camera up |
+| Orbit down | `Num 2` | Orbits the camera down |
+| Orbit left | `Num 4` | Orbits the camera left |
+| Orbit right | `Num 6` | Orbits the camera right |
+| View pie (radial) | `` ` `` (backtick) | Opens the radial view pie menu |
+| Shading pie (radial) | `Z` | Opens the radial shading pie menu |
+| Save view bookmark | `F3` palette | Stores the current camera into a bookmark slot |
+| Recall view bookmark 1–9 | `F3` palette | Restores one of the 9 numbered camera bookmarks |
+| Toggle N-panel (sidebar) | `N` | Shows/hides the viewport sidebar |
+| Toggle T-panel (tool rail) | `T` | Shows/hides the viewport tool rail |
+
+<Callout type="warn" title="Not yet wired up">
+`Camera view` is registered as a placeholder, has no default shortcut, and currently does nothing. It does not appear in the `F3` palette.
+</Callout>
+
+<Callout type="info">
+The 9 numbered **camera (view) bookmarks** store viewpoints and are distinct from [Cues](/docs/cues), which store fixture looks. The orbit, view, and bookmark commands are detailed in [Views, Gizmo & Pie Menus](/docs/navigation/views) and [Camera Bookmarks](/docs/navigation/bookmarks).
+</Callout>
+
+## Selection
+
+Bulk selection actions. For the radial `S` menu and per-type/per-maker selection, see [Selecting Objects](/docs/scene/selection).
+
+| Command | Default shortcut | What it does |
+| --- | --- | --- |
+| Select all | `A` | Selects every item of the active kind (fixtures by default) |
+| Invert selection | `Cmd`/`Ctrl`+`I` | Flips membership within the active kind (selects all from an empty selection) |
+| Quick-select menu | `S` | Opens the Quick-Select palette (global context only) |
+| Replace selected fixtures | `Shift`+`R` | Replaces the selected fixtures |
+| Deselect all (none) | `Alt`+`A` (also `Esc`) | Clears the selection |
+
+<Callout type="info" title="S is context-sensitive">
+`S` opens Quick-Select only when the viewport is **not** focused. With the viewport focused, `S` starts the Scale transform instead.
+</Callout>
+
+## Transform
+
+Nudges move the selection in fixed steps along world axes; hold `Shift` for a 1 m step instead of the default 0.1 m. The modal `G`/`R`/`S` tools and axis locks are **viewport-only** — they need live mouse state, so they are not in the `F3` palette.
+
+| Command | Default shortcut | What it does |
+| --- | --- | --- |
+| Nudge −X / +X | `Left` / `Right` Arrow | Moves selection 0.1 m along X |
+| Nudge −Z / +Z | `Up` / `Down` Arrow | Moves selection 0.1 m along Z |
+| Nudge +/− height | `Page Up` / `Page Down` | Moves selection 0.1 m along Y (height) |
+| Nudge −X / +X (1 m) | `Shift`+`Left` / `Right` Arrow | Moves selection 1 m along X |
+| Nudge −Z / +Z (1 m) | `Shift`+`Up` / `Down` Arrow | Moves selection 1 m along Z |
+| Nudge +/− height (1 m) | `Shift`+`Page Up` / `Page Down` | Moves selection 1 m along Y (height) |
+| Move selection | `G` (viewport) | Modal grab — move with the mouse |
+| Rotate selection | `R` (viewport) | Modal rotate — rotate with the mouse |
+| Scale selection | `S` (viewport) | Modal scale — scale with the mouse |
+| Lock X / Y / Z axis | `X` / `Y` / `Z` (modal) | Constrains an active transform to one axis |
+| Snap cursor to selection | `F3` palette / menu | Moves the 3D cursor to the selection |
+| Reset cursor to origin | `F3` palette / menu | Returns the 3D cursor to the world origin |
+| Renumber sequence by position | `Cmd`/`Ctrl`+`Shift`+`R` | Renumbers the selected fixtures' [sequence numbers](/docs/scene/fixtures) by stage position (rows top→bottom, then columns left→right); all fixtures if none selected |
+
+<Callout type="info" title="During a modal transform">
+While `G`/`R`/`S` is running, `Space` or `Enter` confirms, `Esc` cancels and reverts, and `X`/`Y`/`Z` lock to an axis. Repeated arrow nudges within 600 ms coalesce into a single undo step. More in [Moving, Rotating & Scaling](/docs/scene/transforming).
+</Callout>
+
+## Add
+
+Place fixtures, LED screens, and environment volumes into the scene. The Add menu opens at the cursor.
+
+| Command | Default shortcut | What it does |
+| --- | --- | --- |
+| Add menu (at cursor) | `Shift`+`A` (viewport) | Opens the cursor-anchored Add menu |
+| Add Object… | `Shift`+`A` | **Dialog** — opens the Add menu (centred when run from `F3`) |
+
+The Add menu has four category columns — **Fixtures**, **Screens**, **Pyro**, and **Environment** — with `Arrow Left`/`Right` to switch categories and `Arrow Up`/`Down` to highlight. When the search box is empty, pinned **RECENT** and **FAVOURITES** sections appear at the top; typing a query hides them and filters the full catalog. See [Adding Fixtures & Objects](/docs/scene/adding-objects) and, for pyro, [Pyro Devices](/docs/fixtures/pyro).
+
+<Callout type="idea">
+Star an entry with its trailing star icon to add it to **FAVOURITES**. The star persists to preferences and does not close the menu.
+</Callout>
+
+## Object & history
+
+Document-mutating operators plus undo/redo and the palette/adjust commands. Operators here are wrapped in the undo pipeline, so each one is undoable.
+
+| Command | Default shortcut | Type | What it does |
+| --- | --- | --- | --- |
+| Duplicate / Array… | `D` (viewport) | Dialog | Opens the Duplicate / Array dialog |
+| Duplicate & grab | `Shift`+`D` (viewport) | Action | Duplicates, then enters a modal move |
+| Patch Fixtures… | `P` | Dialog | Opens the Patch dialog |
+| Unpatch Fixtures | `U` | Direct | Removes the DMX patch from the selection |
+| Delete Selected | `Delete` (also `Backspace`) | Direct | Deletes the selected items (fixtures, objects, screens, pyro) |
+| Undo | `Cmd`/`Ctrl`+`Z` | Action | Steps back one undo step |
+| Redo | `Cmd`/`Ctrl`+`Shift`+`Z` (also `Cmd`/`Ctrl`+`Y`) | Action | Steps forward one undo step |
+| Operator search | `F3` (also `Space`) | Action | Opens the operator-search palette |
+| Adjust last operation | `F9` | Action | Re-invokes the last registered operator |
+
+<Callout type="info">
+The undo stack retains up to **64 steps** with a ~256 MB soft cap on snapshot memory; the oldest steps drop when the cap is exceeded.
+</Callout>
+
+### Dialog operator parameters
+
+The three Dialog operators remember their last values between opens and re-open with `F9`.
+
+<Accordions type="single">
+<Accordion title="Duplicate / Array (D)">
+<TypeTable
+  type={{
+    'X offset': { description: 'Per-copy offset along world X. Copy i is offset by i × this value. Negatives reverse direction.', type: 'metres', default: '0' },
+    'Y offset': { description: 'Per-copy offset along world Y (height).', type: 'metres', default: '0' },
+    'Z offset': { description: 'Per-copy offset along world Z.', type: 'metres', default: '0' },
+    'Y angle': { description: 'Per-copy rotation about world Y (pan), in degrees. A Y angle of 36° creates a 10-copy fan.', type: 'degrees', default: '0' },
+    'Number of duplicates': { description: 'Total number of copies, including the original. 1 means no duplication.', type: '1–500', default: '1' },
+  }}
+/>
+See [Duplicate & Array](/docs/scene/duplicate-array).
+</Accordion>
+<Accordion title="Patch Fixtures (P)">
+The dialog pre-fills the count of selected fixtures and seeds the next-free patch slot.
+<TypeTable
+  type={{
+    Universe: { description: 'DMX universe to start in. Auto-seeded to the next unpatched slot.', type: '1–63999', default: 'next free' },
+    Address: { description: 'Starting DMX address within the universe. Fixtures pack sequentially by channel count, wrapping universes if needed.', type: '1–512', default: 'next free' },
+  }}
+/>
+See [Patching Fixtures](/docs/dmx/patching).
+</Accordion>
+<Accordion title="Unpatch & Delete (Direct)">
+`Unpatch Fixtures` (`U`) and `Delete Selected` (`Delete`) are **Direct** operators — they run instantly with no dialog and are undoable. Press `F9` to re-run either on the current selection.
+</Accordion>
+</Accordions>
+
+<Callout type="warn" title="P and U are global">
+`Patch` (`P`) and `Unpatch` (`U`) fire in the global context. The keymap labels them slightly differently (`Patch selected fixtures` / `Unpatch selected fixtures`), but they route to the same canonical operators shown above.
+</Callout>
+
+## File
+
+Project file operations. Glowstone projects use the native [`.glow` format](/docs/projects); legacy `.archie` files still open.
+
+| Command | Default shortcut | What it does |
+| --- | --- | --- |
+| New project | `Cmd`/`Ctrl`+`N` | Creates a new project |
+| Open project | `Cmd`/`Ctrl`+`O` | Opens an existing `.glow` (or legacy `.archie`) project |
+| Save project | `Cmd`/`Ctrl`+`S` | Saves the current project |
+| Save project as… | `Cmd`/`Ctrl`+`Shift`+`S` | Saves under a new name (always as `.glow`) |
+
+## App & window
+
+Preferences, the Report Log, the Welcome Screen, and workspaces.
+
+| Command | Default shortcut | What it does |
+| --- | --- | --- |
+| Preferences | `Cmd`/`Ctrl`+`,` | Opens the preferences window |
+| Report Log | `F3` palette | Opens the [Report Log](/docs/interface/notifications) |
+| Welcome Screen | `F3` palette | Re-opens the welcome screen |
+| Save current as workspace… | `F3` palette | Saves the current layout as a workspace |
+| Workspace 1–9 | `F3` palette | Switches to a saved [workspace](/docs/interface/workspaces) |
+
+## What the palette omits
+
+A command is hidden from the `F3` palette when it cannot run without live context or would duplicate a canonical row.
+
+<Accordions type="single">
+<Accordion title="Why some commands aren't in the palette">
+The palette excludes:
+
+- **Modal transforms** — `Move` (`G`), `Rotate` (`R`), `Scale` (`S`) and the `X`/`Y`/`Z` axis locks, which need live viewport mouse state.
+- **`Camera view`** — a registered no-op placeholder (no shortcut).
+- **Keymap-only twins** — internal `kmi.*` duplicates of canonical entries.
+- **Alias binds** — alternates such as `Cmd`/`Ctrl`+`Y` for Redo or `Backspace` for Delete, which would duplicate the canonical row.
+
+Everything else — view, navigation, selection, file, and object actions plus all catalog operators — appears by its canonical entry.
+</Accordion>
+<Accordion title="Can I rebind these shortcuts?">
+Yes. The shipped bindings are defaults; a runtime override layer loaded from `keymap.json` can rebind, disable, or add binds. With no overrides, Glowstone behaves exactly as shipped. The keymap persists between sessions. See [Preferences & Theme](/docs/interface/preferences).
+</Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Search />} title="Commands & Operator Search" href="/docs/interface/commands">
+    The concepts behind the palette, operators, dialogs, and F9.
+  </Card>
+  <Card icon={<Keyboard />} title="Keyboard Shortcuts" href="/docs/reference/keyboard-shortcuts">
+    The same bindings grouped by context, platform-aware.
+  </Card>
+  <Card icon={<PlusSquare />} title="Adding Fixtures & Objects" href="/docs/scene/adding-objects">
+    Using the Shift+A Add menu, recents, and favourites.
+  </Card>
+  <Card icon={<Boxes />} title="Duplicate & Array" href="/docs/scene/duplicate-array">
+    Every parameter of the Duplicate / Array dialog.
+  </Card>
+  <Card icon={<Terminal />} title="Patching Fixtures" href="/docs/dmx/patching">
+    Assign universes and addresses with the Patch dialog.
+  </Card>
+  <Card icon={<Move3d />} title="Moving, Rotating & Scaling" href="/docs/scene/transforming">
+    Nudges and the modal G/R/S transform tools.
+  </Card>
+</Cards>

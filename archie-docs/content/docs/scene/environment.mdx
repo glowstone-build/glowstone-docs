@@ -1,0 +1,145 @@
+---
+title: "Environments: Fog & Haze"
+description: "Add and tune the haze volume that makes beams visible."
+---
+
+import { Wind, SlidersHorizontal, Sparkles, Box, Plus, Eye } from 'lucide-react';
+
+An **Environment** is a bounded box of participating media that scatters light so beams become visible in the air. Without one, fixtures still light surfaces, but their beams render invisible.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The 3D Viewport with three moving-head beams crossing on a dark stage. Left half shows light haze (density 0.03): subtle, crisp beam shafts. Right half (composite or second shot) shows heavy haze (density ~0.3): thick, glowing, fully visible beams filling the volume."
+/>
+
+The environment in Glowstone is currently a single kind, the **Fog Box**: an axis-aligned box centred on a world position, with width, height, and depth in metres. The live viewport renders one active (unhidden) environment, and a still render inherits it.
+
+## How it works
+
+Glowstone marches each view ray through the fog box, sampling a procedural density field and a phase function to accumulate scattered light from every beam that passes through. The haze is animated: the density field drifts continuously (curl-noise advection and domain warp), so the live preview shows haze rolling through the beams rather than a static cloud.
+
+<Callout type="idea">
+The fog box has a defined boundary. Make it large enough to enclose your rig and stage so beams do not visibly clip at the box edge. The default `40 × 20 × 40` m suits most stages.
+</Callout>
+
+## Add an environment
+
+<Steps>
+<Step>
+### Open the Add menu
+
+Choose **Add ▸ Environment** to create a Fog Box. It is placed resting on the floor at the cursor ground point (its centre sits half its height above the ground so it never sinks below the stage).
+</Step>
+<Step>
+### Select it
+
+Pick the new environment in the [Scene Outliner](/docs/scene/outliner) (under **World ▸ Environment**, shown as a "Fog volume"). An environment is a single-only selection — selecting it clears any fixture, object, or screen selection.
+</Step>
+<Step>
+### Tune it in the Inspector
+
+With the environment selected, the Inspector shows its parameters under **Transform** (Center, Size) and **Volume** (Density, Tint, plus an *Advanced* disclosure for the scattering knobs). Edit them live; the viewport updates immediately.
+</Step>
+</Steps>
+
+<Callout type="info" title="Eye toggle">
+Each environment has an eye toggle in the outliner. Only the unhidden environment is rendered. The hidden state is session-only — it is not saved with the project.
+</Callout>
+
+## Parameters
+
+All values are editable in the Inspector after creation. In the environment Inspector the density control is labelled **Density** (under the **Volume** group) and the haze colour is labelled **Tint**. The **Anisotropy**, **Uniformity**, and **Cluster contrast** knobs sit behind the *Advanced* disclosure in that group.
+
+<Callout type="info" title="Two density sliders">
+The **World** panel also has a convenience **Fog density** slider that drives whichever fog volume is currently unhidden — handy when no environment is selected. It is the same value as the selected environment's **Density**.
+</Callout>
+
+<TypeTable
+  type={{
+    density: {
+      description: 'Extinction coefficient scale (σ_t). The main lever for beam visibility — higher means thicker haze and brighter, more visible beams. 0.03 is light haze; raise it for a smoke-filled look.',
+      type: '0.0–4.0',
+      default: '0.03',
+    },
+    color: {
+      description: 'Scattering tint (linear RGB) of the haze, labelled Tint in the Inspector. The default is a neutral blueish grey-white for realistic theatrical fog; change it for stylised looks.',
+      type: 'linear RGB',
+      default: '[0.7, 0.72, 0.78]',
+    },
+    anisotropy: {
+      description: 'Henyey–Greenstein phase g. Above 0, beams brighten when you look into them; real haze is roughly 0.7–0.85.',
+      type: '-0.95–0.95',
+      default: '0.25',
+    },
+    uniformity: {
+      description: 'Haze smoothness. 1.0 is even, uniform fog; lower values create cloud clusters — dense pockets with clearer gaps.',
+      type: '0.0–1.0',
+      default: '0.6',
+    },
+    cluster_contrast: {
+      description: 'How much brighter the smoke clusters are versus the gaps, and how sharp their boundaries. Only has an effect when uniformity is below 1.0. Higher makes pockets pop.',
+      type: '0.0–1.0',
+      default: '0.0',
+    },
+    size: {
+      description: 'Box dimensions as width × height × depth, in metres (each axis clamped to 0.1–500). The total volume is width × height × depth, centred on center.',
+      type: 'Vec3 (m)',
+      default: '40 × 20 × 40',
+    },
+    center: {
+      description: 'World-space position of the box centre (Y up), in metres.',
+      type: 'Vec3 (m)',
+      default: 'on floor at cursor',
+    },
+  }}
+/>
+
+<Callout type="warn" title="Density is the main lever">
+If your beams are too faint or too overpowering, adjust `density` first. It controls how much light scatters in the air and is by far the strongest control over beam visibility. The other parameters shape the *character* of the haze, not its overall strength.
+</Callout>
+
+### Shaping the look
+
+<Accordions type="single">
+  <Accordion title="Beams look flat — how do I make them pop when viewed head-on?">
+    Raise `anisotropy` toward forward-scattering (closer to `0.7`). Forward scattering makes a beam brighten as you look into it, which reads as more realistic, punchy theatrical haze.
+  </Accordion>
+  <Accordion title="I want rolling smoke pockets instead of even haze">
+    Lower `uniformity` below `1.0` to break the fog into clusters, then raise `cluster_contrast` to make those pockets denser and their edges sharper. The drift animation will carry the clusters through your beams.
+  </Accordion>
+  <Accordion title="My beams clip at an invisible edge">
+    Increase `size` so the box fully encloses the rig and stage, and check that `center` is positioned where your action is. Beams only scatter inside the box.
+  </Accordion>
+</Accordions>
+
+## Related rendering controls
+
+A few global render settings also affect how haze and beams read. They live in **Color Management** (shared between the viewport and the still render), not on the environment itself:
+
+- **Beam intensity** — global multiplier on volumetric scatter (default `650`); brighter, more visible beams everywhere.
+- **Chroma haze** — lifts saturated dim colours in haze so blues, magentas, and deep reds read without flattening (default `1.2`).
+- **Steps** — raymarch quality (preview default `80`; the final render has its own step budget); higher reduces beam noise and banding.
+
+<Callout type="warn" title="Froxel grid is off by default">
+The optional froxel volumetric grid is disabled by default because per-pixel raymarch produces cleaner, sharper beams. Only enable it for very large rigs where performance matters — it can introduce blocky "fog circle" artifacts and mushier gobos.
+</Callout>
+
+See [Volumetric Beams & Haze](/docs/rendering/volumetrics) for the full breakdown of these controls.
+
+## See also
+
+<Cards>
+  <Card icon={<Sparkles />} title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    Raymarch quality, beam intensity, chroma haze, and the froxel option.
+  </Card>
+  <Card icon={<Wind />} title="World: Sky & Ambient" href="/docs/scene/world">
+    HDRI sky, ambient fill, and background controls.
+  </Card>
+  <Card icon={<Plus />} title="Adding Fixtures & Objects" href="/docs/scene/adding-objects">
+    Add the lights whose beams the haze makes visible.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="The Beam Engine" href="/docs/fixtures/beam-engine">
+    How fixture beams are built and aimed.
+  </Card>
+</Cards>

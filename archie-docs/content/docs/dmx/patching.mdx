@@ -1,0 +1,221 @@
+---
+title: "Patching Fixtures"
+description: "Map fixtures to universes and addresses so incoming DMX drives the right 3D fixtures."
+---
+
+import { Network, Wand2, ListChecks, Plug, Activity, BookOpen, Cable, Flame } from 'lucide-react';
+
+The **patch** maps each fixture to a universe, a starting address, a channel footprint and a mode, then decodes incoming console data into beams. Glowstone is **input-only** — it reads DMX and never transmits.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Fixtures tab (Fixture Manager) docked at the bottom of Glowstone: a sortable table with Seq, Fixture, Type, Univ, Addr, Mode and Ch (footprint) columns; conflicted and off rows are flagged in the trailing status cell. The bulk toolbar (U / @ drag fields, Patch seq, Set U, Enable, Disable, Mode) appears above the table when fixtures are selected, with a Reset button top-right."
+/>
+
+## How the patch works
+
+The patch is a **side table** owned by the DMX engine, index-parallel to the scene's fixtures rather than embedded on each `Fixture`. Keeping it separate means duplicating a fixture never duplicates its address, and the MVR import/export round-trip stays untouched. Each fixture has at most one patch entry. The table is persisted inside the `.glow` project file (legacy `.archie` projects still open).
+
+<TypeTable
+  type={{
+    Universe: { description: 'Which universe this fixture occupies (1-based).', type: '1–63999', default: '1' },
+    Address: { description: 'Starting channel within the universe (1-based).', type: '1–512', default: '1' },
+    Footprint: { description: 'Consecutive channels the fixture occupies, from its GDTF mode or the synthetic map.', type: 'channels', default: 'mode-dependent' },
+    Mode: { description: 'Which GDTF fixture mode is active (index into the GDTF modes). 0 for synthetic / single-mode fixtures.', type: '0-based index', default: '0' },
+    Enabled: { description: 'Whether the entry decodes and occupies the universe grid. Disabled = unpatched.', type: 'bool', default: 'see Source' },
+    Source: { description: 'Origin of the address: MVR, GDTF, Synthetic or Manual.', type: 'enum', default: '—' },
+  }}
+/>
+
+<Callout type="info">
+An entry that is `Enabled` decodes every frame, counts toward grid occupancy and is checked for conflicts. A disabled entry is effectively unpatched: it keeps its address in the table but does not decode or claim channels.
+</Callout>
+
+## Where patch entries come from
+
+When fixtures enter the scene they arrive with a patch source that determines whether they start patched.
+
+| Source | Origin | Starts |
+| --- | --- | --- |
+| **MVR** | Imported from an MVR scene's `<Addresses>` block | Enabled |
+| **GDTF** | A GDTF fixture with a known footprint | Disabled |
+| **Synthetic** | A plain (non-GDTF) library fixture on the 8-channel synthetic map | Disabled |
+| **Manual** | Edited by hand in the UI | Enabled (set when you change address, universe or mode) |
+
+<Callout type="idea">
+MVR rigs arrive already addressed, so they light up as soon as the matching console data flows. GDTF and Synthetic fixtures you add yourself start unpatched — give them addresses with the Patch dialog or the Fixture Manager.
+</Callout>
+
+## Channel footprints
+
+A footprint is how many consecutive channels a fixture consumes.
+
+**GDTF fixtures** use the channel count of their active mode, resolved per instance. See [DMX Modes & Channels](/docs/library/dmx-modes) for how a mode determines the footprint.
+
+**Plain fixtures** (no GDTF profile) use a fixed **8-channel synthetic footprint**:
+
+<TypeTable
+  type={{
+    Dimmer: { description: 'Master intensity.', type: '8-bit', default: 'ch 1' },
+    ColorAdd_R: { description: 'Additive red.', type: '8-bit', default: 'ch 2' },
+    ColorAdd_G: { description: 'Additive green.', type: '8-bit', default: 'ch 3' },
+    ColorAdd_B: { description: 'Additive blue.', type: '8-bit', default: 'ch 4' },
+    Pan: { description: 'Pan, coarse + fine (decoded to ±270°).', type: '16-bit', default: 'ch 5–6' },
+    Tilt: { description: 'Tilt, coarse + fine (decoded to ±135°).', type: '16-bit', default: 'ch 7–8' },
+  }}
+/>
+
+<Callout type="info">
+Footprints drive packing. A rig of 65 plain fixtures at 8 channels each needs `65 × 8 = 520` channels, so it fills universe 1 (512 channels) and spills 8 channels into universe 2.
+</Callout>
+
+## Patching workflows
+
+There are two interactive keyboard operators — **Patch** (`P`) and **Unpatch** (`U`) — plus the full Fixture Manager. Both are undoable. After running the Patch operator you can re-open its dialog with `F9` (Blender-style "adjust last operation") to tweak the universe/address and re-run.
+
+Both operators act on whichever patchable selection is active: **fixtures** (via the side patch table) or **pyro devices** (via their inline patch — see [Pyro Devices](/docs/fixtures/pyro)).
+
+### Patch the selection
+
+Use the Patch dialog to address a specific selection from a universe and address you choose.
+
+<Steps>
+<Step>
+### Select fixtures
+Pick the fixtures in the viewport, Outliner or Inspector.
+</Step>
+<Step>
+### Press `P`
+The Patch dialog opens, titled "Patch", with the prompt "Patch N fixtures from:". `Universe` and `Address` are seeded to the next free slot past the end of the current rig.
+</Step>
+<Step>
+### Set the start universe and address
+Both are drag values — drag or type. `Universe` accepts `1`–`63999`; `Address` accepts `1`–`512`.
+</Step>
+<Step>
+### Confirm
+Click **Patch** or press `Enter`. The selection packs sequentially from the chosen start, **skipping channels already claimed by other enabled entries** so it never clobbers the existing rig. Each entry is marked enabled. Press `Esc` or **Cancel** to dismiss.
+</Step>
+</Steps>
+
+<Callout type="idea">
+After patching one batch, press `F9` to re-open the Patch dialog with the same settings, bump the address (for example to continue from the next free block) and confirm again.
+</Callout>
+
+### Unpatch the selection
+
+<Steps>
+<Step>
+### Select fixtures
+Pick the fixtures you want to free.
+</Step>
+<Step>
+### Press `U`
+The Unpatch confirm dialog opens — "Unpatch N fixtures?" — noting "They stop decoding and free their channels." Click **Unpatch** or press `Enter` to confirm; `Esc` or **Cancel** dismisses.
+</Step>
+<Step>
+### Entries are disabled
+Each selected entry is set to disabled: it stops decoding and frees its channels. The address stays in the table but no longer occupies the grid.
+</Step>
+</Steps>
+
+<Callout type="info">
+Auto-patch — packing **every** unpatched fixture sequentially from universe 1, address 1 while skipping channels already claimed by enabled entries — is the engine that the Patch dialog builds on, but it is exposed only through the dev harness env var `GLOWSTONE_DMX_AUTOPATCH=1`. There is no in-app key or button for a whole-rig auto-patch; use the Patch dialog or the Fixture Manager's **Patch seq** instead.
+</Callout>
+
+## The Fixture Manager
+
+The **Fixtures** tab at the bottom of the window is the full patch editor, with multi-select and bulk operations.
+
+### Columns
+
+| Column | Notes |
+| --- | --- |
+| **Seq** | Editable sequence number (console-style fixture id; `0` = unassigned) |
+| **Fixture** | Fixture name; clicking the cell selects the row |
+| **Type** | Fixture profile from the library |
+| **Univ** | Editable universe (editing sets the entry to enabled / Manual) |
+| **Addr** | Editable address (editing sets the entry to enabled / Manual) |
+| **Mode** | Per-fixture GDTF mode dropdown (`—` for plain fixtures) |
+| **Ch** | Footprint (channel count), read-only |
+| *(status)* | Trailing cell: a warning icon on a conflict, `off` when disabled |
+
+<Callout type="info">
+Sort by **Seq** to put rows in console order, and use **Renumber** (in the filter row) to renumber the selection's sequence by stage position — rows top→bottom, then columns left→right.
+</Callout>
+
+### Bulk actions
+
+When fixtures are selected, a bulk toolbar (`Bulk · N`) appears with `U` and `@` drag fields and these buttons:
+
+<Cards>
+  <Card icon={<Wand2 />} title="Patch seq">
+    Assign the selection sequentially from the toolbar's `U` / `@` fields, in visible sort order (not raw selection order), packing by footprint and wrapping to the next universe at 512. It does **not** avoid existing enabled entries — it overwrites onto the chosen slots. (The `P` dialog is the clash-avoiding path.)
+  </Card>
+  <Card icon={<Network />} title="Set U">
+    Set the universe of every selected fixture to the bulk value (also enabling them, source Manual).
+  </Card>
+  <Card icon={<ListChecks />} title="Enable / Disable">
+    Two buttons that toggle the enabled flag for the whole selection.
+  </Card>
+  <Card icon={<Plug />} title="Mode">
+    A mode dropdown — shown only when every selected fixture shares the same GDTF profile — changes the GDTF mode for all of them.
+  </Card>
+</Cards>
+
+### Filters and Reset
+
+The filter row above the table holds a text filter, a sort selector, a Renumber button and two quick toggles:
+
+<Tabs items={['Filter', 'Sort', 'Conflicts', 'Unpatched']}>
+  <Tab value="Filter">Text filter on fixture name or profile.</Tab>
+  <Tab value="Sort">Order rows by **Patch** (universe then address), **Name**, **Type** or **Sequence**.</Tab>
+  <Tab value="Conflicts">A toggle (with a live conflict count) that shows only fixtures whose addresses overlap another enabled entry.</Tab>
+  <Tab value="Unpatched">A toggle that shows only disabled (unpatched) fixtures.</Tab>
+</Tabs>
+
+<Callout type="warn">
+The **Reset** button (top-right) discards all manual edits and restores addresses to their original MVR/GDTF imports. Use it deliberately — manual patching is lost.
+</Callout>
+
+## Address conflicts
+
+A conflict is two or more **enabled** entries whose channel ranges overlap in the same universe.
+
+<Callout type="warn">
+Conflicts are **advisory only** — Glowstone never auto-resolves them. Conflicted fixtures show a warning icon in the Fixture Manager, and the affected cells in the [DMX Monitor](/docs/dmx/dmx-monitor) grid are highlighted. Resolve a conflict by re-patching the overlapping fixtures to free addresses or a different universe.
+</Callout>
+
+To find conflicts fast, flip on the **Conflicts** toggle in the Fixture Manager, then re-patch those rows.
+
+## FAQ
+
+<Accordions type="single">
+  <Accordion title="My fixtures aren't moving — what should I check?">
+    Confirm the entry is `Enabled` and that its universe and address match the console's rig. Then check the DMX Monitor: an "idle" universe means no packets are arriving. A wrong GDTF mode can also misalign channels — verify the mode against your console's profile.
+  </Accordion>
+  <Accordion title="What's the difference between unpatching and deleting?">
+    Unpatch (`U`) disables the patch entry but keeps the fixture in the scene; its address stays in the table, just inactive. Delete removes the fixture and its patch entry entirely.
+  </Accordion>
+  <Accordion title="Where is the patch stored?">
+    Inside the `.glow` project file, as a side table separate from the scene geometry (legacy `.archie` projects still load). Manual address edits set the entry's source to Manual so they round-trip faithfully.
+  </Accordion>
+</Accordions>
+
+## See also
+
+<Cards>
+  <Card icon={<Activity />} title="The DMX Monitor" href="/docs/dmx/dmx-monitor">
+    Watch live channel levels and spot conflicts on the universe grid.
+  </Card>
+  <Card icon={<BookOpen />} title="DMX Modes & Channels" href="/docs/library/dmx-modes">
+    How a fixture's mode determines its footprint.
+  </Card>
+  <Card icon={<Cable />} title="Connecting a Console" href="/docs/dmx/consoles">
+    Match Glowstone universes to your console's output.
+  </Card>
+  <Card icon={<Flame />} title="Pyro Devices" href="/docs/fixtures/pyro">
+    Patch CO2 jets and cold-spark machines on their own inline DMX patch.
+  </Card>
+</Cards>

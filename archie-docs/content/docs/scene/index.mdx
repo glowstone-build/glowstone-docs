@@ -1,0 +1,130 @@
+---
+title: "Scene Concepts"
+description: "How a Glowstone scene is structured: fixtures, objects, screens, pyro, environments and the world."
+---
+
+import { ListTree, MousePointerClick, PlusSquare, Move3d, CloudFog, Sun, Lightbulb, Monitor, Boxes, Flame } from 'lucide-react';
+
+A Glowstone scene is a flat collection of placed things — fixtures, static objects, LED screens, pyro devices and fog volumes — plus a single world that lights it all. The Scene Outliner shows a tidy hierarchy on top of that flat list, but underneath every entity sits in one place.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="The Scene Outliner panel showing the derived tree: a 'Scene' root containing World (with an Environment container holding 'Fog Box 1'), a Fixtures group with two fixtures (each showing a leading sequence number, the profile name and a patch address on the right), an Objects group with 'Stage Deck' and 'Truss', and a Screens group with 'LED Wall 1' showing '512×256 · Test Pattern'."
+/>
+
+## The scene model
+
+Glowstone stores the scene as flat `Vec`s of plain data — no nesting in the storage. The tree you see in the outliner is a view derived from those lists every frame.
+
+| Kind | What it is | Examples |
+| --- | --- | --- |
+| **Fixtures** | Controllable light sources | Moving heads, PAR cans, lasers |
+| **Objects** | Static imported geometry | Stage decks, truss, set pieces |
+| **Screens** | LED video walls and panels | A 4×2 cabinet wall |
+| **Pyro** | Placed pyro devices | CO2 jets, cold-spark machines |
+| **Environments** | Fog / haze volumes | A `Fog Box` that makes beams visible |
+| **World** | A single global sky + ambient | One HDRI per scene |
+
+<Callout type="info">
+There is exactly one **World** per scene. Fixtures, objects, screens, pyro devices and environments can each have any number of instances.
+</Callout>
+
+Pyro is a first-class placed entity with its own inline DMX patch (not the fixture patch table). It is documented on its own page — see [Pyro Devices](/docs/fixtures/pyro).
+
+## Stable entity IDs
+
+Every fixture, object, screen, pyro device and environment carries a session-stable identity (`EntityId`). The outliner uses these IDs to track which rows are expanded and where a selection range is anchored, so that state survives even when you add, delete or reorder entities.
+
+<Callout type="idea">
+Because identity is tracked by ID and not by row position, your expanded groups and selection anchors stay put as the scene changes around them. The ID is a runtime concept (`serde`-skipped, reassigned on load) and is not written into the `.glow` file.
+</Callout>
+
+## The unified object handle
+
+Fixtures, geometry, screens, pyro devices and environments differ in almost every way, but Glowstone treats them identically for a handful of common operations. A single unified handle (`ObjectRef`) lets all these kinds share one path for:
+
+- **Transforming** — move, rotate and scale (see [Moving, Rotating & Scaling](/docs/scene/transforming))
+- **Duplicating** — copy any mix of objects at once (see [Duplicate & Array](/docs/scene/duplicate-array))
+- **Framing** — every object reports a world-space bounding box so the camera can frame it
+- **Re-selecting** — after a duplicate, the copies are selected for you
+
+This is why the same gizmos and shortcuts work whether you grabbed a moving head, a truss, an LED wall, a CO2 jet, or a fog box. (World is not a placed object and is excluded from this handle.)
+
+## One active kind at a time
+
+Selection keeps a multi-select list for **one** kind at a time — fixtures *or* objects *or* screens *or* pyro. The first item in the active list is the *primary* selection that drives single-object editing. World and Environment are single-only selections that are mutually exclusive with everything else.
+
+<Callout type="info" title="Switching kinds">
+A plain click, or a `Cmd`/`Ctrl`-click on an item of a different kind, switches the active kind. Selecting the World or an environment clears any fixture, object, screen or pyro selection. See [Selecting Objects](/docs/scene/selection) for the full set of rules.
+</Callout>
+
+## How the outliner derives its tree
+
+The outliner rebuilds its hierarchy from the flat scene on every frame. Conceptually the tree looks like this:
+
+<Files>
+  <Folder name="Scene" defaultOpen>
+    <Folder name="World" defaultOpen>
+      <Folder name="Environment">
+        <File name="Fog Box 1" />
+      </Folder>
+    </Folder>
+    <Folder name="Fixtures" defaultOpen>
+      <File name="PAR Can 1" />
+      <File name="Moving Head 1" />
+    </Folder>
+    <Folder name="Objects">
+      <File name="Stage Deck" />
+      <File name="Truss" />
+    </Folder>
+    <Folder name="Screens">
+      <File name="LED Wall 1" />
+    </Folder>
+    <Folder name="Pyro">
+      <File name="CO2 Jet 1" />
+    </Folder>
+  </Folder>
+</Files>
+
+Each row shows just its name (the type icon conveys the kind); the secondary string — a group's item count, or a leaf's type/profile — moves to the row's hover tooltip. Fixture rows additionally show a leading **sequence number** and, on the right, a channel-footprint chip (`Nch`) and the patch address. The full breakdown of rows, filters, search and sort lives on the [Scene Outliner](/docs/scene/outliner) page.
+
+## Explore the scene
+
+<Cards>
+  <Card icon={<ListTree />} title="The Scene Outliner" href="/docs/scene/outliner">
+    Read the derived tree, filter by kind, search, sort and rename.
+  </Card>
+  <Card icon={<MousePointerClick />} title="Selecting Objects" href="/docs/scene/selection">
+    Click, Shift and Cmd/Ctrl rules, primary selection and ranges.
+  </Card>
+  <Card icon={<PlusSquare />} title="Adding Fixtures & Objects" href="/docs/scene/adding-objects">
+    Place fixtures, screens, pyro and fog boxes into the scene.
+  </Card>
+  <Card icon={<Move3d />} title="Moving, Rotating & Scaling" href="/docs/scene/transforming">
+    Transform any object kind with the same gizmos and shortcuts.
+  </Card>
+  <Card icon={<CloudFog />} title="Environments: Fog & Haze" href="/docs/scene/environment">
+    Add fog volumes so beams and haze become visible.
+  </Card>
+  <Card icon={<Sun />} title="World: Sky & Ambient" href="/docs/scene/world">
+    Set the single HDRI sky and image-based ambient light.
+  </Card>
+</Cards>
+
+## See also
+
+<Cards>
+  <Card icon={<Lightbulb />} title="Fixtures Overview" href="/docs/fixtures">
+    The beam engine and every fixture parameter.
+  </Card>
+  <Card icon={<Flame />} title="Pyro Devices" href="/docs/fixtures/pyro">
+    CO2 jets and cold-spark machines with inline DMX.
+  </Card>
+  <Card icon={<Monitor />} title="LED Screens" href="/docs/media">
+    Content sources, media servers and pixel mapping.
+  </Card>
+  <Card icon={<Boxes />} title="MVR Scene Exchange" href="/docs/projects/mvr">
+    Import full rigs and geometry from an MVR file.
+  </Card>
+</Cards>

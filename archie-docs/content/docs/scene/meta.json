@@ -1,0 +1,14 @@
+{
+  "title": "Building the Scene",
+  "icon": "Boxes",
+  "pages": [
+    "index",
+    "outliner",
+    "selection",
+    "adding-objects",
+    "transforming",
+    "duplicate-array",
+    "environment",
+    "world"
+  ]
+}

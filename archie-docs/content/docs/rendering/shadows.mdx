@@ -1,0 +1,125 @@
+---
+title: "Shadows"
+description: "Hero-beam shadow maps: per-fixture depth maps that ground beams and occlude shafts mid-air."
+---
+
+import { Crosshair, Gauge, Waves, Layers } from 'lucide-react';
+
+Glowstone renders dedicated shadow maps for the most visible moving-head beams, casting them onto floors and set and occluding the shaft itself where it passes behind geometry.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A narrow moving-head beam in haze striking a truss: the beam shaft is visibly cut where the truss tube crosses it, and a soft-edged shadow falls on the floor below. Fog density raised so the mid-air occlusion of the shaft is clearly readable."
+/>
+
+## How shadows work
+
+Glowstone does not shadow every beam. It picks a small set of "hero" beams and gives each a private depth map rendered from the fixture's point of view. Those maps are then sampled twice:
+
+- The forward surface pass (`mesh.wgsl`) samples them to shadow floors and set geometry.
+- The volumetric pass (`volumetric.wgsl`) samples them to occlude the beam shaft mid-air where it passes through geometry.
+
+Non-hero beams are not shadowed: they simply do not self-occlude mid-air, and pass through geometry without casting. (An optional shared-occluder fallback exists but is off by default — see below.)
+
+<Callout type="info" title="Why only some beams">
+A full depth pass per beam is expensive. Reserving sharp shadow maps for the narrowest, most beam-like fixtures puts the detail where the eye is drawn and keeps the frame rate up.
+</Callout>
+
+## Hero beam selection
+
+Glowstone ranks lit fixtures automatically each frame and shadows the top ones.
+
+<Steps>
+<Step>
+### Rank fixtures
+Every lit beam (one with a non-degenerate cone) is ranked by **cone narrowness** alone — the smaller the half-angle, the sharper and more visible its shadow, so the tightest cones rank highest. At most one map per fixture, so a multi-cell array can't hog the whole atlas.
+</Step>
+<Step>
+### Render depth maps
+The top fixtures (up to the `shadow_max` limit, hard-capped at 8) each render a depth map from their own viewpoint, with a perspective projection matching the beam's cone angle.
+</Step>
+<Step>
+### Sample the maps
+The forward pass shadows surfaces from these maps; the volumetric pass occludes the beam shafts mid-air through geometry.
+</Step>
+<Step>
+### Leave the rest unshadowed
+Beams beyond the hero set are tagged unshadowed (`-1`). They render without casting and without mid-air self-occlusion.
+</Step>
+</Steps>
+
+<Callout type="idea">
+Because ranking is by cone narrowness, a tightly zoomed spot is far more likely to earn a hero map than a wide wash. If a key beam is not casting a crisp shadow, narrowing its zoom can promote it. (Intensity and screen size do not factor into the ranking — only that the beam is lit and how tight its cone is.)
+</Callout>
+
+## The shadow atlas
+
+Hero maps share a single `Depth32Float` texture array. The layout is fixed in source:
+
+<TypeTable
+  type={{
+    'Max hero beams': { description: 'Maximum simultaneously shadowed hero beams (shadow::MAX). Hard cap of 8 in source; each map is a full depth render pass.', type: 'count', default: '8' },
+    'Atlas resolution': { description: 'Per-map square resolution (shadow::RES), Depth32Float.', type: 'pixels', default: '768×768' },
+    'Atlas layers': { description: '8 hero maps plus 1 shared-occluder layer (shadow::LAYERS = MAX + 1).', type: 'count', default: '9' },
+    'Filtering': { description: 'Hardware percentage-closer filtering via a LessEqual comparison sampler with linear taps for soft penumbra on shadow edges.', type: 'PCF', default: '2×2' },
+  }}
+/>
+
+<Callout type="info" title="The shared-occluder layer">
+The 9th atlas layer is a single shared occluder, intended as an O(1) fallback so non-hero beams also self-occlude. It is **disabled by default** and only built when the `GLOWSTONE_SHARED` env var is set — the single mean-direction projection stamped phantom occluder outlines into the haze, so it was turned off. With it off, non-hero beams just don't self-occlude mid-air.
+</Callout>
+
+## The shadow_max setting
+
+`shadow_max` caps how many hero beams get dedicated maps. It lives under **World ▸ Render Properties ▸ Performance**, shown as **Shadow maps**, with separate dials for the viewport preview (**Viewport (preview)**) and the final render (**Render (final)**).
+
+<TypeTable
+  type={{
+    shadow_max: { description: 'Maximum hero beams to render dedicated shadow maps for. 0 disables per-beam shadows entirely. Capped at 8 in the engine (shadow::MAX) even though the dial reaches 16.', type: '0–16', default: '8' },
+  }}
+/>
+
+<Callout type="warn" title="Capped at 8">
+Both dials accept values up to `16`, but the engine renders at most `8` hero maps (`shadow_max.min(shadow::MAX)`). Setting it higher has no additional effect beyond `8`.
+</Callout>
+
+<Callout type="info" title="Lowering for performance">
+Each hero map is a separate depth pass. On a heavy rig, dropping `shadow_max` to `4` (or `0`) is a direct way to reclaim time per frame in the live preview. See [Performance & Quality Tuning](/docs/rendering/performance) for where this sits among the other levers.
+</Callout>
+
+### Suggested values
+
+| Use case | `shadow_max` | Notes |
+| --- | --- | --- |
+| Live preview (smooth 60 FPS) | `4`–`8` | Lower if the frame rate dips |
+| Still render (quality) | `8` | Full hero set |
+| Draft render | `4` | Faster turnaround |
+| No per-beam shadows | `0` | Beams render without casting |
+
+<Callout type="warn" title="Not stored in the project">
+`shadow_max` is a machine-specific knob. It is marked `#[serde(skip)]`, so it is not written into the `.glow` file and resets to its default on load rather than travelling with the show file.
+</Callout>
+
+## Contact shadows
+
+<Callout type="warn" title="Not yet functional">
+Screen-space contact shadows are planned as a cheap, global grounding for every light, to hide cases where light appears to pass straight through geometry. They are not implemented yet, so only hero-beam shadowing (plus the opt-in shared occluder) is active today.
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Waves />} title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    How beam shafts scatter in fog, the surfaces that shadow maps occlude.
+  </Card>
+  <Card icon={<Gauge />} title="Performance & Quality Tuning" href="/docs/rendering/performance">
+    Where shadow_max ranks among the FPS levers.
+  </Card>
+  <Card icon={<Crosshair />} title="Pan, Tilt & Aiming" href="/docs/fixtures/movement">
+    Aim the moving heads whose beams become hero shadow casters.
+  </Card>
+  <Card icon={<Layers />} title="Rendering Overview" href="/docs/rendering">
+    The full render pipeline these shadows feed into.
+  </Card>
+</Cards>

@@ -1,0 +1,141 @@
+---
+title: "Pyro Devices"
+description: "CO2 jets and cold-spark machines — place, tune and patch stage pyro."
+---
+
+import { Flame, Sparkles, CloudFog, Network, SlidersHorizontal } from 'lucide-react';
+
+Glowstone simulates two stage pyro devices: **CO2 jets** (rising white fog plumes) and **cold-spark machines** (golden spark fountains). They are placed like fixtures, aim along their nozzle, and are driven by an inline DMX patch — or free-run at a manual level for previz.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="A stage with a row of CO2 jets firing white plumes up into beams and haze, plus two cold-spark fountains downstage throwing golden sparks. The Inspector shows a selected CO2 Jet with its Effect group (Throw, Speed, Output, Spread, Opacity, Density, Dissipation, Tint)."
+/>
+
+## The two kinds
+
+<Tabs items={['CO2 Jet', 'Cold Spark']}>
+  <Tab value="CO2 Jet">
+    A fast, dense, short-lived **white fog column** that rises and catches coloured stage light. It is alpha-blended and **lit** (not emissive) — the colour comes from the beams hitting it, with an optional faint nozzle tint. The plume billows up to its **Throw** height and lingers for its **Dissipation** time.
+  </Tab>
+  <Tab value="Cold Spark">
+    An upward **golden spark fountain** ("cold pyro" / Sparkular-type): ballistic, additive, velocity-stretched sparks whose colour cools from a hot base to a dim tip along the blackbody curve. It is HDR-emissive and feeds bloom.
+  </Tab>
+</Tabs>
+
+## Adding a device
+
+Press `Shift`+`A` and pick the **Pyro** category, or drag one in from the **Library**. The nozzle sits at the device origin and the effect fires along local `+Y` (steered by pan/tilt). A freshly placed device free-runs at a visible default so you see the effect immediately; patch it to drive it from a console.
+
+### Built-in devices
+
+| Device | Kind | Defaults |
+| --- | --- | --- |
+| Cold Spark Machine | Cold spark | 3.5 m apex, 5000 particle cap |
+| Cold Spark — Mini | Cold spark | 2.0 m apex, 3000 cap |
+| Cold Spark — Moving Head | Cold spark (moving) | 4.0 m apex, 5000 cap |
+| CO2 Jet | CO2 | 9 m throw, 1300 cap |
+| CO2 Jet — Long Throw | CO2 | 14 m throw, 1500 cap |
+| CO2 Jet — Moving (PSYCO2) | CO2 (moving) | 10 m throw, 1400 cap |
+
+## Effect parameters
+
+The Inspector's **Effect** group is kind-specific. Every slider shows a suggested range but **never clamps** — type any value.
+
+<Tabs items={['CO2 Jet', 'Cold Spark']}>
+<Tab value="CO2 Jet">
+
+<TypeTable
+  type={{
+    Throw: { description: 'How high the plume billows up (buoyant rise).', type: '3–20 m', default: 'profile' },
+    Speed: { description: 'Jet exit velocity — the launch blast, separate from Throw.', type: '2–22 m/s', default: '11' },
+    Output: { description: 'Master output / free-run level when unpatched.', type: '0–1', default: '0' },
+    Spread: { description: 'Cone half-angle at the nozzle.', type: '0–20°', default: '8' },
+    Opacity: { description: 'Per-puff core opacity.', type: '0.05–1.0', default: '0.85' },
+    Density: { description: 'Visual smoke density (extinction ×). Higher = denser, darker self-shadowed core and a lighter rim.', type: '0.1–4.0 ×', default: '1.0' },
+    Dissipation: { description: 'Hang time — how long the smoke lingers after the valve shuts. Output itself is instant.', type: '0.3–10 s', default: '2.5' },
+    Tint: { description: 'Faint nozzle-LED tint on the white plume (stage light does the real colouring).', type: 'RGB', default: 'warm white' },
+  }}
+/>
+
+</Tab>
+<Tab value="Cold Spark">
+
+<TypeTable
+  type={{
+    Height: { description: 'Fountain apex height (sets launch speed).', type: '0.5–8.0 m', default: 'profile' },
+    Amount: { description: 'Spark density / free-run level when unpatched.', type: '0–1', default: '0.55' },
+    Spread: { description: 'Cone half-angle at the nozzle.', type: '0–45°', default: '10' },
+    Brightness: { description: 'HDR emission brightness (drives bloom).', type: '1–20', default: '8' },
+    'Hot colour': { description: 'Hot-base blackbody temperature (gold↔white).', type: '1500–3500 K', default: 'profile' },
+    'Tip colour': { description: 'Cooling-tip blackbody temperature (dim red↔orange).', type: '900–1600 K', default: '1100' },
+  }}
+/>
+
+</Tab>
+</Tabs>
+
+## Movement
+
+The **Movement** group steers the nozzle — meaningful on the moving and spin variants.
+
+<TypeTable
+  type={{
+    Pan: { description: 'Aim about world Y.', type: '−90–90°', default: '0' },
+    Tilt: { description: 'Aim about the local X axis.', type: '−60–60°', default: '0' },
+    Spin: { description: 'Rotating-nozzle spin rate.', type: '−100–100 rpm', default: '0' },
+  }}
+/>
+
+## Quality
+
+<TypeTable
+  type={{
+    Viewport: { description: 'CO2 only. Fast skips per-beam smoke shadowing for smooth editing; Full is render-accurate live (heavier). Exports are always Full.', type: 'Fast / Full', default: 'Fast' },
+    Detail: { description: 'CO2 smoke-grid resolution, Low (40³) to Ultra (84³) voxels — higher = crisper edges at more CPU cost.', type: 'Low / Medium / High / Ultra', default: 'High' },
+    'Max particles': { description: 'Hard live-particle cap for this emitter; spawning is throttled so the count never exceeds it.', type: 'integer', default: 'profile' },
+  }}
+/>
+
+<Callout type="info">
+The live viewport renders volumetric CO2 smoke at half-resolution, so an exported [still render](/docs/rendering/render-image) is always the sharpest version of the effect.
+</Callout>
+
+## DMX control
+
+Pyro is patched **inline on the device** — not through the fixture patch table — and decoded each frame. Open the Inspector's **DMX** group, tick **Patched**, choose a **Mode**, and set the universe and address.
+
+<TypeTable
+  type={{
+    Patched: { description: 'Whether the device decodes live DMX. Unpatched devices free-run at the manual Output / Amount.', type: 'toggle', default: 'off' },
+    Mode: { description: 'DMX footprint layout (see below).', type: 'Minimal / Rich', default: 'Minimal' },
+    Universe: { description: 'DMX universe.', type: '1–63999', default: '1' },
+    Address: { description: 'Start channel.', type: '1–512', default: '1' },
+  }}
+/>
+
+### Footprints
+
+| Kind | Minimal | Rich |
+| --- | --- | --- |
+| CO2 Jet | 1 ch — Blast (`200`–`255` fires) | 7 ch — Arm, Blast, Intensity, Duration, Pan, Tilt, Speed |
+| Cold Spark | 3 ch — Spark | 5 ch — Spark+ |
+
+<Callout type="info">
+A patched device only fires when **armed** (the Rich modes carry an arm/safety channel). Unarmed devices stay inert regardless of the blast level; unpatched devices ignore arming and free-run at their manual level.
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Network />} title="Patching Fixtures" href="/docs/dmx/patching">
+    How DMX universes and addresses work across the show.
+  </Card>
+  <Card icon={<CloudFog />} title="Volumetric Beams & Haze" href="/docs/rendering/volumetrics">
+    The fog/haze the CO2 plumes and beams scatter through.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Building the Scene" href="/docs/scene">
+    Place, transform and organise every kind of object.
+  </Card>
+</Cards>

@@ -1,0 +1,122 @@
+---
+title: "Display Modes & Overlays"
+description: "Viewport shading modes and the grid, label, statistics and gizmo overlays."
+---
+
+import { Eye, Grid3x3, Tags, Compass, ListChecks, SlidersHorizontal, Gauge } from 'lucide-react';
+
+The viewport has two independent layers of control: the **display mode** (how surfaces are shaded) and **overlays** (the informational graphics drawn on top of the scene). This page covers both.
+
+<ImagePlaceholder
+  label="Screenshot"
+  ratio="16 / 9"
+  caption="Side-by-side comparison of the same lit stage: left half in Beauty mode (full shading, visible beams and haze); right half in Wireframe mode (geometry edges only, no shading). The viewport header's Display Mode segmented buttons (Beauty / Unlit / Wireframe) are visible at the right of the header with Wireframe active."
+/>
+
+## Display modes
+
+Glowstone renders the viewport in one of three shading modes. Switch between them in real time using the **Display Mode** segmented buttons in the [Viewport header](/docs/interface/panels), or open the Shading pie with `Z` and pick a sector.
+
+<TypeTable
+  type={{
+    Beauty: {
+      description: 'Full shading with lights, beams, volumetrics and the world environment. The default — use it for previsualization and final-look judgement.',
+      type: 'Shading mode',
+      default: 'Active',
+    },
+    Unlit: {
+      description: 'Flat base colours with no lighting contribution (a depth-based SSAO pass adds contact shading). Useful for reading geometry, materials and screen content without beams washing them out.',
+      type: 'Shading mode',
+      default: '—',
+    },
+    Wireframe: {
+      description: 'Geometry edges only, no surface fill. Fast to draw and ideal for checking topology, spotting hidden objects, and aligning a rig.',
+      type: 'Shading mode',
+      default: '—',
+    },
+  }}
+/>
+
+<Callout type="idea">
+Switch to `Unlit` when you are positioning fixtures or LED screens and the beams make it hard to see the underlying objects. Switch back to `Beauty` to judge the lighting look.
+</Callout>
+
+<Tabs items={['Viewport header', 'Shading pie (Z)']}>
+  <Tab value="Viewport header">
+    Click one of the **Beauty / Unlit / Wireframe** segmented buttons in the Viewport header's right-aligned controls (alongside the Exposure field and the Grid / Beam toggles). The change applies immediately.
+  </Tab>
+  <Tab value="Shading pie (Z)">
+    Press `Z` over the viewport to open the radial Shading pie. It has three display-mode sectors (Beauty, Unlit, Wireframe) plus quick toggles for `Grid` and `Stats`. Move the cursor toward a sector and release to pick — no confirm click needed.
+  </Tab>
+</Tabs>
+
+<Callout type="info">
+The active display mode is part of the render settings stored per project in the `.glow` file, so a saved show reopens with the same shading mode.
+</Callout>
+
+## Overlays
+
+Each overlay toggles independently from **View › Overlays**, from a Viewport header control, or from a keyboard shortcut. Toggling updates the display immediately. The View › Overlays submenu lists them in order: **Statistics, Fixture labels, Grid + axes, Navigation gizmo, Transform hint line**, then (after a rule) **FPS overlay**.
+
+| Overlay | What it shows | How to toggle |
+| --- | --- | --- |
+| **FPS overlay** | Frame rate in the top-left corner; colour-coded green (≥55 fps), amber (≥30) or red (under 30). | View › Overlays › FPS overlay |
+| **Grid + axes** | Origin grid on the ground plane plus the RGB world-axis tripod (X red, Y green, Z blue). | `view.toggle_grid` · View › Overlays › Grid + axes · Viewport header `Grid` checkbox · Shading pie (`Z`) › Grid |
+| **Fixture labels** | A configurable label drawn in screen space above each fixture. | `view.toggle_labels` (`L`) · View › Overlays › Fixture labels |
+| **Navigation gizmo** | Six-ball axis cluster (top-right); click a ball to snap the view down that axis. | `view.toggle_gizmos` · View › Overlays › Navigation gizmo |
+| **Statistics** | Bottom-left counts: fixtures, objects, screens, environments and selected (only non-zero categories shown). | `view.toggle_stats` · View › Overlays › Statistics · Shading pie (`Z`) › Stats |
+| **Transform hint line** | A thin axis-constraint line drawn during a modal `G`/`R`/`S` transform. | `view.toggle_hint` · View › Overlays › Transform hint line |
+| **Beam wireframes** | Beam-cone gizmos drawn for every visible fixture (volumetric cone outline). | Viewport header `Beam` checkbox |
+
+<Callout type="info">
+The FPS overlay is a menu/preference toggle only — it has no bound command in the keymap (the other overlays each register a `view.toggle_*` command, so they also appear in the `F3` palette).
+</Callout>
+
+The **Fixture labels** content is chosen in [Preferences](/docs/interface/preferences) and can show the fixture's **Name**, **Fixture ID** (the MVR id), **DMX address** (`universe.channel`) or **Sequence** number. Selected fixtures draw their label in the accent colour; the rest sit quiet over the canvas.
+
+<Callout type="info">
+Four of these overlays — **Fixture labels**, **Statistics**, **Grid** and **Navigation gizmo** — are remembered per [workspace](/docs/interface/workspaces). Activating a workspace re-emphasises its saved overlay state, but you stay free to toggle any of them afterward. Their on/off state is also saved per user in your preferences.
+</Callout>
+
+### The navigation gizmo
+
+The gizmo is a six-ball axis cluster in the top-right corner, over a faint backing disc. Positive-facing balls draw as solid labelled circles; back-facing ones draw as hollow rings, so the cluster reads as a 3D sphere. Hovering highlights a ball in white; clicking it eases the camera to look straight down that axis (0.25 s). When the gizmo overlay is off it is neither drawn nor clickable.
+
+<ImagePlaceholder
+  label="Close-up"
+  ratio="4 / 3"
+  caption="Close-up of the top-right navigation gizmo: six axis balls (X red, Y green, Z blue, with each negative axis as a hollow ring) over a faint backing disc, with one ball hovered and highlighted white."
+/>
+
+### View tag
+
+A small monospace label in the top-left corner (below the FPS overlay when shown) reports the current projection and view as `<Projection> · <View Name>`, for example `Ortho · Front` or `Persp · User`. It reads `User` whenever you free-orbit away from a canned axis view. See [Views, Gizmo & Pie Menus](/docs/navigation/views) for the preset views and projection toggle.
+
+## Overlays in renders
+
+Overlays are a viewport convenience and are not part of the rendered image by default. The `show_overlays` render option controls whether the grid and navigation gizmo are drawn into final output — leave it off to get a clean plate.
+
+<Callout type="success" title="Clean plate">
+For a presentation screenshot or a [still render](/docs/rendering/render-image), hide the grid, labels and gizmo so only the scene and its lighting remain.
+</Callout>
+
+<Callout type="warn">
+The dedicated [Performance overlay](/docs/navigation/performance-overlay) (Window › Performance) is separate from the FPS overlay listed above — it shows frame time and richer GPU stats rather than a single fps figure.
+</Callout>
+
+## See also
+
+<Cards>
+  <Card icon={<Compass />} title="Views, Gizmo & Pie Menus" href="/docs/navigation/views">
+    Preset camera angles, the view pie (`~`) and persp/ortho switching.
+  </Card>
+  <Card icon={<Gauge />} title="Performance Overlay" href="/docs/navigation/performance-overlay">
+    The detailed FPS and frame-time HUD from Window › Performance.
+  </Card>
+  <Card icon={<SlidersHorizontal />} title="Preferences & Theme" href="/docs/interface/preferences">
+    Where overlay show-flags and the fixture-label mode are stored, and how live preferences behave.
+  </Card>
+  <Card icon={<ListChecks />} title="Workspaces" href="/docs/interface/workspaces">
+    How layouts remember per-workspace overlay emphasis.
+  </Card>
+</Cards>
