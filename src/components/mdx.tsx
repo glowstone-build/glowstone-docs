@@ -9,6 +9,7 @@ import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 import { ImagePlaceholder } from './image-placeholder';
 import { Gallery } from './gallery';
+import { CommunityBanner } from './community-banner';
 
 export function getMDXComponents(components?: MDXComponents) {
   return {
@@ -26,6 +27,7 @@ export function getMDXComponents(components?: MDXComponents) {
     InlineTOC,
     ImagePlaceholder,
     Gallery,
+    CommunityBanner,
     img: (props) => <ImageZoom {...(props as any)} />,
     ...components,
   } satisfies MDXComponents;

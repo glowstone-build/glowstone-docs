@@ -5,6 +5,6 @@ export const docsContentRoute = '/llms.mdx/docs';
 
 export const gitConfig = {
   user: 'glowstone-build',
-  repo: 'glowstone-docs',
+  repo: 'glowstone',
   branch: 'main',
 };
