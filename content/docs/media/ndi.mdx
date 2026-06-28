@@ -13,30 +13,26 @@ A Glowstone LED screen can receive any NDI source on the local network and displ
   caption="An LED screen selected in the Scene, with the Inspector Content section's Source dropdown set to NDI: the 'Discovered:' row listing a source such as 'STUDIO (Output 1)@192.168.1.50:5960', the Source text field below it, and the live camera feed showing on the wall in the 3D viewport."
 />
 
-<Callout type="warn" title="NDI is an optional build feature">
-NDI receive is an **optional compile-time feature** and is **OFF by default**. The default build (`cargo build`) ships a graceful no-op stub: Glowstone runs normally but reports NDI as unavailable, and no sources are received. To actually receive NDI you must build Glowstone with the `ndi` feature and install the NDI runtime. See [Enabling NDI](#enabling-ndi) below.
+<Callout type="info" title="NDI just needs the runtime">
+The prebuilt releases already include NDI receive — you only need the **NDI runtime** installed to receive sources. Building from source is the exception: NDI is an opt-in compile-time feature there, so a source build must enable the `ndi` feature (without it Glowstone runs normally but reports NDI as unavailable). See [Enabling NDI](#enabling-ndi) below.
 </Callout>
 
 ## Enabling NDI
 
-Enabling NDI requires building Glowstone from source with the feature flag, plus the proprietary NDI runtime. The NDI SDK is not bundled in the repository.
+On a [prebuilt release](/docs/getting-started/installation) you only need the **NDI runtime** — NDI is already compiled in. Building from source is the exception: there NDI is an opt-in compile-time feature, so the build must enable the `ndi` feature.
 
 <Steps>
 <Step>
-### Install the NDI 6 SDK
-Download the **NDI 6 SDK** from Vizrt and follow its installation instructions. The `ndi` feature links the SDK via the `grafton-ndi` crate, which generates bindings from the SDK headers at build time, so the SDK headers must be present where the build can find them.
+### Install the NDI runtime
+Install the **NDI runtime** — it's all a prebuilt release needs to receive frames. It ships with the [NDI 6 SDK](https://ndi.video/for-developers/ndi-sdk/) download (accept the licence/EULA). If the runtime is absent, Glowstone logs a warning and continues with a no-op client — it will not crash.
 </Step>
 <Step>
-### Build with the `ndi` feature
-Compile Glowstone with the feature enabled. This links the user-installed NDI 6 SDK:
+### Optional: build from source with the `ndi` feature
+Only needed if you build Glowstone yourself, not for the prebuilt releases. Install the **NDI 6 SDK** — the `ndi` feature links it via the `grafton-ndi` crate, which generates bindings from the SDK headers at build time, so the headers must be present — keep Clang on `PATH`, then compile with the feature enabled:
 
 ```bash
 cargo build --features ndi
 ```
-</Step>
-<Step>
-### Install the NDI runtime
-Install the **NDI runtime** (a separate download from the SDK). It is required at runtime to actually receive frames. If the runtime is absent, Glowstone logs a warning and continues with a no-op client — it will not crash.
 </Step>
 </Steps>
 
@@ -46,7 +42,7 @@ Both builds expose the same internal client API, so the rest of the app behaves 
 
 ## Selecting an NDI source
 
-Once Glowstone is built with NDI and the runtime is installed, sources auto-discover on the LAN and appear in the LED screen's content picker.
+Once the NDI runtime is installed, sources auto-discover on the LAN and appear in the LED screen's content picker.
 
 <Steps>
 <Step>
@@ -77,7 +73,7 @@ When a source is selected, Glowstone spawns a per-source receiver thread, resolv
 
 ## When NDI is unavailable
 
-If Glowstone was not built with `--features ndi`, or the NDI runtime is not installed, the source picker shows a hint instead of a discovered list:
+If the NDI runtime is not installed (or, in a source build, the `ndi` feature was not enabled), the source picker shows a hint instead of a discovered list:
 
 > NDI runtime not available (build with `--features ndi` + install the NDI runtime).
 
